@@ -9,10 +9,10 @@ bads-ws1718-group21_ created by GitHub Classroom
 Next Steps for BADS Group Assignment
 
 A) Final Data Cleaning
- - remove unplausible values (e.g. age above/below certain value)
+ - remove inplausible values (e.g. age above/below certain value)
  - impute missing values (median, mean or via ML)
     -> see notes from DAII (Claudia)
-
+    -> has also to be done for unknown data set
 
 B) Feature Creation: Create additional, useful variables
   - Age
