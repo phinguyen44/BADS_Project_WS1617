@@ -53,16 +53,16 @@ rm(list = ls())
     dat.input$delivery_date <- dat.input$delivery_date[delivery_date2]
     
     # Calculate delivery time
-    dat.inputdate2 <- as.Date(dat.input[, 2])
-    dat.inputdate3 <- as.Date(dat.input[, 3])
+    mydate2 <- as.Date(dat.input[, 2])
+    mydate3 <- as.Date(dat.input[, 3])
     
-    diff.in.days <- data.frame(
-        difftime(dat.inputdate3, dat.inputdate2, units <- "days"))
+    diff.in.days = data.frame(
+        difftime(mydate3, mydate2, units = "days"))
     
     dat.input  <- cbind(dat.input, diff.in.days[,1], no.return)
     colnames(dat.input) <- paste0(c(names.vec, "delivery.time", "no.return"))
     
-    rm(delivery_date1, delivery_date2, dat.inputdate2, dat.inputdate3, diff.in.days, missing, no.return)
+    rm(mydate2, mydate3, delivery_date1, delivery_date2, diff.in.days, missing, no.return)
     
     
 ### Month of order
@@ -74,6 +74,21 @@ rm(list = ls())
     
     dat.input$order_month<- z(order.month)
     rm(z, order.month)
+    
+### Weekday of order
+
+# Note: April 1 in 2012 was a Sunday   
+    
+    # Aggregate over mean - dates get ordered automatically
+    return.daily = aggregate(x = dat.input$return, by = list(dat.input$order_date), mean)
+    
+    return.daily$weekday = paste0(c(rep(c("Sun", "Mon", "Tues", "Wed", "Thurs", "Fri", "Sat"), 52), "Sun"))
+    
+    colnames(return.daily) = c("order_date", "mean.return", "weekday" )
+    
+    dat.input = merge(dat.input, return.daily[,c(1,3)], by = "order_date")
+    
+    rm(return.daily)
     
 ############################################################################
 
@@ -135,6 +150,7 @@ colnames(dat.input) = c("order_item_id" ,
                        "deliver.time",
                        "no.return",
                        "order_month",
+                       "weekday",
                        "user_dob_year",
                        "order_year",
                         "age")
@@ -157,23 +173,5 @@ colnames(dat.input) = c("order_item_id" ,
 
 save(dat.input, file = "BADS_WS1718_known_clean" )
     
-    
-##### Some Random Notes: Ignore! #####
-    
-k = sort(dat.input$order_date) 
-    
-return.daily = aggregate(x = dat.input$return, by = list(dat.input$order_date), mean)
-return.daily$weekday = paste0(c(rep(c("Sun", "Mon", "Tues", "Wed", "Thurs", "Fri", "Sat"), 52), "Sun"))
-
-colnames(return.daily) = c("order_date", "mean.return", "weekday" )
-dat = merge(dat.input, return.daily, by = "order_date")
-return.month = aggregate(x = dat.input$return, by = list(dat.input$order_month), mean)
-
-
-return.weekday = aggregate(x = dat$return, by = list(dat$weekday), mean)
-
-plot(return.daily)
-plot(return.month)
-plot(return.weekday[,2])
 
        
