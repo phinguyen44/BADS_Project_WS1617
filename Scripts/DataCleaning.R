@@ -12,10 +12,14 @@
 
 rm(list = ls())
 
+# Adjust your working directory
+setwd("")
+getwd
+
     # LOAD NECESSARY PACKAGES & DATA
     # List all packages needed for session
-    neededPackages <- c("dplyr", "tidyr", "ggplot2", "lubridate", 
-                       "magrittr","infuser", "foreign")
+    neededPackages <- c("dplyr", "tidyr", "lubridate", 
+                        "foreign")
     allPackages    <- c(neededPackages %in% installed.packages()[,"Package"])
     
     # Install packages (if not already installed)
@@ -30,7 +34,6 @@ rm(list = ls())
         library(x, character.only = TRUE)))
     
     # Load dataset
-    
     dat.input <- read.csv("BADS_WS1718_known.csv", sep = ",", header <- TRUE)
     names.vec <- colnames(dat.input)
 
@@ -133,8 +136,8 @@ rm(list = ls())
     
 ############################################################################
     
-colnames(dat.input) = c("order_item_id" ,                            
-                       "order_date"    ,                            
+colnames(dat.input) = c("order_date"    ,
+                        "order_item_id" ,                            
                        "delivery_date" ,                           
                        "item_id"       ,                          
                        "item_size"     ,                         
@@ -156,6 +159,8 @@ colnames(dat.input) = c("order_item_id" ,
                         "age")
     
 ############################################################################
+### Final formatting
+    
 ### Format time variables
     
     # Declare all date variables as correct data type
@@ -165,13 +170,14 @@ colnames(dat.input) = c("order_item_id" ,
     dat.input$user_reg_date <- as.Date(dat.input$user_reg_date)
     dat.input$order_month   <- as.factor(dat.input$order_month)
     dat.input$deliver.time  <- as.numeric(dat.input$deliver.time)
-    
-    
+
+### Sort by order id again
+dat.input = dat.input[order(dat.input$order_item_id),]
     
 ############################################################################
 # Export clean data set
 
-save(dat.input, file = "BADS_WS1718_known_clean" )
+save(dat.input, file = "BADS_WS1718_known_clean.RData" )
     
 
        
