@@ -167,6 +167,8 @@ dat.input = merge(dat.input, brand.cluster, by = "brand_id" )
 
 dat.input = dat.input[order(dat.input$order_item_id),]
 
+dat.input$brand.cluster = as.factor(dat.input$brand.cluster)
+
 ############################################################################
 
 # Export clean data set
