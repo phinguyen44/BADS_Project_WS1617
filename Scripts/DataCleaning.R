@@ -14,7 +14,7 @@ rm(list = ls())
 
 # Adjust your working directory
 setwd("")
-getwd
+getwd()
 
     # LOAD NECESSARY PACKAGES & DATA
     # List all packages needed for session
@@ -34,7 +34,7 @@ getwd
         library(x, character.only = TRUE)))
     
     # Load dataset
-    dat.input <- read.csv("BADS_WS1718_known.csv", sep = ",", header <- TRUE)
+    dat.input <- read.csv("BADS_WS1718_known.csv", sep = ",", header = TRUE)
     names.vec <- colnames(dat.input)
 
 ############################################################################
