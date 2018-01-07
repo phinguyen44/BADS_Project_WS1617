@@ -16,7 +16,7 @@ getwd()
 
     # LOAD NECESSARY PACKAGES & DATA
     # List all packages needed for session
-    neededPackages <- c("cluster")
+    neededPackages <- c("cluster", "ggplot2")
     allPackages    <- c(neededPackages %in% installed.packages()[,"Package"])
     
     # Install packages (if not already installed)
@@ -156,18 +156,32 @@ memb = kcluster$cluster
 
 table(memb, clusters)
 
+# Check for suitability of cluster
 sil <- silhouette(memb, d)
 plot(sil, col=1:2, border=NA)
 
-brand.cluster = cbind("brand_id" = clus.input[, "brand_id"], "brand.cluster" = memb)
+# Illustrate Cluster with PCA
+PCA = prcomp(clusdat[,2:6],center=F, scale=F)
+summary(PCA)
+PCA$rotation
+pca = PCA$x[,1:2]
+k = data.frame(cbind(pca, memb))
+
+ggplot(k, aes(PC1, PC2, color = factor(memb)))+
+    geom_point()
+
 
 ### Merge clusters with dataset
+
+brand.cluster = cbind("brand_id" = clus.input[, "brand_id"], "brand.cluster" = memb)
 
 dat.input = merge(dat.input, brand.cluster, by = "brand_id" )
 
 dat.input = dat.input[order(dat.input$order_item_id),]
 
 dat.input$brand.cluster = as.factor(dat.input$brand.cluster)
+
+rm(list=(ls()[ls()!=c("dat.input")]))
 
 ############################################################################
 
