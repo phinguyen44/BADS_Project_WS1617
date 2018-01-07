@@ -104,17 +104,19 @@ agg2 =  aggregate(dat.input$age, list(dat.input$brand_id),
                  FUN = function(x)c(mn = mean(x),med = median(x)))
 
 agg3 =  aggregate(dat.input$item_price, list(dat.input$brand_id), 
-                  FUN = function(x)c(max = max(x),med = median(x)))
+                  FUN = function(x)c(max = max(x),med = median(x), min = min(x), len = length(x)))
+
 
 brand_agg2 <- cbind(do.call(data.frame, agg2), do.call(data.frame, agg3))
 
 colnames(brand_agg2) = c("brand_id", "mean.age.brand", "median.age.brand",
-                        "group", "max.price.brand", "median.price.brand")
+                        "group", "max.price.brand", "median.price.brand", 
+                        "min.price.brand", "no.of.orders")
 
 vec1 = c("brand_id", "aver.return.brand", "sales.brand", "WOE.brand")
 
 vec2 = c("brand_id", "median.age.brand", "max.price.brand",
-        "median.price.brand")
+        "median.price.brand", "min.price.brand", "no.of.orders")
 
 clus.input = merge(brand_agg[, vec1], brand_agg2[, vec2], by = "brand_id" )
 
@@ -124,8 +126,11 @@ rm(agg2, agg3, brand_agg, vec1, vec2, brand_agg2)
 
 ### Use subset for clustering
 
+# Define optimal clustering variable vector
 vec.brand = c("WOE.brand", "sales.brand",  "median.age.brand", "max.price.brand",
               "median.price.brand")
+
+#Todo: Check whether better clustering with variable "no.of.orders" íncluded (lower S value)
 
 # Scale data
 clusdat <- cbind("brand_id" = clus.input[, c("brand_id")], 
@@ -138,7 +143,7 @@ d <- dist(clusdat[,2:6], method = "euclidean")
 cluster.hier <- hclust(d, method = "ward.D")
 plot(cluster.hier)
 
-clusters = cutree(cluster.hier, k=5) # get 5 clusters
+clusters = cutree(cluster.hier, k=6) # get 5 clusters
 
 # function to find medoid in cluster i
 clust.centroid = function(i, dat, clusters) {
@@ -149,7 +154,7 @@ clust.centroid = function(i, dat, clusters) {
 # Get centroids
 (centroids = sapply(unique(clusters), clust.centroid, clusdat[,2:6], clusters))
 
-# Calculate 4 cluster based on k-means
+# Calculate 5 cluster based on k-means
 kcluster = kmeans(clusdat[,2:6], centers = t(centroids))
 
 memb = kcluster$cluster
@@ -184,6 +189,93 @@ dat.input$brand.cluster = as.factor(dat.input$brand.cluster)
 rm(list=(ls()[ls()!=c("dat.input")]))
 
 ############################################################################
+
+### Feature Extraction: Item size
+
+agg4 =  aggregate(dat.input$age, list(dat.input$item_size), 
+                  FUN = function(x)c(max = max(x),mn = mean(x), min = min(x)))
+
+agg5 =  aggregate(dat.input$return, list(dat.input$item_size), 
+                  FUN = function(x)c(mn = mean(x), len = length(x)))
+
+item_agg <- cbind(do.call(data.frame, agg4), do.call(data.frame, agg5))
+
+colnames(item_agg) = c("item_size", "max.age.size", "mean.age.size", "min.age.size",
+                         "group", "mean.return.size", "no.orders.size" )
+
+vec3 =  c("mean.age.size", "min.age.size",
+           "mean.return.size", "no.orders.size")
+
+#### Cluster sizes
+
+### Use subset for clustering
+
+# Scale data
+clusdat = item_agg [, c("item_size", vec3)]
+clusdat[, vec3] = scale(clusdat[, vec3])
+
+# Use Euclidean distance
+
+# Todo: check whether include size name for cluster
+d <- dist(clusdat[,2:5], method = "euclidean")
+
+# hclust# Dendogramm suggests more than 5 cluster,
+# but would lead to too small groups
+cluster.hier <- hclust(d, method = "ward.D")
+plot(cluster.hier)
+
+
+clusters = cutree(cluster.hier, k=5) # get 5 clusters
+
+# function to find medoid in cluster i
+clust.centroid = function(i, dat, clusters) {
+    ind = (clusters == i)
+    colMeans(dat[ind,])
+}
+
+# Get centroids
+(centroids = sapply(unique(clusters), clust.centroid, clusdat[,2:6], clusters))
+
+# Calculate 5 cluster based on k-means
+kcluster = kmeans(clusdat[,2:6], centers = t(centroids))
+
+memb = kcluster$cluster
+
+table(memb, clusters)
+
+# Check for suitability of cluster
+sil <- silhouette(memb, d)
+plot(sil, col=1:2, border=NA)
+
+
+# Illustrate Cluster with PCA
+PCA = prcomp(clusdat[,2:6],center=F, scale=F)
+summary(PCA)
+PCA$rotation
+pca = PCA$x[,1:2]
+k = data.frame(cbind(pca, memb))
+
+ggplot(k, aes(PC1, PC2, color = factor(memb)))+
+    geom_point()
+
+clusdat$size.cluster = memb
+
+### Merge item clusters with dataset
+
+size.cluster = clusdat[, c("item_size", "size.cluster")] 
+
+dat.input = merge(dat.input, size.cluster, by = "item_size" )
+
+dat.input = dat.input[order(dat.input$order_item_id),]
+
+dat.input$size.cluster = as.factor(dat.input$size.cluster)
+
+rm(list=(ls()[ls()!=c("dat.input")]))
+
+
+
+############################################################################
+
 
 # Export clean data set
 
