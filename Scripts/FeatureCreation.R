@@ -234,10 +234,10 @@ clust.centroid = function(i, dat, clusters) {
 }
 
 # Get centroids
-(centroids = sapply(unique(clusters), clust.centroid, clusdat[,2:6], clusters))
+(centroids = sapply(unique(clusters), clust.centroid, clusdat[,2:5], clusters))
 
 # Calculate 5 cluster based on k-means
-kcluster = kmeans(clusdat[,2:6], centers = t(centroids))
+kcluster = kmeans(clusdat[,2:5], centers = t(centroids))
 
 memb = kcluster$cluster
 
@@ -249,7 +249,7 @@ plot(sil, col=1:2, border=NA)
 
 
 # Illustrate Cluster with PCA
-PCA = prcomp(clusdat[,2:6],center=F, scale=F)
+PCA = prcomp(clusdat[,2:5],center=F, scale=F)
 summary(PCA)
 PCA$rotation
 pca = PCA$x[,1:2]
@@ -273,13 +273,72 @@ dat.input$size.cluster = as.factor(dat.input$size.cluster)
 rm(list=(ls()[ls()!=c("dat.input")]))
 
 
-
-############################################################################
-
-
 # Export clean data set
 
 save(dat.input, file = "BADS_WS1718_known_var.RData" )
-    
 
+
+############################################################################
+# Further notes
+############################################################################
+
+### WOE for sizes
+
+#  Calculate mean and count for brand return and sale
+agg6 =  aggregate(dat.input$return, list(dat.input$item_size), 
+                 FUN = function(x)c(mn = mean(x), n = length(x), 
+                                    good = mean(x)*length(x), bad = (1-mean(x))*length(x)))
+
+size_agg <- do.call(data.frame, agg6)
+
+colnames(size_agg) = c("item_size", "aver.return.size", "sales.size", "good", "bad")
+
+rm(agg6)
+
+# Check distribution of sales and return
+
+boxplot(size_agg$sales.size, horizontal=TRUE,axes=TRUE,outline=FALSE)
+summary(size_agg$sales.size)
+
+# Function of Weight of Evidence
+
+GOOD = sum(size_agg$good)
+BAD  = sum(size_agg$bad)
+
+size_agg$WOE = log((size_agg$bad/BAD)/(size_agg$good/GOOD))
+
+### Improve measure according to Zdravevski (2010)
+
+# Case 1: No cases in good and bad: Not existent
+
+# Case 2: Either no cases in good or bad: WOE -> Inf
+# Replace occurence (=0) with 1
+
+size_agg$good = ifelse(size_agg$good == 0, 1, size_agg$good)
+
+size_agg$bad = ifelse(size_agg$bad == 0, 1, size_agg$bad)    
+
+# Redo Calculation of WOE
+size_agg$WOE.size = log((size_agg$bad/BAD)/(size_agg$good/GOOD))
+
+# Calculate Information Value
+
+size_agg$InVa = ((size_agg$bad/BAD) - (size_agg$good/GOOD)) * size_agg$WOE
+
+# Overall IV = 0.06 weak predictor 
+sum(size_agg$InVa)
+
+
+############################################################################
+
+# Merge created variables
+
+vec4 = c("item_size", "WOE.size")
+
+dat.input = merge(dat.input, item_agg[, vec4], by = "item_size" )
+
+rm(BAD, GOOD, vec)
+
+### Sort by order id again
+dat.input = dat.input[order(dat.input$order_item_id),]
        
