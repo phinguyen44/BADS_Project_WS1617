@@ -31,7 +31,6 @@ getwd()
         library(x, character.only = TRUE)))
     
     # Load dataset
-    dat.input <- load("BADS_WS1718_known_clean.RData")
     load("BADS_WS1718_known_clean.RData")
 
 ############################################################################
@@ -77,7 +76,7 @@ brand_agg$WOE.brand = log((brand_agg$bad/BAD)/(brand_agg$good/GOOD))
 
 # Calculate Information Value
 
-brand_agg$InVa = ((brand_agg$bad/BAD) - (brand_agg$good/GOOD)) * brand_agg$WOE
+brand_agg$InVa = ((brand_agg$bad/BAD) - (brand_agg$good/GOOD)) * brand_agg$WOE.brand
 
 # Overall IV = 0.15 medium predictor 
 sum(brand_agg$InVa)
@@ -99,51 +98,78 @@ dat.input = dat.input[order(dat.input$order_item_id),]
 
 ### Feature Extraction: brands
 
+Mode <- function(x) {
+    if (is.numeric(x)) {
+        x_table <- table(x)
+        return(as.numeric(names(x_table)[which.max(x_table)]))
+    }
+}
 
 agg2 =  aggregate(dat.input$age, list(dat.input$brand_id), 
-                 FUN = function(x)c(mn = mean(x),med = median(x)))
+                 FUN = function(x)c(mn = mean(x),med = median(x),
+                                    max = max(x), min = min(x)))
 
 agg3 =  aggregate(dat.input$item_price, list(dat.input$brand_id), 
                   FUN = function(x)c(max = max(x),med = median(x), min = min(x), len = length(x)))
 
+agg4 =  aggregate(dat.input$item_id, list(dat.input$brand_id), 
+                  FUN = function(x)c(len = length(unique(x))))
 
-brand_agg2 <- cbind(do.call(data.frame, agg2), do.call(data.frame, agg3))
+agg5 =  aggregate(dat.input$order_month, list(dat.input$brand_id), 
+                  FUN = function(x)c(mmon = Mode(as.numeric(x))))
+                                   
+
+agg6 =  aggregate(dat.input$item_color, list(dat.input$brand_id), 
+                  FUN = function(x)c(len = length(unique(x))))
+
+
+brand_agg2 <- cbind(do.call(data.frame, agg2), do.call(data.frame, agg3), 
+                    do.call(data.frame, agg4), do.call(data.frame, agg5),
+                    do.call(data.frame, agg6))
 
 colnames(brand_agg2) = c("brand_id", "mean.age.brand", "median.age.brand",
+                         "max.age.brand", "min.age.brand",
                         "group", "max.price.brand", "median.price.brand", 
-                        "min.price.brand", "no.of.orders")
+                        "min.price.brand", "no.of.orders", "group","no.items.brand",
+                        "group", "mode.month", "no.of.colours")
 
 vec1 = c("brand_id", "aver.return.brand", "sales.brand", "WOE.brand")
 
-vec2 = c("brand_id", "median.age.brand", "max.price.brand",
-        "median.price.brand", "min.price.brand", "no.of.orders")
+vec2 = c("brand_id", "mean.age.brand", "max.age.brand", "min.age.brand", "max.price.brand",
+        "median.price.brand", "min.price.brand", "no.of.orders", "no.items.brand",
+        "m.month", "no.of.colours")
 
 clus.input = merge(brand_agg[, vec1], brand_agg2[, vec2], by = "brand_id" )
 
-rm(agg2, agg3, brand_agg, vec1, vec2, brand_agg2)
+rm(agg2, agg3, brand_agg, vec1, vec2, brand_agg2, agg4, agg5)
+
+clus.input$pdiff = clus.input$max.price.brand - clus.input$min.price.brand
+clus.input$agediff = clus.input$max.age.brand - clus.input$min.age.brand
+
 
 #### Cluster brands
 
 ### Use subset for clustering
 
 # Define optimal clustering variable vector
-vec.brand = c("WOE.brand", "sales.brand",  "median.age.brand", "max.price.brand",
-              "median.price.brand")
-
-#Todo: Check whether better clustering with variable "no.of.orders" íncluded (lower S value)
+vec.brand = c("aver.return.brand", "sales.brand", "WOE.brand", "mean.age.brand", "max.price.brand",
+              "median.price.brand", "no.of.orders", "no.items.brand",
+              "mean.month", "pdiff", "agediff")
 
 # Scale data
 clusdat <- cbind("brand_id" = clus.input[, c("brand_id")], 
                             scale(clus.input[, vec.brand]))
 
-# Use Euclidean distance
-d <- dist(clusdat[,2:6], method = "euclidean")
 
-# hclust# Dendogramm suggests 5 cluster
+
+# Use Euclidean distance
+d <- dist(clusdat[,2:12], method = "euclidean")
+
+# hclust# Dendogramm suggests 3 cluster
 cluster.hier <- hclust(d, method = "ward.D")
 plot(cluster.hier)
 
-clusters = cutree(cluster.hier, k=6) # get 5 clusters
+clusters = cutree(cluster.hier, k=3) # get 3 clusters
 
 # function to find medoid in cluster i
 clust.centroid = function(i, dat, clusters) {
@@ -152,10 +178,10 @@ clust.centroid = function(i, dat, clusters) {
 }
 
 # Get centroids
-(centroids = sapply(unique(clusters), clust.centroid, clusdat[,2:6], clusters))
+(centroids = sapply(unique(clusters), clust.centroid, clusdat[,2:12], clusters))
 
-# Calculate 5 cluster based on k-means
-kcluster = kmeans(clusdat[,2:6], centers = t(centroids))
+# Calculate 3 cluster based on k-means
+kcluster = kmeans(clusdat[,2:12], centers = t(centroids))
 
 memb = kcluster$cluster
 
@@ -166,10 +192,10 @@ sil <- silhouette(memb, d)
 plot(sil, col=1:2, border=NA)
 
 # Illustrate Cluster with PCA
-PCA = prcomp(clusdat[,2:6],center=F, scale=F)
+PCA = prcomp(clusdat[,2:12],center=F, scale=F)
 summary(PCA)
 PCA$rotation
-pca = PCA$x[,1:2]
+pca = PCA$x[,1:3]
 k = data.frame(cbind(pca, memb))
 
 ggplot(k, aes(PC1, PC2, color = factor(memb)))+
@@ -192,40 +218,49 @@ rm(list=(ls()[ls()!=c("dat.input")]))
 
 ### Feature Extraction: Item size
 
-agg4 =  aggregate(dat.input$age, list(dat.input$item_size), 
+agg7 =  aggregate(dat.input$age, list(dat.input$item_size), 
                   FUN = function(x)c(max = max(x),mn = mean(x), min = min(x)))
 
-agg5 =  aggregate(dat.input$return, list(dat.input$item_size), 
+agg8 =  aggregate(dat.input$return, list(dat.input$item_size), 
                   FUN = function(x)c(mn = mean(x), len = length(x)))
 
-item_agg <- cbind(do.call(data.frame, agg4), do.call(data.frame, agg5))
+agg9 =  aggregate(dat.input$item_price, list(dat.input$item_size), 
+                  FUN = function(x)c(mn = mean(x), max = max(x), min = min(x)))
+
+
+item_agg <- cbind(do.call(data.frame, agg7), do.call(data.frame, agg8),
+                  do.call(data.frame, agg9))
 
 colnames(item_agg) = c("item_size", "max.age.size", "mean.age.size", "min.age.size",
-                         "group", "mean.return.size", "no.orders.size" )
+                         "group", "mean.return.size", "no.orders.size",
+                          "group", "mean.price.size", "max.price.size", "min.price.size")
 
-vec3 =  c("mean.age.size", "min.age.size",
-           "mean.return.size", "no.orders.size")
+item_agg$pdiff = item_agg$max.price.size - item_agg$min.price.size 
+
+vec3 =  c("mean.age.size", "min.age.size", "max.age.size",
+           "mean.return.size", "no.orders.size", "mean.price.size", 
+            "pdiff")
 
 #### Cluster sizes
 
 ### Use subset for clustering
 
 # Scale data
-clusdat = item_agg [, c("item_size", vec3)]
+clusdat = item_agg[, c("item_size", vec3)]
 clusdat[, vec3] = scale(clusdat[, vec3])
 
 # Use Euclidean distance
 
 # Todo: check whether include size name for cluster
-d <- dist(clusdat[,2:5], method = "euclidean")
+d <- dist(clusdat[,2:8], method = "euclidean")
 
-# hclust# Dendogramm suggests more than 5 cluster,
+# hclust# Dendogramm suggests more than 6 cluster,
 # but would lead to too small groups
 cluster.hier <- hclust(d, method = "ward.D")
 plot(cluster.hier)
 
 
-clusters = cutree(cluster.hier, k=5) # get 5 clusters
+clusters = cutree(cluster.hier, k=6) # get 6 clusters
 
 # function to find medoid in cluster i
 clust.centroid = function(i, dat, clusters) {
@@ -234,10 +269,10 @@ clust.centroid = function(i, dat, clusters) {
 }
 
 # Get centroids
-(centroids = sapply(unique(clusters), clust.centroid, clusdat[,2:5], clusters))
+(centroids = sapply(unique(clusters), clust.centroid, clusdat[,2:8], clusters))
 
 # Calculate 5 cluster based on k-means
-kcluster = kmeans(clusdat[,2:5], centers = t(centroids))
+kcluster = kmeans(clusdat[,2:8], centers = t(centroids))
 
 memb = kcluster$cluster
 
@@ -249,7 +284,7 @@ plot(sil, col=1:2, border=NA)
 
 
 # Illustrate Cluster with PCA
-PCA = prcomp(clusdat[,2:5],center=F, scale=F)
+PCA = prcomp(clusdat[,2:8],center=F, scale=F)
 summary(PCA)
 PCA$rotation
 pca = PCA$x[,1:2]
@@ -342,3 +377,72 @@ rm(BAD, GOOD, vec)
 ### Sort by order id again
 dat.input = dat.input[order(dat.input$order_item_id),]
        
+
+############################################################################
+
+### Item-id: Use Weight of evidence
+
+#  Calculate mean and count for brand return and sale
+agg =  aggregate(dat.input$return, list(dat.input$item_id), 
+                 FUN = function(x)c(mn = mean(x), n = length(x), 
+                                    good = mean(x)*length(x), bad = (1-mean(x))*length(x)))
+
+item_agg <- do.call(data.frame, agg)
+
+colnames(item_agg) = c("item_id", "aver.return.item", "sales.item", "good", "bad")
+
+rm(agg)
+
+# Check distribution of sales and return
+
+boxplot(item_agg$sales.item, horizontal=TRUE,axes=TRUE,outline=FALSE)
+summary(item_agg$sales.item)
+
+# Function of Weight of Evidence
+
+GOOD = sum(item_agg$good)
+BAD  = sum(item_agg$bad)
+
+item_agg$WOE = log((item_agg$bad/BAD)/(item_agg$good/GOOD))
+
+### Improve measure according to Zdravevski (2010)
+
+# Case 1: No cases in good and bad: Not existent
+
+# Case 2: Either no cases in good or bad: WOE -> Inf
+# Replace occurence (=0) with 1
+
+item_agg$good = ifelse(item_agg$good == 0, 1, item_agg$good)
+
+item_agg$bad = ifelse(item_agg$bad == 0, 1, item_agg$bad)    
+
+# Redo Calculation of WOE
+item_agg$WOE.item = log((item_agg$bad/BAD)/(item_agg$good/GOOD))
+
+# Calculate Information Value
+
+item_agg$InVa = ((item_agg$bad/BAD) - (item_agg$good/GOOD)) * item_agg$WOE.item
+
+# Overall IV = 0.45 very good predictor! 
+sum(item_agg$InVa)
+
+
+############################################################################
+
+
+# Merge created variables
+
+vec = c("item_id", "aver.return.item", "sales.item", "WOE.item")
+
+dat.input = merge(dat.input, item_agg[, vec], by = "item_id" )
+
+rm(BAD, GOOD, vec)
+
+### Sort by order id again
+dat.input = dat.input[order(dat.input$order_item_id),]
+
+
+# Important note: For training purposes, WOE should only be calculated on training set!
+
+hist(dat.input$WOE.item, nclass = 100)
+
