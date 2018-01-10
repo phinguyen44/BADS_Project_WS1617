@@ -14,24 +14,24 @@ rm(list = ls())
 setwd("")
 getwd()
 
-    # LOAD NECESSARY PACKAGES & DATA
-    # List all packages needed for session
-    neededPackages <- c("cluster", "ggplot2")
-    allPackages    <- c(neededPackages %in% installed.packages()[,"Package"])
-    
-    # Install packages (if not already installed)
-    if (!all(allPackages)) {
-        missingIDX <- which(allPackages == FALSE)
-        needed     <- neededPackages[missingIDX]
-        lapply(needed, install.packages)  
-        }
-    
-    # Load all defined packages
-    lapply(neededPackages, function(x) suppressPackageStartupMessages(
-        library(x, character.only = TRUE)))
-    
-    # Load dataset
-    load("BADS_WS1718_known_clean.RData")
+# LOAD NECESSARY PACKAGES & DATA
+# List all packages needed for session
+neededPackages <- c("cluster", "ggplot2")
+allPackages    <- c(neededPackages %in% installed.packages()[,"Package"])
+
+# Install packages (if not already installed)
+if (!all(allPackages)) {
+    missingIDX <- which(allPackages == FALSE)
+    needed     <- neededPackages[missingIDX]
+    lapply(needed, install.packages)  
+}
+
+# Load all defined packages
+lapply(neededPackages, function(x) suppressPackageStartupMessages(
+    library(x, character.only = TRUE)))
+
+# Load dataset
+load("BADS_WS1718_known_clean.RData")
 
 ############################################################################
 
@@ -39,9 +39,9 @@ getwd()
 
 #  Calculate mean and count for brand return and sale
 agg =  aggregate(dat.input$return, list(dat.input$brand_id), 
-                          FUN = function(x)c(mn = mean(x), n = length(x), 
-                                good = mean(x)*length(x), bad = (1-mean(x))*length(x)))
-    
+                 FUN = function(x)c(mn = mean(x), n = length(x), 
+                                    good = mean(x)*length(x), bad = (1-mean(x))*length(x)))
+
 brand_agg <- do.call(data.frame, agg)
 
 colnames(brand_agg) = c("brand_id", "aver.return.brand", "sales.brand", "good", "bad")
@@ -90,7 +90,7 @@ vec = c("brand_id", "aver.return.brand", "sales.brand", "WOE.brand")
 dat.input = merge(dat.input, brand_agg[, vec], by = "brand_id" )
 
 rm(BAD, GOOD, vec)
-    
+
 ### Sort by order id again
 dat.input = dat.input[order(dat.input$order_item_id),]
 
@@ -106,8 +106,8 @@ Mode <- function(x) {
 }
 
 agg2 =  aggregate(dat.input$age, list(dat.input$brand_id), 
-                 FUN = function(x)c(mn = mean(x),med = median(x),
-                                    max = max(x), min = min(x)))
+                  FUN = function(x)c(mn = mean(x),med = median(x),
+                                     max = max(x), min = min(x)))
 
 agg3 =  aggregate(dat.input$item_price, list(dat.input$brand_id), 
                   FUN = function(x)c(max = max(x),med = median(x), min = min(x), len = length(x)))
@@ -117,7 +117,7 @@ agg4 =  aggregate(dat.input$item_id, list(dat.input$brand_id),
 
 agg5 =  aggregate(dat.input$order_month, list(dat.input$brand_id), 
                   FUN = function(x)c(mmon = Mode(as.numeric(x))))
-                                   
+
 
 agg6 =  aggregate(dat.input$item_color, list(dat.input$brand_id), 
                   FUN = function(x)c(len = length(unique(x))))
@@ -129,15 +129,15 @@ brand_agg2 <- cbind(do.call(data.frame, agg2), do.call(data.frame, agg3),
 
 colnames(brand_agg2) = c("brand_id", "mean.age.brand", "median.age.brand",
                          "max.age.brand", "min.age.brand",
-                        "group", "max.price.brand", "median.price.brand", 
-                        "min.price.brand", "no.of.orders", "group","no.items.brand",
-                        "group", "mode.month", "no.of.colours")
+                         "group", "max.price.brand", "median.price.brand", 
+                         "min.price.brand", "no.of.orders", "group","no.items.brand",
+                         "group", "mode.month", "no.of.colours")
 
 vec1 = c("brand_id", "aver.return.brand", "sales.brand", "WOE.brand")
 
 vec2 = c("brand_id", "mean.age.brand", "max.age.brand", "min.age.brand", "max.price.brand",
-        "median.price.brand", "min.price.brand", "no.of.orders", "no.items.brand",
-        "m.month", "no.of.colours")
+         "median.price.brand", "min.price.brand", "no.of.orders", "no.items.brand",
+         "m.month", "no.of.colours")
 
 clus.input = merge(brand_agg[, vec1], brand_agg2[, vec2], by = "brand_id" )
 
@@ -158,7 +158,7 @@ vec.brand = c("aver.return.brand", "sales.brand", "WOE.brand", "mean.age.brand",
 
 # Scale data
 clusdat <- cbind("brand_id" = clus.input[, c("brand_id")], 
-                            scale(clus.input[, vec.brand]))
+                 scale(clus.input[, vec.brand]))
 
 
 
@@ -232,14 +232,14 @@ item_agg <- cbind(do.call(data.frame, agg7), do.call(data.frame, agg8),
                   do.call(data.frame, agg9))
 
 colnames(item_agg) = c("item_size", "max.age.size", "mean.age.size", "min.age.size",
-                         "group", "mean.return.size", "no.orders.size",
-                          "group", "mean.price.size", "max.price.size", "min.price.size")
+                       "group", "mean.return.size", "no.orders.size",
+                       "group", "mean.price.size", "max.price.size", "min.price.size")
 
 item_agg$pdiff = item_agg$max.price.size - item_agg$min.price.size 
 
 vec3 =  c("mean.age.size", "min.age.size", "max.age.size",
-           "mean.return.size", "no.orders.size", "mean.price.size", 
-            "pdiff")
+          "mean.return.size", "no.orders.size", "mean.price.size", 
+          "pdiff")
 
 #### Cluster sizes
 
@@ -321,8 +321,8 @@ save(dat.input, file = "BADS_WS1718_known_var.RData" )
 
 #  Calculate mean and count for brand return and sale
 agg6 =  aggregate(dat.input$return, list(dat.input$item_size), 
-                 FUN = function(x)c(mn = mean(x), n = length(x), 
-                                    good = mean(x)*length(x), bad = (1-mean(x))*length(x)))
+                  FUN = function(x)c(mn = mean(x), n = length(x), 
+                                     good = mean(x)*length(x), bad = (1-mean(x))*length(x)))
 
 size_agg <- do.call(data.frame, agg6)
 
@@ -376,7 +376,7 @@ rm(BAD, GOOD, vec)
 
 ### Sort by order id again
 dat.input = dat.input[order(dat.input$order_item_id),]
-       
+
 
 ############################################################################
 
