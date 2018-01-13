@@ -8,8 +8,8 @@
     2. Order information
     3. Item information
     4. Additional information that we would like but can't add (e.g. online reviews, checkout process, etc.)
-3. How does xgboost handle non-linear interactions? Can it create a non-linear decision boundary with being fed linear features?
-4. Do we need to do any type of feature selection? Does it natively do feature selection?
+3. How does xgboost handle non-linear interactions? Can it create a non-linear decision boundary with being fed linear features? - apparently yes it can! since it's a tree
+4. Do we need to do any type of feature selection? Does it natively do feature selection? - looks like it does!
 
 ## Model Generation
 
@@ -20,13 +20,15 @@
     1. Number of iterations
     2. Maximum depth of trees
     3. Shrinkage / learning rate (eta)
-    4. Minimum loss reduction (gamma)
+    4. Minimum loss reduction - regulariozation (gamma)
     5. Subspace ratio of columns
     6. Minimum sum of instance weight
 
 ## Model Evaluation
 
-1. Do we need to cross-validate? If so, why? Does boosting natively do cross-validation?
+1. Do we need to cross-validate? If so, why? Does boosting natively do cross-validation? - looks like it can handle cross-validation
+    - Remember to add notes on what exactly cross-validation does (reduce out-of-sample error)
+    - How is it done in `xgboost`?
 2. Log-loss? Brier score?
 
 ## Prediction
@@ -39,5 +41,4 @@
 ## Resources
 
 1. https://github.com/dmlc/xgboost/tree/master/demo
-2. http://xgboost.readthedocs.io/en/latest/R-package/xgboostPresentation.html
-3. http://xgboost.readthedocs.io/en/latest/R-package/discoverYourData.html
+2. https://www.hackerearth.com/practice/machine-learning/machine-learning-algorithms/beginners-tutorial-on-xgboost-parameter-tuning-r/tutorial/
