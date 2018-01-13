@@ -23,6 +23,9 @@ needs(tidyverse, caret, mlr, xgboost, mice, pROC, doParallel)
 load("Data/BADS_WS1718_known_imp1.RData")
 df.known <- read.csv("Data/BADS_WS1718_class.csv")
 
+# Source performance metric calculations
+source("Scripts/Helpful.R")
+
 ################################################################################
 # FEATURES
 
@@ -99,16 +102,24 @@ xgb1 <- xgb.train(params                = params,
 ################################################################################
 # EVALUATE
 
-xgbpred <- predict(xgb1, dtest)
-xgbpred <- ifelse(xgbpred > 0.5,1,0)
+xgbpred  <- predict(xgb1, dtest)
+xgbpred1 <- ifelse(xgbpred > 0.5,1,0)
 
-confusionMatrix(xgbpred, ts.label)
+confusionMatrix(xgbpred1, ts.label)
+performance.met(ts.label, xgbpred)
 
 # Variable importance plot
-mat <- xgb.importance(feature_names = colnames(tr),model = xgb1)
+mat <- xgb.importance(feature_names = colnames(tr), model = xgb1)
 xgb.plot.importance(importance_matrix = mat[1:20]) 
 
-# TODO: Check reliability plot
+# Check reliability plot
+reliability.plot(act = ts.label, pred = xgbpred)
+
+# Check results after platt scaling
+plattpred  <- platt(act = ts.label, pred = xgbpred)
+plattpred1 <- ifelse(plattpred > 0.5,1,0)
+confusionMatrix(ts.label, plattpred1)
+reliability.plot(act = ts.label, pred = plattpred)
 
 ################################################################################
 # PREDICT
