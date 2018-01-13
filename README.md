@@ -13,6 +13,7 @@ A) Final Data Cleaning
  - impute missing values (median, mean or via ML)
     -> see notes from DAII (Claudia)
     -> has also to be done for unknown data set
+ - Consider EM Algorithm (Expectation Maximization) for the NAs   
 
 B) Feature Creation: Create additional, useful variables
   - Age
