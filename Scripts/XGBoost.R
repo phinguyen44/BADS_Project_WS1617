@@ -17,7 +17,7 @@ wd = file.path(Sys.getenv("HOME"),"/Documents/Projects/bads-ws1718-group21")
 setwd(wd)
 
 # Load packages
-needs(tidyverse, caret, mlr, xgboost, mice, pROC, doParallel)
+needs(tidyverse, caret, mlr, xgboost, mice, pROC, parallel, parallelMap)
 
 # Load data
 load("Data/BADS_WS1718_known_imp1.RData")
@@ -53,15 +53,15 @@ ts <- df.train[-idx.train, ]  # test set
 # xgboost accepts target variable separately
 tr.label <- tr$return
 ts.label <- ts$return
-tr       <- tr %>% select(-return)
-ts       <- ts %>% select(-return)
+train    <- tr %>% select(-return)
+test     <- ts %>% select(-return)
 
 # one hot encoding - this is required for xgboost
-tr <- model.matrix(~ 0 + ., tr)
-ts <- model.matrix(~ 0 + ., ts)
+train <- model.matrix(~ 0 + ., train)
+test  <- model.matrix(~ 0 + ., test)
 
-dtrain <- xgb.DMatrix(data = tr,label = tr.label) 
-dtest  <- xgb.DMatrix(data = ts,label = ts.label)
+dtrain <- xgb.DMatrix(data = train, label = tr.label) 
+dtest  <- xgb.DMatrix(data = test, label = ts.label)
 
 # PARAMETERS
 params <- list(booster          = "gbtree", # gbtree or dart
@@ -117,6 +117,68 @@ reliability.plot(act = ts.label, pred = xgbpred)
 
 # Check results after platt scaling
 plattpred  <- platt(act = ts.label, pred = xgbpred)
+plattpred1 <- ifelse(plattpred > 0.5,1,0)
+confusionMatrix(ts.label, plattpred1)
+reliability.plot(act = ts.label, pred = plattpred)
+
+################################################################################
+# BUILD MODEL (part 2, with MLR)
+
+traintask <- makeClassifTask(data = tr, target = "return", positive = 1)
+testtask  <- makeClassifTask(data = ts, target = "return", positive = 1)
+
+# one hot encoding
+traintask <- createDummyFeatures(obj = traintask) 
+testtask  <- createDummyFeatures(obj = testtask)
+
+# create learner
+lrn <- makeLearner("classif.xgboost", predict.type = "prob")
+
+params <- makeParamSet(
+    makeDiscreteParam("booster", values = c("gbtree","dart")), 
+    makeDiscreteParam("gamma", values = 0),
+    makeDiscreteParam("eta", values = c(0.01, 0.05, 0.1, 0.15)), 
+    makeDiscreteParam("nrounds", values = c(20, 100, 200)), 
+    makeIntegerParam("max_depth", lower = 3L, upper = 10L), 
+    makeNumericParam("min_child_weight", lower = 1L, upper = 10L), 
+    makeNumericParam("subsample", lower = 0.5, upper = 1), 
+    makeNumericParam("colsample_bytree", lower = 0.5, upper = 1)
+    )
+
+# cross-validation
+rdesc <- makeResampleDesc(method = "CV", iters = 5, stratify = TRUE)
+
+# random search
+ctrl  <- makeTuneControlRandom(maxit = 10L)
+
+parallelStartSocket(cpus = detectCores())
+
+xgb.tuning <- tuneParams(learner    = lrn, 
+                         task       = traintask, 
+                         resampling = rdesc,
+                         par.set    = params, 
+                         control    = ctrl, 
+                         measures   = list(auc = mlr::auc, acc),
+                         show.info  = TRUE
+                         )
+
+parallelStop()
+
+# Extract optimal parameter values after tuning 
+xgb.tuning$x
+
+lrn <- setHyperPars(lrn, par.vals = c(xgb.tuning$x, "verbose" = 0))
+
+# train & predic model
+xgmodel <- train(learner = lrn, task = traintask)
+xgpred  <- predict(xgmodel, testtask)
+
+# performance
+confusionMatrix(xgpred$data$response, ts.label)
+
+reliability.plot(act = ts.label, pred = xgpred$data$prob.1)
+# Check results after platt scaling
+plattpred  <- platt(act = ts.label, pred = xgpred$data$prob.1)
 plattpred1 <- ifelse(plattpred > 0.5,1,0)
 confusionMatrix(ts.label, plattpred1)
 reliability.plot(act = ts.label, pred = plattpred)

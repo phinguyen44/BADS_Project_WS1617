@@ -117,7 +117,7 @@ discrete.bin <- function(df, variable, numbins = 10) {
     df.bins <- df %>% 
     mutate(bins = factor(bins, levels = unique(bins))) %>% 
         group_by(bins) %>% 
-        summarize(ReturnRate = sum(Return) / sum(Total))
+        dplyr::summarize(ReturnRate = sum(Return) / sum(Total))
     
     return(df.bins)
 }
@@ -148,7 +148,7 @@ discrete.power <- function(df, variable, numbins = 10, powerval = 5) {
     df.bins <- df %>% 
     mutate(bins = factor(bins, levels = unique(bins))) %>% 
         group_by(bins) %>% 
-        summarize(ReturnRate = sum(Return) / sum(Total))
+        dplyr::summarize(ReturnRate = sum(Return) / sum(Total))
     
     return(df.bins)
 }
@@ -296,12 +296,12 @@ performance.met <- function(act, pred) {
     
     FPR <- test %>% 
         filter(act == 0) %>% 
-        summarize(FPR = sum(pred) / n()) %>% 
+        dplyr::summarize(FPR = sum(pred) / n()) %>% 
         as.numeric()
     
     FNR <- test %>% 
         filter(act == 1) %>% 
-        summarize(FNR = (n() - sum(pred)) / n()) %>% 
+        dplyr::summarize(FNR = (n() - sum(pred)) / n()) %>% 
         as.numeric()
     
     final <- list(ClassTable = check1, FPR = FPR, FNR = FNR, 
