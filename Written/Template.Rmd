@@ -1,0 +1,240 @@
+---
+title: "Fancy Title"
+header-includes:
+  - \usepackage{graphicx}
+  - \usepackage{amsmath}
+  - \usepackage{float}
+  - \usepackage{hyperref}
+output: pdf_document
+latex_engine: lualatex
+geometry: margin = 4.5cm
+bibliography: references.bib
+---
+
+```{r, eval = TRUE, echo = FALSE, include = FALSE, cache = TRUE} 
+# source("C:/Users/Julian/cms/bachelor-thesis_Winkel/impl/voiproduction.R")
+
+```
+
+```{r global_options, include=FALSE}
+knitr::opts_chunk$set(fig.pos = 'H')
+```
+\pagenumbering{gobble}
+
+<!-- \newcommand{\quantnet}{\hspace*{\fill} \raisebox{-1pt}{\includegraphics[scale=0.05]{C:/Users/Julian/cms/bachelor-thesis_Winkel/written/thesis/qletlogo.pdf}}\,} -->
+
+
+\makeatletter
+\renewcommand\paragraph{\@startsection{paragraph}{4}{\z@}%
+            {-2.5ex\@plus -1ex \@minus -.25ex}%
+            {1.25ex \@plus .25ex}%
+            {\normalfont\normalsize\bfseries}}
+\makeatother
+\setcounter{secnumdepth}{4} 
+\setcounter{tocdepth}{4}    
+
+\bigskip
+
+\begin{center}
+
+Business Analytics and Data Science Group Project  
+
+\medskip
+submitted to  
+\medskip
+
+
+
+\textbf{First Prof} \linebreak
+\textbf{Second Prof}  \linebreak
+ 
+
+\medskip
+Humboldt-Universität zu Berlin \linebreak     
+School of Business and Economics  \linebreak
+\medskip
+
+
+Chair  \linebreak 
+
+by  \linebreak  
+
+\textbf{Claudia Günther, Phi Nguyen, Julian Winkel}  \linebreak  
+Immatriculation Numbers \linebreak
+
+
+
+
+\includegraphics[width=0.3\textwidth]{HU_Logo_small.png}
+
+\medskip
+
+Anything else we want to say
+
+\medskip
+
+
+Berlin, Date 
+
+\end{center}
+
+
+\newpage
+\pagenumbering{roman}
+
+
+
+\begin{abstract}
+
+\smallskip
+
+Insert abstract here
+
+\bigskip
+
+
+
+\end{abstract}
+
+\newpage
+
+\listoftables
+
+\newpage
+
+\listoffigures
+
+\newpage
+
+
+\begin{Large}
+\textbf{Abbreviations} \linebreak
+\end{Large}
+
+\begin{tabular}{ll}
+\textbf{ANN} & Artificial Neural Network     \\
+\textbf{LM} & Linear Model    \\
+ 
+\end{tabular}
+
+
+\newpage
+
+\pagenumbering{arabic}
+
+\tableofcontents
+
+\newpage
+
+\section{Introduction}
+
+
+\newpage
+
+
+\section{Previous Research}
+
+
+\subsection{Overview}
+
+Divide previous research in subsections that will be presented in the following.
+
+
+\subsection{Research on ANN}
+
+This is how we cite @Badea_2014. The reference is automatically pasted in the according section.
+You can also cite indirectly at the end of a sentence [@Badea_2014].
+In this format, it is possible to insert pages, too [@Badea_2014, 10-14].
+
+
+
+\subsection{Research on ...}
+
+
+\clearpage
+\newpage
+
+\section{Data}
+
+
+
+
+\newpage
+
+
+
+\clearpage
+
+\newpage
+
+
+\section{Descriptive Analysis}
+
+
+
+\clearpage
+
+
+
+
+\newpage
+
+
+
+
+\subsection{Summary Statistics}
+
+
+
+
+\newpage
+
+\section{Model 1}
+
+\subsection{Estimated Model 1}
+
+
+\subsection{Model 1 Diagnosis}
+
+
+\clearpage
+\newpage
+
+
+
+\section{Conclusion}
+
+
+\newpage
+
+\section{References}
+
+
+<div id="refs"></div>
+
+
+\newpage
+
+\begin{Large}
+\textbf{Declaration of Authorship} 
+\end{Large}
+
+\bigskip
+\bigskip
+
+TEXT
+
+\bigskip
+\bigskip
+
+15.01.2018
+
+
+
+
+
+
+
+
+
+
