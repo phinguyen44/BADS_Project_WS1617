@@ -31,7 +31,7 @@ lapply(neededPackages, function(x) suppressPackageStartupMessages(
     library(x, character.only = TRUE)))
 
 # Load dataset
-load("BADS_WS1718_known_clean.RData")
+load("BADS_WS1718_known_imp1.RData")
 
 ############################################################################
 
@@ -137,7 +137,7 @@ vec1 = c("brand_id", "aver.return.brand", "sales.brand", "WOE.brand")
 
 vec2 = c("brand_id", "mean.age.brand", "max.age.brand", "min.age.brand", "max.price.brand",
          "median.price.brand", "min.price.brand", "no.of.orders", "no.items.brand",
-         "m.month", "no.of.colours")
+         "mode.month", "no.of.colours")
 
 clus.input = merge(brand_agg[, vec1], brand_agg2[, vec2], by = "brand_id" )
 
@@ -154,7 +154,7 @@ clus.input$agediff = clus.input$max.age.brand - clus.input$min.age.brand
 # Define optimal clustering variable vector
 vec.brand = c("aver.return.brand", "sales.brand", "WOE.brand", "mean.age.brand", "max.price.brand",
               "median.price.brand", "no.of.orders", "no.items.brand",
-              "mean.month", "pdiff", "agediff")
+              "mode.month", "pdiff", "agediff")
 
 # Scale data
 clusdat <- cbind("brand_id" = clus.input[, c("brand_id")], 
