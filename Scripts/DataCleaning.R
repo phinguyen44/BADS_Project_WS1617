@@ -130,7 +130,7 @@ getwd()
     dat.input$age <- dat.input$age[z]
     rm(z)
     
-    z <- ifelse(dat.input$age < 12, NA, TRUE)
+    z <- ifelse(dat.input$age < 16, NA, TRUE)
     dat.input$age <- dat.input$age[z]
     rm(z)
     

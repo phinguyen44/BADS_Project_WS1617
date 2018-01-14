@@ -16,7 +16,7 @@ getwd()
 
 # LOAD NECESSARY PACKAGES & DATA
 # List all packages needed for session
-neededPackages <- c("cluster", "ggplot2")
+neededPackages <- c("cluster", "ggplot2", "tidyverse")
 allPackages    <- c(neededPackages %in% installed.packages()[,"Package"])
 
 # Install packages (if not already installed)
@@ -137,7 +137,7 @@ vec1 = c("brand_id", "aver.return.brand", "sales.brand", "WOE.brand")
 
 vec2 = c("brand_id", "mean.age.brand", "max.age.brand", "min.age.brand", "max.price.brand",
          "median.price.brand", "min.price.brand", "no.of.orders", "no.items.brand",
-         "m.month", "no.of.colours")
+         "mode.month", "no.of.colours")
 
 clus.input = merge(brand_agg[, vec1], brand_agg2[, vec2], by = "brand_id" )
 
@@ -154,7 +154,7 @@ clus.input$agediff = clus.input$max.age.brand - clus.input$min.age.brand
 # Define optimal clustering variable vector
 vec.brand = c("aver.return.brand", "sales.brand", "WOE.brand", "mean.age.brand", "max.price.brand",
               "median.price.brand", "no.of.orders", "no.items.brand",
-              "mean.month", "pdiff", "agediff")
+              "mode.month", "pdiff", "agediff")
 
 # Scale data
 clusdat <- cbind("brand_id" = clus.input[, c("brand_id")], 
@@ -308,11 +308,6 @@ dat.input$size.cluster = as.factor(dat.input$size.cluster)
 rm(list=(ls()[ls()!=c("dat.input")]))
 
 
-# Export clean data set
-
-save(dat.input, file = "BADS_WS1718_known_var.RData" )
-
-
 ############################################################################
 # Further notes
 ############################################################################
@@ -370,9 +365,9 @@ sum(size_agg$InVa)
 
 vec4 = c("item_size", "WOE.size")
 
-dat.input = merge(dat.input, item_agg[, vec4], by = "item_size" )
+dat.input = merge(dat.input, size_agg[, vec4], by = "item_size" )
 
-rm(BAD, GOOD, vec)
+rm(BAD, GOOD, vec4)
 
 ### Sort by order id again
 dat.input = dat.input[order(dat.input$order_item_id),]
@@ -445,4 +440,31 @@ dat.input = dat.input[order(dat.input$order_item_id),]
 # Important note: For training purposes, WOE should only be calculated on training set!
 
 hist(dat.input$WOE.item, nclass = 100)
+
+
+############################################################################
+
+### Feature creation based on basked
+
+
+# Get all unique combinations of order date & user_id
+baskets <- dat.input %>%
+    group_by(user_id, order_date) %>% 
+    summarize(basket.size=length(order_item_id)) %>% 
+    as.data.frame(.) 
+
+
+dat.input = merge(dat.input, baskets, by = c("user_id", "order_date") )
+
+rm(baskets)
+
+### Sort by order id again
+dat.input = dat.input[order(dat.input$order_item_id),]
+
+
+
+# Export clean data set
+
+save(dat.input, file = "BADS_WS1718_known_var.RData" )
+
 
