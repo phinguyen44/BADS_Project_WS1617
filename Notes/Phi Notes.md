@@ -28,17 +28,18 @@
 
 1. Do we need to cross-validate? If so, why? Does boosting natively do cross-validation? - looks like it can handle cross-validation
     - Remember to add notes on what exactly cross-validation does (reduce out-of-sample error)
-    - How is it done in `xgboost`?
-2. Log-loss? Brier score?
+2. [Cost-sensitive classification](https://mlr-org.github.io/mlr-tutorial/release/html/cost_sensitive_classif/index.html#class-dependent-misclassification-costs)
 
 ## Prediction
 
 ## Additional Notes
 
 1. What is the motivation for boosting, what are the advantages / disadvantages etc?
+    - SPEED! Since it combines many small, simple classifiers, the trees don't get too deep
 2. How does it improve upon predictions? By reducing variance or bias?
 
 ## Resources
 
-1. https://github.com/dmlc/xgboost/tree/master/demo
+1. https://mlr-org.github.io/mlr-tutorial/release/html/index.html
 2. https://www.hackerearth.com/practice/machine-learning/machine-learning-algorithms/beginners-tutorial-on-xgboost-parameter-tuning-r/tutorial/
+3. https://www.analyticsvidhya.com/blog/2016/08/practicing-machine-learning-techniques-in-r-with-mlr-package/

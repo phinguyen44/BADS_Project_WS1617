@@ -41,14 +41,14 @@ df.train <- df.train %>%
     mutate(order_year = as.factor(order_year),
            weekday    = as.factor(weekday))
 
-################################################################################
-# BUILD MODEL
-
 # SPLIT DATA
 set.seed(321)
 idx.train <- createDataPartition(y = df.train$return, p = 0.8, list = FALSE)
 tr <- df.train[idx.train, ]   # training set
 ts <- df.train[-idx.train, ]  # test set
+
+################################################################################
+# BUILD MODEL
 
 # xgboost accepts target variable separately
 tr.label <- tr$return
@@ -135,10 +135,10 @@ testtask  <- createDummyFeatures(obj = testtask)
 lrn <- makeLearner("classif.xgboost", predict.type = "prob")
 
 params <- makeParamSet(
-    makeDiscreteParam("booster", values = c("gbtree","dart")), 
-    makeDiscreteParam("gamma", values = 0),
+    makeDiscreteParam("booster", values = c("gbtree", "dart")), 
+    makeDiscreteParam("gamma", values = c(0, 0.1, 0.2, 0.3)),
     makeDiscreteParam("eta", values = c(0.01, 0.05, 0.1, 0.15)), 
-    makeDiscreteParam("nrounds", values = c(20, 100, 200)), 
+    makeDiscreteParam("nrounds", values = c(20, 50, 100)), 
     makeIntegerParam("max_depth", lower = 3L, upper = 10L), 
     makeNumericParam("min_child_weight", lower = 1L, upper = 10L), 
     makeNumericParam("subsample", lower = 0.5, upper = 1), 
@@ -158,7 +158,7 @@ xgb.tuning <- tuneParams(learner    = lrn,
                          resampling = rdesc,
                          par.set    = params, 
                          control    = ctrl, 
-                         measures   = list(auc = mlr::auc, acc),
+                         measures   = acc,
                          show.info  = TRUE
                          )
 
