@@ -76,7 +76,7 @@ lr.mod <- function(learner, traintask, testtask) {
     end     <- Sys.time()
     runtime <- end - start
     cat(paste0(learner, " run time: "))
-    runtime
+    print(runtime)
     
     return(lr.yhat)
 }
@@ -126,7 +126,7 @@ dt.mod <- function(learner, traintask, testtask) {
     end     <- Sys.time()
     runtime <- end - start
     cat(paste0(learner, " run time: "))
-    runtime
+    print(runtime)
     
     return(t.yhat)
 
@@ -174,7 +174,7 @@ rf.mod <- function(learner, traintask, testtask) {
     end     <- Sys.time()
     runtime <- end - start
     cat(paste0(learner, " run time: "))
-    runtime
+    print(runtime)
     
     return(rf.yhat)
 }
@@ -219,7 +219,7 @@ gbm.mod <- function(learner, traintask, testtask) {
     end     <- Sys.time()
     runtime <- end - start
     cat(paste0(learner, " run time: "))
-    runtime
+    print(runtime)
     
     return(gbm.yhat)
     
@@ -273,7 +273,7 @@ xgb.mod <- function(learner, traintask, testtask) {
     end     <- Sys.time()
     runtime <- end - start
     cat(paste0(learner, " run time: "))
-    runtime
+    print(runtime)
     
     return(xg.yhat)
     
@@ -314,7 +314,8 @@ nn.mod <- function(learner, traintask, testtask) {
     
     end     <- Sys.time()
     runtime <- end - start
-    cat(paste0(learner, " run time: ", round(runtime, 2), " secs"))
+    cat(paste0(learner, " run time: "))
+    print(runtime)
     
     return(nn.yhat)
     
