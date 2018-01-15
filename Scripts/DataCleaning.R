@@ -12,7 +12,7 @@
 rm(list = ls())
 
 # Adjust your working directory
-wd = file.path(Sys.getenv("HOME"),"/Documents/Projects/bads-ws1718-group21")
+wd = file.path(Sys.getenv("HOME"),"/Documents/Projects/bads-ws1718-group21/Data")
 setwd(wd)
 
 # LOAD NECESSARY PACKAGES & DATA
@@ -33,7 +33,7 @@ lapply(neededPackages, function(x) suppressPackageStartupMessages(
     library(x, character.only = TRUE)))
 
 # Load dataset
-dat.input <- read.csv("Data/BADS_WS1718_known.csv", sep = ",", header = TRUE)
+dat.input <- read.csv("BADS_WS1718_known.csv", sep = ",", header = TRUE)
 names.vec <- colnames(dat.input)
 
 ############################################################################
@@ -159,7 +159,7 @@ dat.input$delivery_date <- as.Date(dat.input$delivery_date)
 dat.input$user_reg_date <- as.Date(dat.input$user_reg_date)
 dat.input$order_month   <- as.factor(dat.input$order_month)
 dat.input$deliver.time  <- as.numeric(dat.input$deliver.time)
-dat.intput$order_year   <- as.factor(dat.input$order_year)
+dat.input$order_year   <- as.factor(dat.input$order_year)
     
 ############################################################################
 # Export clean data set
