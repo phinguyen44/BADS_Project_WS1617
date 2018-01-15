@@ -17,7 +17,7 @@ setwd(wd)
 
 # Load packages
 needs(tidyverse, magrittr, purrr, infuser,
-      caret, mlr, xgboost, gbm, rpart, e1071, MASS,
+      caret, mlr, xgboost, gbm, rpart, e1071, MASS, nnet, 
       mice, pROC, parallel, parallelMap)
 
 # Load data

@@ -8,8 +8,11 @@
     2. Order information
     3. Item information
     4. Additional information that we would like but can't add (e.g. online reviews, checkout process, etc.)
-3. How does xgboost handle non-linear interactions? Can it create a non-linear decision boundary with being fed linear features? - apparently yes it can! since it's a tree, automatatically detects non-linear feature interactions (STILL NEED PAPER FOR THIS)
+3. How does xgboost handle non-linear interactions? Can it create a non-linear decision boundary with being fed linear features? - apparently yes it can! since it's a tree, automatically detects non-linear feature interactions (STILL NEED PAPER FOR THIS)
 4. Do we need to do any type of feature selection? Does it natively do feature selection? - looks like it does!
+5. Use [WOE](https://stats.stackexchange.com/questions/189568/replacing-variables-by-woe-weight-of-evidence-in-logistic-regression/229039) - includes advantages and disadvantages
+    - Don't forget to 0 out cases in unknown set if they don't appear in known set
+    - How do we prevent overfitting (bias) with WOE? Use cross-validation then perform WOE on the variables
 
 ## Model Generation
 
@@ -56,3 +59,4 @@
 1. https://www.hackerearth.com/practice/machine-learning/machine-learning-algorithms/beginners-tutorial-on-xgboost-parameter-tuning-r/tutorial/
 2. https://www.analyticsvidhya.com/blog/2016/08/practicing-machine-learning-techniques-in-r-with-mlr-package/
 3. https://gormanalysis.com/gradient-boosting-explained/
+4. https://multithreaded.stitchfix.com/blog/2015/08/13/weight-of-evidence/
