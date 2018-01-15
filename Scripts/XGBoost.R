@@ -31,10 +31,10 @@ source("Scripts/Helpful.R")
 
 # select variables
 df.train <- dat.input1 %>% 
-    select(age, user_state, user_title,
-           deliver.time, order_year, order_month, weekday, no.return,
-           item_price,
-           return)
+    dplyr::select(age, user_state, user_title,
+                  deliver.time, order_year, order_month, weekday, no.return,
+                  item_price,
+                  return)
 
 # convert to factor
 df.train <- df.train %>% 

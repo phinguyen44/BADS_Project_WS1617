@@ -16,7 +16,7 @@ wd = file.path(Sys.getenv("HOME"),"/Documents/Projects/bads-ws1718-group21")
 setwd(wd)
 
 # Load packages
-needs(tidyverse, magrittr, purrr,
+needs(tidyverse, magrittr, purrr, infuser,
       caret, mlr, xgboost, gbm, rpart, e1071, MASS,
       mice, pROC, parallel, parallelMap)
 
@@ -32,15 +32,15 @@ source("Scripts/Helpful.R")
 
 # select variables
 df.train <- dat.input1 %>% 
-    select(age, user_state, user_title,
-           deliver.time, order_year, order_month, weekday, no.return,
-           item_price,
-           return)
+    dplyr::select(age, user_state, user_title,
+                  deliver.time, order_year, order_month, weekday, no.return,
+                  item_price,
+                  return)
 
 # convert to factor
 df.train <- df.train %>% 
-    mutate(order_year = as.factor(order_year),
-           weekday    = as.factor(weekday))
+    dplyr::mutate(order_year = as.factor(order_year),
+                  weekday    = as.factor(weekday))
 
 ################################################################################
 # BUILD MODEL
@@ -75,7 +75,8 @@ lr.mod <- function(learner, traintask, testtask) {
     
     end     <- Sys.time()
     runtime <- end - start
-    cat(paste0(learner, " run time: ", round(runtime, 2), " secs"))
+    cat(paste0(learner, " run time: "))
+    runtime
     
     return(lr.yhat)
 }
@@ -97,7 +98,9 @@ dt.mod <- function(learner, traintask, testtask) {
     )
     
     # grid search
-    gscontrol <- makeTuneControlGrid()
+    # gscontrol <- makeTuneControlGrid()
+    # random search
+    gscontrol <- makeTuneControlRandom(maxit = 30L)
     
     start <- Sys.time()
     
@@ -122,7 +125,8 @@ dt.mod <- function(learner, traintask, testtask) {
     
     end     <- Sys.time()
     runtime <- end - start
-    cat(paste0(learner, " run time: ", round(runtime, 2), " secs"))
+    cat(paste0(learner, " run time: "))
+    runtime
     
     return(t.yhat)
 
@@ -137,13 +141,13 @@ rf.mod <- function(learner, traintask, testtask) {
     
     # hyperparameters
     rf_param <- makeParamSet(
-        makeIntegerParam("ntree",lower = 50, upper = 500),
+        makeIntegerParam("ntree",lower = 50, upper = 200),
         makeIntegerParam("mtry", lower = 3, upper = 10),
-        makeIntegerParam("nodesize", lower = 10, upper = 50)
+        makeIntegerParam("nodesize", lower = 10, upper = 40)
     )
     
     # tune parameters (random rather than grid search faster)
-    rancontrol <- makeTuneControlRandom(maxit = 20L)
+    rancontrol <- makeTuneControlRandom(maxit = 30L)
     set_cv     <- makeResampleDesc("CV",iters = 3L)
     
     start <- Sys.time()
@@ -169,7 +173,8 @@ rf.mod <- function(learner, traintask, testtask) {
     
     end     <- Sys.time()
     runtime <- end - start
-    cat(paste0(learner, " run time: ", round(runtime, 2), " secs"))
+    cat(paste0(learner, " run time: "))
+    runtime
     
     return(rf.yhat)
 }
@@ -180,12 +185,12 @@ gbm.mod <- function(learner, traintask, testtask) {
     # make learner
     g.gbm <- makeLearner(learner, predict.type = "prob")
     
-    rancontrol <- makeTuneControlRandom(maxit = 50L)
+    rancontrol <- makeTuneControlRandom(maxit = 30L)
     set_cv     <- makeResampleDesc("CV",iters = 3L)
     
     gbm_par <- makeParamSet(
         makeDiscreteParam("distribution", values = "bernoulli"),
-        makeIntegerParam("n.trees", lower = 100, upper = 1000), 
+        makeIntegerParam("n.trees", lower = 20, upper = 300), 
         makeIntegerParam("interaction.depth", lower = 2, upper = 10), 
         makeIntegerParam("n.minobsinnode", lower = 10, upper = 80),
         makeNumericParam("shrinkage",lower = 0.01, upper = 1)
@@ -213,7 +218,8 @@ gbm.mod <- function(learner, traintask, testtask) {
     
     end     <- Sys.time()
     runtime <- end - start
-    cat(paste0(learner, " run time: ", round(runtime, 2), " secs"))
+    cat(paste0(learner, " run time: "))
+    runtime
     
     return(gbm.yhat)
     
@@ -229,7 +235,7 @@ xgb.mod <- function(learner, traintask, testtask) {
     # make learner
     xg_set <- makeLearner(learner, predict.type = "prob")
     
-    rancontrol <- makeTuneControlRandom(maxit = 100L)
+    rancontrol <- makeTuneControlRandom(maxit = 50L)
     set_cv     <- makeResampleDesc("CV",iters = 3L)
     
     xg_ps <- makeParamSet(
@@ -240,7 +246,7 @@ xgb.mod <- function(learner, traintask, testtask) {
         makeNumericParam("lambda", lower = 0.55,upper = 0.60),
         makeNumericParam("eta", lower = 0.001, upper = 0.5),
         makeNumericParam("subsample", lower = 0.10, upper = 0.80),
-        makeNumericParam("min_child_weight", lower = 1:, upper = 5L),
+        makeNumericParam("min_child_weight", lower = 1L, upper = 5L),
         makeNumericParam("colsample_bytree", lower = 0.2, upper = 0.8)
     )
 
@@ -266,7 +272,8 @@ xgb.mod <- function(learner, traintask, testtask) {
     
     end     <- Sys.time()
     runtime <- end - start
-    cat(paste0(learner, " run time: ", round(runtime, 2), " secs"))
+    cat(paste0(learner, " run time: "))
+    runtime
     
     return(xg.yhat)
     
@@ -277,11 +284,11 @@ nn.mod <- function(learner, traintask, testtask) {
     
     nn <- makeLearner(learner, predict.type = "prob")
     
-    rancontrol <- makeTuneControlRandom(maxit = 50L)
+    rancontrol <- makeTuneControlRandom(maxit = 30L)
     set_cv     <- makeResampleDesc("CV",iters = 3L)
     
     nn_par <- makeParamSet(
-        makeDiscreteParam("size", values = seq(1, 10, by=1)),
+        makeDiscreteParam("size", values = seq(1, 8, by=1)),
         makeDiscreteParam("decay", values = seq(0, 0.1, by=0.005))
     )
     
@@ -317,7 +324,7 @@ nn.mod <- function(learner, traintask, testtask) {
 learners <- list(lr = "classif.logreg",
                  nn  = "classif.nnet",
                  gbm = "classif.gbm",
-                 xgb = "classif.xgb",
+                 xgb = "classif.xgboost",
                  dt = "classif.rpart",
                  rf = "classif.randomForest"
                  )
@@ -341,15 +348,45 @@ auc    <- lapply(yhat.r, function(x) measureAUC(truth = ts.label,
                                                 positive = 1))
 cMat   <- lapply(yhat.r, function(x) confusionMatrix(x, ts.label))
 
+# PLOT RELIABILITY PLOT. SELECT ONE OF THE MODELS IN the PRED arg
 reliability.plot(act = ts.label, pred = yhat$rf)
 
+yhat.r.name <- infuse("Data/Predictions - Phi/run_{{rundate}}_yhat.Rdata",
+                      rundate = strftime(Sys.Date(), "%Y%m%d"))
+cMat.name   <- infuse("Data/Predictions - Phi/run_{{rundate}}_cMat.Rdata",
+                      rundate = strftime(Sys.Date(), "%Y%m%d"))
+
+save(yhat.r, file = yhat.r.name)
+save(cMat, file = cMat.name)
+
+################################################################################
+## NOTE: STUFF BELOW HERE IS OPTIONAL, HENCE CODE IS UGLY
+
 # Check results after platt scaling
-plattpred  <- platt(act = ts.label, pred = yhat$rf)
+plattpred  <- platt(act = ts.label, pred = yhat$xgb)
 plattpred1 <- ifelse(plattpred > 0.5,1,0)
 confusionMatrix(ts.label, plattpred1)
 
 reliability.plot(act = ts.label, pred = plattpred)
 
-# PLATT SCALING APPEARS TO HAVE AN EFFECT OF DECREASING FPR
+x = data.frame(actual = ts.label, pred = yhat$rf, plattpred = plattpred)
+
+p1 <- ggplot(data = x, aes(pred, color = as.factor(actual))) +
+    geom_density(size = 1) +
+    geom_vline(aes(xintercept = 0.5), color = "blue") + 
+    labs(title = "Training Set Predicted Score") + 
+    theme_minimal() +
+    theme(panel.grid.minor = element_blank()) + 
+    theme(panel.grid.major.x = element_blank())
+p1
+
+p2 <- ggplot(data = x, aes(plattpred, color = as.factor(actual))) +
+    geom_density(size = 1) +
+    geom_vline(aes(xintercept = 0.5), color = "blue") + 
+    labs(title = "Training Set Predicted Score, After Platt Scaling") + 
+    theme_minimal() +
+    theme(panel.grid.minor = element_blank()) + 
+    theme(panel.grid.major.x = element_blank())
+p2
 
 # TODO: STORE FINAL RESULTS IN RDATA FILE & RUN TIME
