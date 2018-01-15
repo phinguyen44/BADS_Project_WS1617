@@ -40,6 +40,7 @@
     - SPEED! Since it combines many small, simple classifiers, the trees don't get too deep
     - "The most important factor behind the success of XGBoost is its scalability in all scenarios.  The system runs more than ten times faster than existing popular solutions on a single machine and scales to billions of examples in distributed or
     memory-limited settings." - Chen/Guestrin 2016
+    - xgb vs gbm?
     - xgboost also has DART regularization
     - Advantage over trees: doesn't overfit, can include predictive power from mutiple, overlapping regions of the feature space (one tree only considers each additional feature inside a small region of input space)
     - Gradient boosting is easy to understand, isn't restricted to just using trees (can use any base model)

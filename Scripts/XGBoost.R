@@ -53,8 +53,8 @@ ts <- df.train[-idx.train, ]  # test set
 # xgboost accepts target variable separately
 tr.label <- tr$return
 ts.label <- ts$return
-train    <- tr %>% select(-return)
-test     <- ts %>% select(-return)
+train    <- tr %>% dplyr::select(-return)
+test     <- ts %>% dplyr::select(-return)
 
 # one hot encoding - this is required for xgboost
 train <- model.matrix(~ 0 + ., train)
