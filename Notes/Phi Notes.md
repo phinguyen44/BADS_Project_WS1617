@@ -23,8 +23,9 @@
     4. Minimum loss reduction - regularization (gamma)
     5. Subspace ratio of columns
     6. Minimum sum of instance weight
-4. Should we apply some heterogeneous ensembling? What are the benefits
+4. Should we apply some heterogeneous ensembling? What are the benefits (Carauna et al)
 5. Platt scaling to calibrate -> smooths out so they better match posterior probabilities - also has an effect of reducing false positives (only in this case, by shifting predictions downward slightly)
+    - Calibration should be done on a separately
 
 ## Model Evaluation
 
@@ -33,6 +34,8 @@
 2. [Cost-sensitive classification](https://mlr-org.github.io/mlr-tutorial/release/html/cost_sensitive_classif/index.html#class-dependent-misclassification-costs)
 
 ## Prediction
+
+1. We should aim to focus on extreme cases (namely, we should only predict return if we're reasonably confident)
 
 ## Additional Notes
 
