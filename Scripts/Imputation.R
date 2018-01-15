@@ -128,16 +128,11 @@ dat.input2 = dat.input
 # Attention: only run when necessary, take a lot of time
 age.imp <- mice(dat.input2[, c("age", "user_title", "brand_id", "item_size", 
                            "item_price")],m=5,maxit=50,meth='pmm',seed=123)
-    
-age.imp2 = age.imp
-age.imp2 = data.frame(age.imp2)
-    
-completedData1 <- complete(age.imp,1)
-completedData2 <- complete(age.imp,2)
-completedData3 <- complete(age.imp,3)
-completedData4 <- complete(age.imp,4)
-completedData5 <- complete(age.imp,5)
-    
+m <- 5
+for(i in 1:m){
+    completeData[i] <- complete(age.imp, m)
+}
+
 save(completedData1, completedData2, completedData3, 
      completedData4, completedData5, 
      file = "BADS_WS1718_known_imp2.RData")
