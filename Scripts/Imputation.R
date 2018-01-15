@@ -131,11 +131,10 @@ age.imp <- mice(dat.input2[, c("age", "user_title", "brand_id", "item_size",
 m <- 5
 for(i in 1:m){
     completeData[i] <- complete(age.imp, m)
+    dat.input2$age[i] <- completeData[i]$age
 }
 
-save(completedData1, completedData2, completedData3, 
-     completedData4, completedData5, 
-     file = "BADS_WS1718_known_imp2.RData")
+save(dat.input2, file = "BADS_WS1718_known_imp2.RData")
 
 ############################################################################
 ### Method 3: Drop missing observation
