@@ -9,7 +9,7 @@
 
 ################################################################################
 # LOAD DATA
-rm(list = ls())
+# rm(list = ls())
 
 # Adjust your working directory
 wd = file.path(Sys.getenv("HOME"),"/Documents/Projects/bads-ws1718-group21")
@@ -22,7 +22,8 @@ needs(tidyverse, magrittr, purrr, infuser,
 
 # Load data
 load("Data/BADS_WS1718_known_imp1.RData")
-df.known <- read.csv("Data/BADS_WS1718_class.csv")
+load("Data/BADS_WS1718_known_feat.RData")
+df.known <- read.csv("Data/BADS_WS1718_known.csv")
 
 # Source performance metric calculations
 source("Scripts/Helpful.R")
@@ -31,16 +32,26 @@ source("Scripts/Helpful.R")
 # FEATURES
 
 # select variables
-df.train <- dat.input1 %>% 
+df.train <- dat.input1 %>%
     dplyr::select(age, user_state, user_title,
                   deliver.time, order_year, order_month, weekday, no.return,
                   item_price,
                   return)
 
 # convert to factor
-df.train <- df.train %>% 
+df.train <- df.train %>%
     dplyr::mutate(order_year = as.factor(order_year),
                   weekday    = as.factor(weekday))
+
+# other one
+df.train2 <- dat.input2 %>%
+    dplyr::select(age, user_state, user_title, user_purchase_num, #user_id_WOE,
+                  deliver.time, order_year, order_month, weekday, no.return,
+                  order_size, 
+                  #item_id_WOE, item_color_WOE, item_size_WOE,
+                  order_same_item, order_same_cs, order_same_cb, order_same_bs,
+                  item_price,
+                  return)
 
 ################################################################################
 # BUILD MODEL
@@ -54,8 +65,29 @@ ts <- df.train[-idx.train, ]  # test set
 tr.label <- tr$return
 ts.label <- ts$return
 
+## Get for post-processing later
+# post.process <- ts$no.return
+# tr <- tr %>% dplyr::select(-no.return)
+# ts <- ts %>% dplyr::select(-no.return)
+
 traintask <- makeClassifTask(data = tr, target = "return", positive = 1)
 testtask  <- makeClassifTask(data = ts, target = "return", positive = 1)
+
+# SPLIT DATA # PART 2
+idx.train2 <- createDataPartition(y = df.train2$return, p = 0.8, list = FALSE)
+tr2 <- df.train2[idx.train2, ]   # training set
+ts2 <- df.train2[-idx.train2, ]  # test set
+
+tr.label2 <- tr2$return
+ts.label2 <- ts2$return
+
+# ## Get for post-processing later
+# post.process2 <- ts2$no.return
+# tr2 <- tr2 %>% dplyr::select(-no.return)
+# ts2 <- ts2 %>% dplyr::select(-no.return)
+
+traintask2 <- makeClassifTask(data = tr2, target = "return", positive = 1)
+testtask2  <- makeClassifTask(data = ts2, target = "return", positive = 1)
 
 ## CREATE EACH MODEL
 
@@ -179,52 +211,6 @@ rf.mod <- function(learner, traintask, testtask) {
     return(rf.yhat)
 }
 
-# GBM
-gbm.mod <- function(learner, traintask, testtask) {
-    
-    # make learner
-    g.gbm <- makeLearner(learner, predict.type = "prob")
-    
-    rancontrol <- makeTuneControlRandom(maxit = 30L)
-    set_cv     <- makeResampleDesc("CV",iters = 3L)
-    
-    gbm_par <- makeParamSet(
-        makeDiscreteParam("distribution", values = "bernoulli"),
-        makeIntegerParam("n.trees", lower = 20, upper = 300), 
-        makeIntegerParam("interaction.depth", lower = 2, upper = 10), 
-        makeIntegerParam("n.minobsinnode", lower = 10, upper = 80),
-        makeNumericParam("shrinkage",lower = 0.01, upper = 1)
-    )
-    
-    start <- Sys.time()
-    
-    parallelStartSocket(cpus = detectCores())
-    tune_gbm <- tuneParams(learner    = g.gbm, 
-                           task       = traintask,
-                           resampling = set_cv,
-                           measures   = acc,
-                           par.set    = gbm_par,
-                           control    = rancontrol
-                           )
-    parallelStop()
-    
-    final_gbm <- setHyperPars(learner = g.gbm, par.vals = tune_gbm$x)
-    
-    to.gbm <- train(final_gbm, traintask)
-    pr.gbm <- predict(to.gbm, testtask)
-    
-    # predict
-    gbm.yhat       <- pr.gbm$data$prob.1
-    
-    end     <- Sys.time()
-    runtime <- end - start
-    cat(paste0(learner, " run time: "))
-    print(runtime)
-    
-    return(gbm.yhat)
-    
-}
-
 # XGB
 xgb.mod <- function(learner, traintask, testtask) {
     
@@ -324,33 +310,62 @@ nn.mod <- function(learner, traintask, testtask) {
 ## LIST OF FUNCTIONS
 learners <- list(lr = "classif.logreg",
                  nn  = "classif.nnet",
-                 gbm = "classif.gbm",
                  xgb = "classif.xgboost",
                  dt = "classif.rpart",
                  rf = "classif.randomForest"
                  )
 mods <- list(lr = lr.mod,
              nn  = nn.mod,
-             gbm = gbm.mod,
              xgb = xgb.mod,
              dt = dt.mod,
              rf = rf.mod
              )
 
-yhat <- map2(mods, learners, function(f, x) f(x, traintask, testtask))
+yhat   <- map2(mods, learners, function(f, x) f(x, traintask, testtask))
+yhat.r <- lapply(yhat, round)
+
+yhat.new   <- map2(mods, learners, function(f, x) f(x, traintask2, testtask2))
+yhat.r.new <- lapply(yhat.new, round)
+
+################################################################################
+# POST-PROCESSING
+
+# TODO: CHECK the post-processing
+
+# Post-processing with no.returns at the end
+# idx  <- which(post.process==1)
+# idx2 <- which(post.process2==1)
+# 
+# yhat.r.post <- yhat.r
+# for (i in 1:length(yhat.r)) {
+#     yhat.r.post[[i]][idx] <- 0
+# }
+# 
+# yhat.r.post.new <- yhat.r.new
+# for (i in 1:length(yhat.r)) {
+#     yhat.r.post.new[[i]][idx2] <- 0
+# }
+
+# get confusion matrices for all:
+# 1) old model, old model + post processing
+# 2) new model, new model + post processing
+
+cMat          <- lapply(yhat.r, function(x) confusionMatrix(x, ts.label, positive = "1"))
+# cMat.post     <- lapply(yhat.r.post, function(x) confusionMatrix(x, ts.label, positive = "1"))
+cMat.new      <- lapply(yhat.r.new, function(x) confusionMatrix(x, ts.label2, positive = "1"))
+# cMat.new.post <- lapply(yhat.r.post.new, function(x) confusionMatrix(x, ts.label2, positive = "1"))
 
 ################################################################################
 # EVALUATE
 
-yhat.r <- lapply(yhat, round)
 auc    <- lapply(yhat.r, function(x) measureAUC(truth = ts.label, 
                                                 probabilities = x, 
                                                 negative = 0, 
                                                 positive = 1))
-cMat   <- lapply(yhat.r, function(x) confusionMatrix(x, ts.label))
+cMat   <- lapply(yhat.r, function(x) confusionMatrix(x, ts.label, positive = "1"))
 
 # PLOT RELIABILITY PLOT. SELECT ONE OF THE MODELS IN the PRED arg
-reliability.plot(act = ts.label, pred = yhat$rf)
+reliability.plot(act = ts.label, pred = yhat$lr)
 
 yhat.r.name <- infuse("Data/Predictions - Phi/run_{{rundate}}_yhat.Rdata",
                       rundate = strftime(Sys.Date(), "%Y%m%d"))
@@ -363,31 +378,31 @@ save(cMat, file = cMat.name)
 ################################################################################
 ## NOTE: STUFF BELOW HERE IS OPTIONAL, HENCE CODE IS UGLY
 
+# must feed in each pred individually
+
 # Check results after platt scaling
-plattpred  <- platt(act = ts.label, pred = yhat$xgb)
-plattpred1 <- ifelse(plattpred > 0.5,1,0)
-confusionMatrix(ts.label, plattpred1)
-
-reliability.plot(act = ts.label, pred = plattpred)
-
-x = data.frame(actual = ts.label, pred = yhat$rf, plattpred = plattpred)
-
-p1 <- ggplot(data = x, aes(pred, color = as.factor(actual))) +
-    geom_density(size = 1) +
-    geom_vline(aes(xintercept = 0.5), color = "blue") + 
-    labs(title = "Training Set Predicted Score") + 
-    theme_minimal() +
-    theme(panel.grid.minor = element_blank()) + 
-    theme(panel.grid.major.x = element_blank())
-p1
-
-p2 <- ggplot(data = x, aes(plattpred, color = as.factor(actual))) +
-    geom_density(size = 1) +
-    geom_vline(aes(xintercept = 0.5), color = "blue") + 
-    labs(title = "Training Set Predicted Score, After Platt Scaling") + 
-    theme_minimal() +
-    theme(panel.grid.minor = element_blank()) + 
-    theme(panel.grid.major.x = element_blank())
-p2
-
-# TODO: STORE FINAL RESULTS IN RDATA FILE & RUN TIME
+# plattpred  <- platt(act = ts.label, pred = yhat$xgb)
+# plattpred1 <- ifelse(plattpred > 0.5,1,0)
+# confusionMatrix(ts.label, plattpred1, positive = "1")
+# 
+# reliability.plot(act = ts.label, pred = plattpred)
+# 
+# x = data.frame(actual = ts.label, pred = yhat$rf, plattpred = plattpred)
+# 
+# p1 <- ggplot(data = x, aes(pred, color = as.factor(actual))) +
+#     geom_density(size = 1) +
+#     geom_vline(aes(xintercept = 0.5), color = "blue") + 
+#     labs(title = "Training Set Predicted Score") + 
+#     theme_minimal() +
+#     theme(panel.grid.minor = element_blank()) + 
+#     theme(panel.grid.major.x = element_blank())
+# p1
+# 
+# p2 <- ggplot(data = x, aes(plattpred, color = as.factor(actual))) +
+#     geom_density(size = 1) +
+#     geom_vline(aes(xintercept = 0.5), color = "blue") + 
+#     labs(title = "Training Set Predicted Score, After Platt Scaling") + 
+#     theme_minimal() +
+#     theme(panel.grid.minor = element_blank()) + 
+#     theme(panel.grid.major.x = element_blank())
+# p2

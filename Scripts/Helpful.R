@@ -16,6 +16,7 @@
 # by power)
 # assign.bins() - creates bins based off bins created in discrete.bins()
 # samplefxn() - imputation fxn (misnomer)
+# WOE() - self-made WOE function. outputs a vector
 # 
 # MODEL BUILDING:
 # build.glm() - builds predictions and classification table for glm model
@@ -65,7 +66,7 @@ return.check <- function(df, var) {
         ))
     return.table[[var]] <- levels(df[[var]])
     return.table <- return.table %>% 
-        select(var, V1, V2) %>% 
+        dplyr::select(var, V1, V2) %>% 
         rename(Keep = V1, Return = V2) %>% 
         mutate(Total = Keep + Return, ReturnRate = round(Return / Total, 3))
   
@@ -74,7 +75,7 @@ return.check <- function(df, var) {
 
 # check return rates of numeric variables
 num.check <- function(df, var) {
-    prices.df <- df %>% arrange(get(var))
+    prices.df <- df %>% arrange_(var)
     tables    <- as.data.frame(table(prices.df[[var]], prices.df$return))
     tables    <- tidyr::spread(tables, Var2, Freq)
     tables    <- tables %>% 
@@ -177,6 +178,39 @@ samplefxn <- function(df, var, type) {
                                 times = len))
     
     return(values)
+}
+
+# WOE
+WOE <- function(df, var) {
+    
+    require(dplyr)
+    require(magrittr)
+    
+    df.new <- df %>% 
+        group_by_(var) %>% 
+        dplyr::summarize(Keep   = n() - sum(return),
+                  Return = sum(return))
+    
+    ### Improve measure according to Zdravevski (2010)
+    tot.keep <- sum(df.new$Keep)
+    tot.ret  <- sum(df.new$Return)
+    
+    # Case 1: Keep = 0, Return = 0 -> WOE = 0
+    # Case 2: Keep = 0, Return > 0 -> Keep = Keep + 1, 
+    # Return = Return + tot.ret/tot.keep
+    # Case 3: Keep > 0, Return = 0 -> Return = Return + 1, 
+    # Keep = Keep + tot.keep/tot.ret
+    # Otherwise, normal case.
+    df.new$WOE <- with(df.new, 
+        ifelse(Keep == 0 & Return == 0, 0,
+        ifelse(Keep == 0 & Return > 0, log((Return*tot.keep + tot.ret)/tot.ret),
+        ifelse(Keep > 0 & Return == 0, log(tot.keep/(Keep*tot.ret + tot.keep)),
+        log((Return/tot.ret)/(Keep/tot.keep))))))
+    
+    # join data
+    out <- left_join(df, df.new, var) %>% use_series(WOE)
+    return(out)
+    
 }
 
 ################################################################################
