@@ -48,7 +48,7 @@ df.train <- dat.input2 %>%
 # INITIAL SPLIT
 
 # SPLIT DATA
-set.seed(321)
+set.seed(3210)
 idx.train <- createDataPartition(y = df.train$return, p = 0.8, list = FALSE)
 tr <- df.train[idx.train, ]   # training set
 ts <- df.train[-idx.train, ]  # test set
@@ -59,10 +59,12 @@ ts.label <- ts$return
 ## LIST OF FUNCTIONS
 learners <- list(lr = "classif.logreg",
                  nn  = "classif.nnet",
-                 xgb = "classif.xgboost")
+                 xgb = "classif.xgboost",
+                 rf = "classif.randomForest")
 mods <- list(lr = lr.mod,
              nn  = nn.mod,
-             xgb = xgb.mod)
+             xgb = xgb.mod,
+             rf = rf.mod)
 
 ################################################################################
 # CROSS-VALIDATION
@@ -221,8 +223,8 @@ tr <- tr %>%
                   deliver.time, order_year, order_month, weekday, no.return,
                   order_size, 
                   item_id_WOE, item_color_WOE, item_size_WOE, brand_id_WOE,
-                  order_same_item, order_same_cs, order_same_cb, 
-                  order_same_bs,
+                  order_same_item, # order_same_cs, order_same_cb, 
+                  # order_same_bs,
                   item_price,
                   return)
 
@@ -232,8 +234,8 @@ ts <- ts %>%
                   deliver.time, order_year, order_month, weekday, no.return,
                   order_size, 
                   item_id_WOE, item_color_WOE, item_size_WOE, brand_id_WOE,
-                  order_same_item, order_same_cs, order_same_cb, 
-                  order_same_bs,
+                  order_same_item, # order_same_cs, order_same_cb, 
+                  # order_same_bs,
                   item_price,
                   return)
 
@@ -244,6 +246,7 @@ testtask  <- makeClassifTask(data = ts, target = "return", positive = 1)
 fin   <- map2(mods, learners, function(f, x) f(x, traintask, testtask))
 fin.r <- lapply(fin, function(x) sapply(x$pred, function(y) round(y)))
 cMat  <- lapply(fin.r, function(x) confusionMatrix(x, ts.label, positive = "1"))
+cMat
 
 # SAVE prediction results (on test set)
 fin.name  <- infuse("Data/Predictions - Phi/run_{{rundate}}_yhat.Rdata",
