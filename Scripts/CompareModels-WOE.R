@@ -166,8 +166,8 @@ alldata2 <- lapply(alldata, transpose)
 pred <- lapply(alldata2, function(x) lapply(x$pred, function(y) round(y)))
 
 # get prediction accuracy
-get.acc  <- function(x) confusionMatrix(x, ts.label.f, positive="1")$overall[1]
-pred.acc <- lapply(pred, function(x) sapply(x, function(y) get.acc(y)))
+get.acc  <- function(x, act) confusionMatrix(x, act, positive="1")$overall[1]
+pred.acc <- lapply(pred, function(x) map2_dbl(x, actual, get.acc))
 acc.mean <- lapply(pred.acc, mean)
 acc.se   <- lapply(pred.acc, sd)
 
@@ -242,7 +242,7 @@ testtask  <- makeClassifTask(data = ts, target = "return", positive = 1)
 
 # TRAIN MODEL
 fin   <- map2(mods, learners, function(f, x) f(x, traintask, testtask))
-fin.r <- lapply(yhat[[i]]$pred, round)
+fin.r <- lapply(fin, function(x) sapply(x$pred, function(y) round(y)))
 cMat  <- lapply(fin.r, function(x) confusionMatrix(x, ts.label, positive = "1"))
 
 # SAVE prediction results (on test set)
