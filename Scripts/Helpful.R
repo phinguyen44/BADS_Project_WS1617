@@ -39,9 +39,7 @@
 
 # check distribution of categorical variables (and how they might differ)
 dist.check <- function(df.train, var) {
-    # TRANSFORM INCORRECTLY SCALED VARIABLES
-    if (var == "brand_id") df.test[[var]] <- df.test[[var]] - 100
-    if (var == "item_id") df.test[[var]] <- (df.test[[var]] / 2) - 1
+    
     dist.train <- data.frame(
         train = table(df.train[[var]])[order(table(df.train[[var]]))]
         )
