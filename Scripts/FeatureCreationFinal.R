@@ -7,9 +7,9 @@
 # Description:
 # Create all supervised and unsupervised features to be built on training set
 # Feature categories:
-# a) item
-# b) basket/order
-# c) customer
+# A) item
+# B) order
+# C) customer
 #
 ################################################################################
 
@@ -40,9 +40,10 @@ load("BADS_WS1718_known_imp1.RData")
 
 ############################################################################
 ############################################################################
-### Feature creation on item level #########################################
+### A) Feature creation on item level ######################################
 
-###  A) Item price + discount ###
+#############################################################################
+###  Item price + discount ###
 
 # Item price: Decretize price using equal binning
 # @ Phi: please enter your code here, coudnt really do it
@@ -75,7 +76,8 @@ dat.input1$max.price.paid <- ifelse(dat.input1$item_price ==
 dat.input1$min.price.paid <- ifelse(dat.input1$item_price == 
                                         dat.input1$min.price.item.size, "1", "0")
 
-### B) Item Colour ###
+#############################################################################
+### Item Colour ###
 
 # Create dataframe containing groups of colors
 colors.dat <- data.frame(matrix(nrow = length(levels(dat.input1$item_color)),
@@ -123,7 +125,8 @@ dat.input1 <- merge(dat.input1, colors.dat, by = "item_color" )
 # Some clean up
 rm(colors.dat, color.matching)
 
-### C) Item category and size ###
+#############################################################################
+### Item category and size ###
 
 # Determine category of item based on (unique) size
 sizes <- list()
@@ -190,9 +193,42 @@ dat.input1$item.subcategory <- ifelse(subgroups$item_price >= subgroups$q3,
                                       "luxus", dat.input1$item.subcategory)
 rm(subgroups)
 
-##### Note
+### End of item based features  ###
+#############################################################################
 
-## Order on day of registration
-dat.input1$first.order <- as.factor(ifelse(dat.input1$user_reg_date == dat.input1$order_date, 1, 0))
+############################################################################
+### B) Feature creation on order level ######################################
+# Definition of basket: Items bought by customer on same day
 
+# Create features based on ordered baskets
+dat.input1  <- dat.input1 %>% 
+             group_by(user_id, order_date) %>% 
+    dplyr::  mutate(
+                    basket.value = sum(item_price),
+                    basket.size  = length(order_item_id),
+                    basket.big   = ifelse(basket.size > 1, "yes", "no"))
 
+# Find similar items within one basket (disregarding color/size)
+dat.input1  <- dat.input1 %>% 
+    group_by(user_id, order_date, item_id) %>% 
+    dplyr::  mutate(
+        item.basket.muti    = length(item_id),
+        item.basket.multiD = ifelse(item.basket.muti > 1, "yes", "no"))
+
+# Find similar items within one basket of different size
+dat.input1  <- dat.input1 %>% 
+    group_by(user_id, order_date, item_id) %>% 
+    dplyr::  mutate(
+        item.basket.size.diff     = length(item_size),
+        item.basket.size.diffD    = ifelse(item.basket.size.diff > 1, "yes", "no"))
+
+# Firt order on day of registration
+dat.input1$first.order <- as.factor(ifelse(dat.input1$user_reg_date == 
+                                           dat.input1$order_date, "yes", "no"))
+
+# Further optional feature: See whether duplicate item have different size
+
+############################################################################
+### C) Feature creation on customer level ##################################
+
+# remember: account age
