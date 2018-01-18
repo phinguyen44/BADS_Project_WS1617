@@ -37,7 +37,7 @@ dat.input1 <- dat.input1 %>%
            brand_id   = factor(brand_id),
            user_id    = factor(user_id),
            weekday    = factor(weekday),
-           order_year = factor(order_year),
+           order_year = factor(order_year)
            ) %>% 
     dplyr::select(order_item_id,
                   user_id, user_title, age, user_state, user_reg_date,
