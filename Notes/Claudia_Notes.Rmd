@@ -1,0 +1,32 @@
+---
+title: "MoreFeatures"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## Features to be constructed
+- construct price ranges (0, low price, higher prices)
+- statistics on purchase baskets
+- statistics on customer
+- item discount + max price paid
+- group shoes/cloths
+- account age
+
+
+## Optional Features
+
+- user profile
+- historic record on purchasing and return behavior
+- match customer-product pair (cite Fu et al (2016) "Fused latent model...")
+- challenge: too few observations? Only 3 item per customer on 
+             - more than 40% of customers have only bought one item
+             - 10% of items are bought by same customer twice 
+              -> probably high risk of one being returned
+              
+              
+## Mention
+- unsupervised vs supervised methods
+- category for features (item, customer, time/delivery, brand, e.g.)
