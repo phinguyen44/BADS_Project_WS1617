@@ -21,7 +21,7 @@ getwd()
 
 # LOAD NECESSARY PACKAGES & DATA
 # List all packages needed for session
-neededPackages <- c("cluster", "ggplot2", "tidyverse")
+neededPackages <- c("cluster", "ggplot2", "tidyverse", "dplyr")
 allPackages    <- c(neededPackages %in% installed.packages()[,"Package"])
 
 # Install packages (if not already installed)
@@ -140,7 +140,7 @@ sizes$clothing.uk = c("6", "8", "10", "12", "14", "16", "18", "20", "22", "24")
 # Shoe sizes (mostly women)
 sizes$shoe.eu = c("35", "35+", "36", "36+",	"37", "37+", "38",	"38+",	
                   "39",	"39+", "40", "40+",	"41", "41+",
-                  "42", "42+", "43", "43+", "44", "44+")
+                  "42", "42+", "43", "43+", "44", "44+", "45", "45+", "46", "46+")
 sizes$shoe.uk.us = c("3", "3+", "4", "4+", "5", "5+", "6", "6+", 
                      "7", "7+", "8", "8+", "9", "9+", "9+",
                      "10", "10+", "11", "11+")
@@ -153,32 +153,50 @@ sizes$children.size = c("44",	"50",	"56",	"62",	"68",	"74",	"80",
 
 sizes$pants.eu = c("3832", "3432", "3332", "3332", "23", "24", "25", "26",
                    "27", "28", "29", "30", "31", "32", "34", "36", "38",
-                   "40", "42", "44", "48", "50", "52")
+                   "40", "42", "44", "48", "50", "52", "54")
+
+sizes$acessoires = c("unsized", "80", "90", "100", "110", "120", "130",
+                     "140", "150", "160" )
 
 # Find unique sizes to determine category
 k <- unlist(sizes)
 z <- k[duplicated(k)]
 sizes$unique <- k[!(k %in% z)]
 
-vec.cloth <- unlist(sizes$unique[1:22])
-vec.shoes <- unlist(sizes$unique[23:51])
-vec.child <- unlist(sizes$unique[52:71])
-vec.pants <- unlist(sizes$unique[72:82])
+vec.cloth <- unlist(sizes$unique[1:21])
+vec.shoes <- unlist(sizes$unique[22:53])
+vec.child <- unlist(sizes$unique[54:69])
+vec.pants <- unlist(sizes$unique[70:80])
+vec.acces <- unlist(sizes$unique[81:87])
+
 
 # Assign category to those items with unique size
 dat.input1  <- dat.input1 %>% 
     group_by(item_id) %>% 
     dplyr:: mutate(
-        item.category = ifelse(item_size %in% vec.cloth, "clothing","unknown"),
+        item.category = ifelse(item_size %in% vec.cloth, "clothing","NA"),
         item.category = ifelse(item_size %in% vec.shoes, "shoes", item.category),
         item.category = ifelse(item_size %in% vec.child, "child", item.category),
-        item.category = ifelse(item_size %in% vec.pants, "pants", item.category))
+        item.category = ifelse(item_size %in% vec.pants, "pants", item.category),
+        item.category = ifelse(item_size %in% vec.acces, "acces", item.category))
 
+# Refine identification
+group.check  <- dat.input1 %>% 
+    group_by(item_id) %>% 
+    dplyr:: summarise(
+             all.categories = list(item.category),
+            # This is not giving the correct sizes
+              all.sizes      = list(item_size),
+             true.unknown   = all(all.categories == "NA"),
+             item.category  = ifelse(true.unknown, "unknown", "known"),
+             check.cat      = length(unique(unlist(all.categories))))
+
+# TODO: Cross-check all sizes
 # TODO: Refine size criteria (based on range + levels)
 
 # Clean up
 
-rm(sizes, k, z, vec.cloth, vec.child, vec.pants, vec.shoes)
+rm(sizes, k, z, vec.cloth, vec.child, vec.pants, vec.shoes, vec.acces)
 
 ### Define subcategories based on price  
 subgroups  <- dat.input1 %>% 
@@ -191,9 +209,19 @@ dat.input1$item.subcategory <- ifelse(subgroups$item_price <= subgroups$q1,
                                       "cheap", "neutral")
 dat.input1$item.subcategory <- ifelse(subgroups$item_price >= subgroups$q3,
                                       "luxus", dat.input1$item.subcategory)
+
 rm(subgroups)
 
+# Group brand
+
+
+
 ### End of item based features  ###
+
+
+
+
+
 #############################################################################
 
 ############################################################################

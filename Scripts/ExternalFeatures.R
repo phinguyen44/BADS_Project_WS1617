@@ -229,7 +229,7 @@ dat.input1  <- dat.input1 %>%
 ###################################################################
 
 # Check out distributions of item, item price across sizes and colors
-agg =  aggregate(dat.input1$return, list(dat.input1$item.subcategory), 
+agg =  aggregate(dat.input1$return, list(dat.input1$item.category), 
                  FUN = function(x)c(mn = mean(x), n = length(x)))
 
 item_agg <- do.call(data.frame, agg)
