@@ -154,6 +154,7 @@ rm(colors.dat, basic.matching)
 ################################################################################
 ### Grouping sizes 
 # Source: https://www.net-a-porter.com/am/sizechart.nap
+# https://en.wikipedia.org/wiki/Clothing_sizes
 # check out sizes on Zalando
 # Tell clothing and shoes apart based on size range
 

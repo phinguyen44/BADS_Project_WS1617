@@ -50,31 +50,25 @@ load("BADS_WS1718_known_imp1.RData")
 # make sure that the price of 0 is an extra category!
 
 
-# Item discount: calculate discount based on max price per item & size
+# Item discount and pric paid: calculate discount based on max price per item & size
 
 dat.input1  <- dat.input1 %>% 
     group_by(item_id, item_size) %>% 
     dplyr:: mutate(
-        max.price.item.size = max(item_price),
-        min.price.item.size = min(item_price),
-        range.price.item.size = max(item_price) - min(item_price))
+        max.price.item.size    = max(item_price),
+        min.price.item.size    = min(item_price),
+        range.price.item.size  = max(item_price) - min(item_price),
+        discount.abs           = max.price.item.size - item_price,
+        discount.pc            = (max.price.item.size - item_price)/
+                                 max.price.item.size,
+        max.price.paid         = ifelse(item_price == max.price.item.size, "1", "0"),
+        min.price.paid         = ifelse(item_price == min.price.item.size, "1", "0"))
 
-# Absolute discount (difference)
-dat.input1$discount.abs <- dat.input1$max.price.item.size - dat.input1$item_price 
-
-# Discount in percentage
-dat.input1$discount.pc  <- (dat.input1$max.price.item.size - dat.input1$item_price)/
-                            dat.input1$max.price.item.size
+# Adjust discount in percentage for zero price
 dat.input1$discount.pc  <- ifelse(dat.input1$discount.pc == "NaN",
                                   0, dat.input1$discount.pc )
     
-
-# Dummy whether a customer paid max or min price
-dat.input1$max.price.paid <- ifelse(dat.input1$item_price == 
-                                    dat.input1$max.price.item.size, "1", "0")
-
-dat.input1$min.price.paid <- ifelse(dat.input1$item_price == 
-                                        dat.input1$min.price.item.size, "1", "0")
+# Todo: define rule if only one price exist
 
 #############################################################################
 ### Item Colour ###
@@ -133,27 +127,33 @@ sizes <- list()
 
 # Clothing sizes
 sizes$clothing.eu = c("xs", "XS", "s", "S", "m", "M", "l", "L", "xl", "XL", 
-                      "xxl", "XXL", "xxxl", "XXXL","34", "36", "38", "40",
-                      "42", "44", "46", "48", "50", "52", "54", "56" )
-sizes$clothing.uk = c("6", "8", "10", "12", "14", "16", "18", "20", "22", "24")
+                      "xxl", "XXL", "xxxl", "XXXL", "32","34", "36", "38", "40",
+                      "42", "44", "46", "48", "50", "52", "54", "56", "76", "80",
+                      	"84" ,	"88" ,	"92", 	"96", 	"100", 	"105", 	"110", 	
+                      "116", 	"122", 	"128",  "16" ,	"17", 	"18", 	"19", 
+                      "20",     "21" ,	"22" ,	"23" ,	"24" ,	"25", 	"26", 	"27")
+sizes$clothing.uk = c("4","6", "8", "10", "12", "14", "16", "18", "20", "22", "24")
 
 # Shoe sizes (mostly women)
-sizes$shoe.eu = c("35", "35+", "36", "36+",	"37", "37+", "38",	"38+",	
-                  "39",	"39+", "40", "40+",	"41", "41+",
-                  "42", "42+", "43", "43+", "44", "44+", "45", "45+", "46", "46+")
+sizes$shoe.eu = c("32", "33", "34", "34+" ,"35", "35+", "36", "36+",	
+                  "37", "37+", "38",   "38+", "39", "39+", "40", 
+                   "40+",	"41", "41+", "42", "42+", "43", "43+",
+                  "44", "44+", "45", "45+", "46", "46+", "47", "48", "49")
 sizes$shoe.uk.us = c("3", "3+", "4", "4+", "5", "5+", "6", "6+", 
                      "7", "7+", "8", "8+", "9", "9+", "9+",
-                     "10", "10+", "11", "11+")
+                     "10", "10+", "11", "11+", "12", "12+", "13", "13+", "14", "14+")
 
 # Children sizes
 sizes$children.size = c("44",	"50",	"56",	"62",	"68",	"74",	"80",
                         "86",	"92",	"98",	"104",	"110",	"116",	"122",
-                        "128","134",	"140",	"146",	"152",	"158",  "164",
-                        "170",	"176")
+                        "128",  "134",	"140",	"146",	"152",	"158",  "164",
+                        "170",	"176", "28", 	"30", 	"32", 	"34", 	"36", 
+                        "38", 	"40" ,	"42",   "1" ,	"3" ,	"5", 	"7" ,
+                        "9",    "11", 	"13", 	"15" ,	"17")
 
 sizes$pants.eu = c("3832", "3432", "3332", "3332", "23", "24", "25", "26",
-                   "27", "28", "29", "30", "31", "32", "34", "36", "38",
-                   "40", "42", "44", "48", "50", "52", "54")
+                   "27", "28", "29", "30", "31", "32", "33", "34", "35", "36", 
+                   "38", "37",  "40", "42", "44", "48", "50", "52", "54")
 
 sizes$acessoires = c("unsized", "80", "90", "100", "110", "120", "130",
                      "140", "150", "160" )
@@ -164,57 +164,51 @@ z <- k[duplicated(k)]
 sizes$unique <- k[!(k %in% z)]
 
 vec.cloth <- unlist(sizes$unique[1:21])
-vec.shoes <- unlist(sizes$unique[22:53])
-vec.child <- unlist(sizes$unique[54:69])
-vec.pants <- unlist(sizes$unique[70:80])
-vec.acces <- unlist(sizes$unique[81:87])
-
+vec.shoes <- unlist(sizes$unique[22:51])
+vec.child <- unlist(sizes$unique[52:66])
+vec.pants <- unlist(sizes$unique[67:70])
+vec.acces <- unlist(sizes$unique[71:76])
 
 # Assign category to those items with unique size
 dat.input1  <- dat.input1 %>% 
     group_by(item_id) %>% 
     dplyr:: mutate(
-        item.category = ifelse(item_size %in% vec.cloth, "clothing","NA"),
-        item.category = ifelse(item_size %in% vec.shoes, "shoes", item.category),
-        item.category = ifelse(item_size %in% vec.child, "child", item.category),
-        item.category = ifelse(item_size %in% vec.pants, "pants", item.category),
-        item.category = ifelse(item_size %in% vec.acces, "acces", item.category))
+        item.categoryi = ifelse(item_size %in% vec.cloth, "clothing","unknown"),
+        item.categoryi = ifelse(item_size %in% vec.shoes, "shoes", item.categoryi),
+        item.categoryi = ifelse(item_size %in% vec.child, "child", item.categoryi),
+        item.categoryi = ifelse(item_size %in% vec.pants, "pants", item.categoryi),
+        item.categoryi = ifelse(item_size %in% vec.acces, "acces", item.categoryi),
+        all.categories = list(item.categoryi),
+        check.cat      = length(unique(unlist(all.categories))),
+        item.category  = ifelse(check.cat > 2, "unknown", min(item.categoryi))) 
 
-# Refine identification
-group.check  <- dat.input1 %>% 
-    group_by(item_id) %>% 
-    dplyr:: summarise(
-             all.categories = list(item.category),
-            # This is not giving the correct sizes
-              all.sizes      = list(item_size),
-             true.unknown   = all(all.categories == "NA"),
-             item.category  = ifelse(true.unknown, "unknown", "known"),
-             check.cat      = length(unique(unlist(all.categories))))
-
-# TODO: Cross-check all sizes
-# TODO: Refine size criteria (based on range + levels)
+dat.input1 <-dat.input1[, -c(30:32)]
 
 # Clean up
-
 rm(sizes, k, z, vec.cloth, vec.child, vec.pants, vec.shoes, vec.acces)
 
 ### Define subcategories based on price  
-subgroups  <- dat.input1 %>% 
+
+dat.input1  <- dat.input1 %>% 
     group_by(item.category) %>% 
     dplyr:: mutate(
-        q1 = quantile(item_price, 0.25),
-        q3 = quantile(item_price, 0.75))
+        item.subcategory = ifelse(item_price <= quantile(item_price, 0.25),  "cheap", "neutral"),
+        item.subcategory = ifelse(item_price >= quantile(item_price, 0.75), "luxus", item.subcategory))
 
-dat.input1$item.subcategory <- ifelse(subgroups$item_price <= subgroups$q1,
-                                      "cheap", "neutral")
-dat.input1$item.subcategory <- ifelse(subgroups$item_price >= subgroups$q3,
-                                      "luxus", dat.input1$item.subcategory)
-
-rm(subgroups)
-
-# Group brand
-
-
+# Group brands with clustering: Review whether this makes sense
+brand.cluster  <- dat.input1 %>% 
+    group_by(brand_id) %>% 
+    dplyr::  summarise(
+        range.age.brand       = max(age) - min(age),
+        mean.age.brand        = mean(age),
+        mean.price.brand      = mean(item_price),
+        range.price.brand     = max(item_price) - min(item_price),
+        nu.orders.brand       = length(item_id),
+        sum.price.brand       = sum(item_price),
+        nu.items.brand        = length(unique(item_id)),
+        nu.color.brand        = length(unique(item_color)),
+        nu.size.brand         = length(unique(item_size)),
+        nu.category.brand     = length(unique(item.category)))
 
 ### End of item based features  ###
 
@@ -260,3 +254,101 @@ dat.input1$first.order <- as.factor(ifelse(dat.input1$user_reg_date ==
 ### C) Feature creation on customer level ##################################
 
 # remember: account age
+
+
+#### Construct income average for Bundeslaender
+income.bl.dat <- data.frame(
+    matrix(nrow = length(levels(dat.input1$user_state)), 
+           ncol = 3))
+
+# New data frame containing external information on Bundeslaender
+colnames(income.bl.dat)  <- c("user_state", "income.bl", "West")
+income.bl.dat$user_state <- as.factor(levels(dat.input1$user_state))
+income.bl.dat$income.bl  <- c(42.62, 42.95, 35.42, 26.84, 46.75, 60.91,
+                              42.73, 32.59, 25.02, 36.54, 33.58, 34.89,
+                              27.89, 25.82, 30.48, 27.17)
+income.bl.dat$West <- as.factor(c(1,1,0,0,1,1,1,1,0,1,1,1,0,0,1,0))
+
+dat.input1 <- merge(dat.input1, income.bl.dat, by = "user_state" )
+
+#### Construct income average for age groups
+
+# New data frame containing external information on age
+income.age.dat <- data.frame(
+    matrix(nrow = length(levels(as.factor(dat.input1$age))), 
+           ncol = 3))
+colnames(income.age.dat)  <- c("age", "income.age", "age.group")
+income.age.dat$age <- levels(as.factor(dat.input1$age))
+
+# Assign income to groups and define age groups
+income.age <- list()
+age.group  <- list()
+for (i in 1:length(levels(as.factor(dat.input1$age)))){
+    if (i < 20){
+        income.age[i] <- 8.51
+        age.group[i] <-  "below20"
+    } else if (i < 25){ 
+        income.age[i] <- 17.90
+        age.group[i]  <- "below25"
+    } else if (i < 30){
+        income.age[i] <- 26.79
+        age.group[i]  <- "below30"
+    } else if (i < 35){
+        income.age[i] <- 33.56
+        age.group[i]  <- "below35"
+    } else if (i < 40){
+        income.age[i] <- 36.30
+        age.group[i]  <- "below40"
+    } else if (i < 45){
+        income.age[i] <- 38.44
+        age.group[i] <- "below45"
+    } else if (i < 50){
+        income.age[i] <- 38.83
+        age.group[i] <- "below50"
+    } else if (i < 55){
+        income.age[i] <- 38.74
+        age.group[i]  <- "below55"
+    } else if (i < 60){
+        income.age[i] <- 36.82
+        age.group[i] <- "below60"
+    } else if (i < 65){
+        income.age[i] <- 34.43
+        age.group[i]  <- "below65"
+    } else {
+        income.age[i] <- 13.68
+        age.group[i] <- "above65"
+    }
+}
+
+income.age.dat$income.age <- as.numeric(income.age)
+income.age.dat$age.group <- as.factor(unlist(age.group))
+
+dat.input1 <- merge(dat.input1, income.age.dat, by = "age" )
+
+# Calculate indicator of income based on age and state
+
+dat.input1$income.ind      <- (dat.input1$income.bl * dat.input1$income.age)^0.5
+dat.input1$price.inc.ratio <- dat.input1$item_price / dat.input1$income.ind
+
+# Some clean up
+rm(income.bl.dat, income.age.dat, income.age, age.group)
+
+
+
+
+
+##### Notes
+
+
+subgroups  <- dat.input1 %>% 
+    group_by(item.category) %>% 
+    dplyr:: mutate(
+        q1 = quantile(item_price, 0.25),
+        q3 = quantile(item_price, 0.75))
+
+dat.input1$item.subcategory1 <- ifelse(subgroups$item_price <= subgroups$q1,
+                                       "cheap", "neutral")
+dat.input1$item.subcategory1 <- ifelse(subgroups$item_price >= subgroups$q3,
+                                       "luxus", dat.input1$item.subcategory)
+
+rm(subgroups)
