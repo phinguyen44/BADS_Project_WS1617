@@ -12,11 +12,6 @@
 #
 ################################################################################
 
-# TODO:
-# Price bins
-# Delivery bins
-
-
 rm(list = ls())
 
 # Adjust your working directory
@@ -71,8 +66,8 @@ dat.input1  <- dat.input1 %>%
 # Adjust discount in percentage for zero price
 dat.input1$discount.pc  <- ifelse(dat.input1$discount.pc == "NaN",
                                   0, dat.input1$discount.pc )
-    
-# TODO: define rule if only one price exist
+
+# price and delivery bins
 
 #############################################################################
 ### Item Colour ###
@@ -378,12 +373,12 @@ rm(brand.cluster, centroids)
 #############################################################################
 
 # Final formatting
-
 dat.input1 <- dat.input1 %>% 
     dplyr::mutate(item_id                  = factor(item_id),
            brand_id                        = factor(brand_id),
            user_id                         = factor(user_id),
            weekday                         = factor(weekday),
+           account.age.order               = as.numeric(account.age.order),
            order_year                      = factor(order_year),
            order_item_id                   = factor(order_item_id),
            item_id                         = factor(item_id),
