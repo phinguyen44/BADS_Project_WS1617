@@ -81,12 +81,6 @@ dat.input1 <- dat.input1 %>%
 ################################################################################
 # PRODUCT LEVEL
 
-# WOE item categorical variables
-dat.input1$item_id_WOE    <- WOE(dat.input1, "item_id")
-dat.input1$brand_id_WOE   <- WOE(dat.input1, "brand_id")
-dat.input1$item_color_WOE <- WOE(dat.input1, "item_color")
-dat.input1$item_size_WOE  <- WOE(dat.input1, "item_size")
-
 # TODO: MAYBE JUST MAKE THESE DUMMY VARIABLES (yes. no?)
 # TODO: How to make sure that it doesn't count the variable to be omitted?
 
