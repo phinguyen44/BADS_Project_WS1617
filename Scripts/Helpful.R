@@ -88,9 +88,9 @@ num.check <- function(df, var) {
 # Function creates discrete buckets based on chosen variable
 # Note that fxn will try to create numbins selected, but if some observations 
 # span multiple bins, there may be fewer bins
-discrete.bin <- function(df, variable, numbins = 10) {
+discrete.bin <- function(df, numbins = 10) {
     df <- df %>% 
-        arrange(df[[variable]]) %>% 
+        arrange(Var1) %>% 
         mutate(allsums = cumsum(Total))
     
     cutoff  <- round(tail(df, 1)$allsums / numbins)
@@ -100,14 +100,16 @@ discrete.bin <- function(df, variable, numbins = 10) {
     # last value underbins
     binidx  <- sapply(binsmax, function(x) last(which(df$allsums <= x))) 
     
-    maxval <- df[[variable]][binidx]
-    maxval <- c(0, maxval)
+    maxval <- df$Var1[binidx]
+    
+    # Create 0 only bin
+    maxval <- c(0, 0, maxval)
     
     df$bins  <- paste0("[0, ", maxval[2], "]")
     
     for (i in 2:length(maxval)) {
         for (j in 1:nrow(df)) {
-            if (df[[variable]][j] > maxval[i]) {
+            if (df$Var1[j] > maxval[i]) {
                 df$bins[j] <- paste0("(", maxval[i], ", ", maxval[i+1], "]")
             }
         } 
@@ -122,22 +124,23 @@ discrete.bin <- function(df, variable, numbins = 10) {
 }
 
 # create a discrete function that follows power
-discrete.power <- function(df, variable, numbins = 10, powerval = 5) {
+discrete.power <- function(df, numbins = 10, powerval = 2) {
     df <- df %>% 
-    arrange(df[[variable]])
+    arrange(Var1)
     
     cutoffs <- powerval ^ (1:numbins)
-    if (max(cutoffs) > max(df[[variable]])) {
+    if (max(cutoffs) > max(df$Var1)) {
         message("Bin values exceeds num items in group. Truncating # of bins.")
-        cutoffs <- cutoffs[cutoffs < max(df[[variable]])] 
+        cutoffs <- cutoffs[cutoffs < max(df$Var1)] 
     }
-    groupings    <- c(0, cutoffs, max(df[[variable]]))
-    
+    # Create 0 only bin
+    groupings    <- c(0, 0, cutoffs, max(df$Var1))
+
     df$bins  <- paste0("[0, ", groupings[2], "]")
     
     for (i in 2:length(groupings)) {
         for (j in 1:nrow(df)) {
-            if (df[[variable]][j] > groupings[i]) {
+            if (df$Var1[j] > groupings[i]) {
                 df$bins[j] <- paste0("(", groupings[i], ", ", 
                                      groupings[i+1], "]")
             }
@@ -156,12 +159,14 @@ discrete.power <- function(df, variable, numbins = 10, powerval = 5) {
 assign.bins <- function(df, buckets, variable) {
     start    <- unlist(gregexpr(buckets$bins, pattern = ", "))
     end      <- unlist(gregexpr(buckets$bins, pattern = "]"))
-    ceilings <- c(0, as.numeric(substr(buckets$bins, start + 2, end - 1)))
+    ceilings <- c(as.numeric(substr(buckets$bins, start + 2, end - 1)))
     
     # set arbitrarily large ceiling
     ceilings[length(ceilings)] <- 99999
     
-    grouping <- cut(df[[variable]], ceilings, include.lowest = TRUE)
+    grouping <- cut(df[[variable]], 
+                    ceilings, 
+                    include.lowest = FALSE)
     return(grouping)
 }
 

@@ -35,7 +35,10 @@ lapply(neededPackages, function(x) suppressPackageStartupMessages(
     library(x, character.only = TRUE)))
 
 # Load dataset
-load("BADS_WS1718_known_imp1.RData")
+load("Data/BADS_WS1718_known_imp1.RData")
+
+# source helper packages
+source("Scripts/Helpful.R")
 
 ############################################################################
 ############################################################################
@@ -53,7 +56,7 @@ load("BADS_WS1718_known_imp1.RData")
 
 dat.input1  <- dat.input1 %>% 
     group_by(item_id, item_size) %>% 
-    dplyr:: mutate(
+    dplyr::mutate(
         max.price.item.size    = max(item_price),
         min.price.item.size    = min(item_price),
         range.price.item.size  = max(item_price) - min(item_price),
@@ -61,13 +64,22 @@ dat.input1  <- dat.input1 %>%
         discount.pc            = (max.price.item.size - item_price)/
                                  max.price.item.size,
         is.discount            = ifelse(discount.abs > 0, 1, 0)) %>% 
-    select(-max.price.item.size, -min.price.item.size, range.price.item.size)
+    dplyr::select(-max.price.item.size, -min.price.item.size, -range.price.item.size)
 
 # Adjust discount in percentage for zero price
 dat.input1$discount.pc  <- ifelse(dat.input1$discount.pc == "NaN",
                                   0, dat.input1$discount.pc )
 
-# price and delivery bins
+# price bins (discrete)
+price  <- num.check(dat.input1, "item_price")
+priceB <- discrete.bin(price, numbins = 10)
+
+# assign bins (manually add 0)
+dat.input1$item_priceB  <- assign.bins(dat.input1, priceB, "item_price")
+dat.input1$item_priceB  <- as.character(dat.input1$item_priceB)
+idx <- which(dat.input1$item_price == 0)
+dat.input1$item_priceB[idx] <- "[0,0]"
+dat.input1$item_priceB  <- as.factor(dat.input1$item_priceB)
 
 #############################################################################
 ### Item Colour ###
@@ -380,7 +392,6 @@ dat.input1 <- dat.input1 %>%
            weekday                         = factor(weekday),
            account.age.order               = as.numeric(account.age.order),
            order_year                      = factor(order_year),
-           order_item_id                   = factor(order_item_id),
            item_id                         = factor(item_id),
            item_size                       = factor(item_size),
            item.category                   = factor(item.category),
@@ -398,6 +409,3 @@ dat.input1 <- dat.input1 %>%
 
 # Export clean data set
 save(dat.input1, file = "BADS_WS1718_known_var.RData" )
-
-
-
