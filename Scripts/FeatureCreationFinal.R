@@ -1,4 +1,3 @@
-
 ################################################################################
 # 
 #   Feature Creation and Extraction
@@ -66,14 +65,14 @@ dat.input1  <- dat.input1 %>%
         discount.abs           = max.price.item.size - item_price,
         discount.pc            = (max.price.item.size - item_price)/
                                  max.price.item.size,
-        max.price.paid         = ifelse(item_price == max.price.item.size, "1", "0"),
-        min.price.paid         = ifelse(item_price == min.price.item.size, "1", "0"))
+        is.discount            = ifelse(discount.abs > 0, 1, 0)) %>% 
+    select(-max.price.item.size, -min.price.item.size, range.price.item.size)
 
 # Adjust discount in percentage for zero price
 dat.input1$discount.pc  <- ifelse(dat.input1$discount.pc == "NaN",
                                   0, dat.input1$discount.pc )
     
-# Todo: define rule if only one price exist
+# TODO: define rule if only one price exist
 
 #############################################################################
 ### Item Colour ###
@@ -196,7 +195,7 @@ rm(sizes, k, z, vec.cloth, vec.child, vec.pants, vec.shoes, vec.acces)
 
 dat.input1  <- dat.input1 %>% 
     group_by(item.category) %>% 
-    dplyr:: mutate(
+    dplyr::mutate(
         item.subcategory = ifelse(item_price <= quantile(item_price, 0.25),  "cheap", "neutral"),
         item.subcategory = ifelse(item_price >= quantile(item_price, 0.75), "luxus", item.subcategory))
 
@@ -208,8 +207,8 @@ dat.input1  <- dat.input1 %>%
 
 # Create features based on ordered baskets
 dat.input1  <- dat.input1 %>% 
-             group_by(user_id, order_date) %>% 
-    dplyr::  mutate(
+    group_by(user_id, order_date) %>% 
+    dplyr::mutate(
                     basket.value = sum(item_price),
                     basket.size  = n(),
                     basket.big   = ifelse(basket.size > 1, 1, 0))
@@ -217,32 +216,32 @@ dat.input1  <- dat.input1 %>%
 # Find similar items within one basket (disregarding color/size)
 dat.input1  <- dat.input1 %>% 
     group_by(user_id, order_date, item_id) %>% 
-    dplyr::  mutate(
+    dplyr::mutate(
         order.same.item    = n(),
         order.same.itemD   = ifelse(order.same.item > 1, 1, 0))
 
 # Find similar items within one basket of different size
 dat.input1  <- dat.input1 %>% 
     group_by(user_id, order_date, item_id) %>% 
-    dplyr::  mutate(
+    dplyr::mutate(
         item.basket.size.diff     = length(item_size),
         item.basket.size.diffD    = ifelse(item.basket.size.diff > 1, 1, 0))
 
 # Find similar items within same category in one basket(regardless of size)
 dat.input1  <- dat.input1 %>% 
     group_by(user_id, order_date, item.category) %>% 
-    dplyr::  mutate(
+    dplyr::mutate(
         item.basket.same.category   = n(),
         item.basket.same.categoryD  = ifelse(item.basket.same.category > 1, 1, 0))
 
 # Find similar items within same category in one basket (differing in size)
 dat.input1  <- dat.input1 %>% 
     group_by(user_id, order_date, item.category) %>% 
-    dplyr::  mutate(
+    dplyr::mutate(
         item.basket.category.size.diff   = length(item_size),
         item.basket.category.size.diffD  = ifelse(item.basket.category.size.diff > 1, 1, 0))
 
-# Firt order on day of registration
+# First order on day of registration
 dat.input1$first.order <- as.factor(ifelse(dat.input1$user_reg_date == 
                                            dat.input1$order_date, 1, 0))
 
@@ -338,7 +337,7 @@ rm(income.bl.dat, income.age.dat, income.age, age.group)
 # Group brands with clustering: Review whether this makes sense
 brand.cluster  <- dat.input1 %>% 
     group_by(brand_id) %>% 
-    dplyr::  summarise(
+    dplyr::summarise(
         range.age.brand       = max(age) - min(age),
         mean.age.brand        = mean(age),
         mean.price.brand      = mean(item_price),
@@ -381,7 +380,7 @@ rm(brand.cluster, centroids)
 # Final formatting
 
 dat.input1 <- dat.input1 %>% 
-    mutate(item_id                         = factor(item_id),
+    dplyr::mutate(item_id                  = factor(item_id),
            brand_id                        = factor(brand_id),
            user_id                         = factor(user_id),
            weekday                         = factor(weekday),
@@ -389,8 +388,6 @@ dat.input1 <- dat.input1 %>%
            order_item_id                   = factor(order_item_id),
            item_id                         = factor(item_id),
            item_size                       = factor(item_size),
-           max.price.paid                  = factor(max.price.paid),
-           min.price.paid                  = factor(min.price.paid),
            item.category                   = factor(item.category),
            item.subcategory                = factor(item.subcategory),
            basket.big                      = factor(basket.big),

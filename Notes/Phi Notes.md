@@ -3,14 +3,8 @@
 ## Data Preparation
 
 1. How to handle imputation? Both academically (aka with papers) and technically (with packages like MICE)
-2. Feature selection:
-    1. Demographic information
-    2. Order information
-    3. Item information
-    4. Additional information that we would like but can't add (e.g. online reviews, checkout process, etc.)
-3. How does xgboost handle non-linear interactions? Can it create a non-linear decision boundary with being fed linear features? - apparently yes it can! since it's a tree, automatically detects non-linear feature interactions (STILL NEED PAPER FOR THIS)
+2. How does xgboost handle non-linear interactions? Can it create a non-linear decision boundary with being fed linear features? - apparently yes it can! since it's a tree, automatically detects non-linear feature interactions (STILL NEED PAPER FOR THIS)
     - Note that omitting the `no.return` variable and only including it in post-processing reduces the overall performance. why? maybe because of interactions?
-4. Do we need to do any type of feature selection? Does it natively do feature selection? - looks like it does!
 5. Use [WOE](https://stats.stackexchange.com/questions/189568/replacing-variables-by-woe-weight-of-evidence-in-logistic-regression/229039) - includes advantages and disadvantages
     - Don't forget to 0 out cases in unknown set if they don't appear in known set
     - How do we prevent overfitting (bias) with WOE? Use cross-validation then perform WOE on the variables
@@ -18,7 +12,7 @@
 
 ## Model Generation
 
-1. How does the model work? Combines simple classifiers - each round of boosting corrects error of prior model by using gradients (residuals) - Friedman (2001)
+1. How does the gradient boosting work? Combines simple classifiers - each round of boosting corrects error of prior model by using gradients (residuals) - Friedman (2001)
 2. Can gradient accept different loss functions? Apparently yes (can accept any differentiable loss function)
     1. Alternatively apply cutoff after probabilities have been assigned
 3. Hyperparameters for our models:
@@ -37,8 +31,14 @@
         - mtry: number of variables randomly sampled. default is sqrt(#vars)
         - nodesize: min size of terminal nodes. the higher the number the smaller the tree (hence faster)
 4. Should we apply some heterogeneous ensembling? What are the benefits (Carauna et al)
+    - research shows that an effective ensemble includes models that are highly correct and make errors on different parts of input space (what are drawbacks of each model?) (Opitz)
+    - varying feature subsets used by each member of ensemble should promote this necessary diversity (Opitz) - features should promote _disagreement_ between models
+    - efficacy of a set of features depends on the learning algorithm itself (each learner may have different feature set) (Opitz)
+5. What is our approach to ensembling:
+    - hill climb (with replacement) Caruana
+    - each output must be calibrated first
 5. Platt scaling to calibrate -> smooths out so they better match posterior probabilities - also has an effect of reducing false positives (only in this case, by shifting predictions downward slightly)
-    - Calibration should be done on a separately trained set, then the output of the training set should be passed through the calibrated model
+    - Calibration should be done on a separately trained set, then the output of the training set should be passed through the calibrated model (Niculescu)
 
 ## Model Evaluation
 
