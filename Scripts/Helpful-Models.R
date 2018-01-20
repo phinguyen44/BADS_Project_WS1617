@@ -154,12 +154,9 @@ xgb.mod <- function(learner, traintask, testtask) {
         makeDiscreteParam("booster", values = c("gbtree", "dart")),
         makeDiscreteParam("gamma", values = c(0, 0.1, 0.2)),
         makeDiscreteParam("eta", values = c(0.01, 0.05, 0.1, 0.15)), 
-        makeDiscreteParam("nrounds", values = c(20, 50, 100)),
-        makeDiscreteParam("subsample", values = 0.80),
-        makeDiscreteParam("min_child_weight", values = 1),
-        makeDiscreteParam("colsample_bytree", values = 0.8),
-        makeIntegerParam("max_depth", lower = 3L, upper = 8L),
-        makeNumericParam("lambda", lower = 0.55, upper = 0.60)
+        makeDiscreteParam("nrounds", values = c(50, 100, 200)),
+        makeDiscreteParam("lambda", values = seq(0.3, 0.6, by=0.05)),
+        makeIntegerParam("max_depth", lower = 3L, upper = 8L)
     )
     
     start <- Sys.time()
@@ -202,7 +199,7 @@ nn.mod <- function(learner, traintask, testtask) {
     
     nn_par <- makeParamSet(
         makeDiscreteParam("size", values = seq(2, 8, by=1)),
-        makeDiscreteParam("decay", values = seq(0, 0.1, by=0.01))
+        makeDiscreteParam("decay", values = seq(0, 0.5, by=0.1))
     )
     
     start <- Sys.time()

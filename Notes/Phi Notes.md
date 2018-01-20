@@ -1,4 +1,4 @@
-# Notes on Gradient Boosting
+# Notes from PHIKACHU
 
 ## Data Preparation
 
@@ -21,13 +21,21 @@
 1. How does the model work? Combines simple classifiers - each round of boosting corrects error of prior model by using gradients (residuals) - Friedman (2001)
 2. Can gradient accept different loss functions? Apparently yes (can accept any differentiable loss function)
     1. Alternatively apply cutoff after probabilities have been assigned
-3. What metaparameters need to be tuned? Find optimal learning rate, tree depth, number of iterations, keep others default
-    1. Number of iterations
-    2. Maximum depth of trees
-    3. Shrinkage / learning rate (eta)
-    4. Minimum loss reduction - regularization (gamma)
-    5. Subspace ratio of columns
-    6. Minimum sum of instance weight
+3. Hyperparameters for our models:
+    1. xgboost: (first 2 control complexity to prevent overfitting, next 2 add randomness to make training more robust to noise)
+        - max_depth: depth of tree. higher values increase complexity / overfitting
+        - gamma: minimum loss reduction required to further partition a tree. (regularization) higher values decrease model complexity
+        - eta: step size shrinkage used in update to prevents overfitting (shrinks feature weights at each step)
+        - nrounds: number of rounds for boosting
+        - booster: gbtree or dart. read documentation on 'dart'
+        - lambda: l2 regularization. higher numbers reduces overfitting
+    2. nnet:
+        - size: number of units in hidden layer (only one hidden layer)
+        - decay: regularization parameter (good values?)
+    3. randomForest:
+        - ntree: number of trees to grow. should not be too low, to ensure every input row gets predicted a few times.
+        - mtry: number of variables randomly sampled. default is sqrt(#vars)
+        - nodesize: min size of terminal nodes. the higher the number the smaller the tree (hence faster)
 4. Should we apply some heterogeneous ensembling? What are the benefits (Carauna et al)
 5. Platt scaling to calibrate -> smooths out so they better match posterior probabilities - also has an effect of reducing false positives (only in this case, by shifting predictions downward slightly)
     - Calibration should be done on a separately trained set, then the output of the training set should be passed through the calibrated model
@@ -61,7 +69,7 @@
 ## Resources
 
 1. https://www.analyticsvidhya.com/blog/2016/08/practicing-machine-learning-techniques-in-r-with-mlr-package/
-2. https://gormanalysis.com/gradient-boosting-explained/
+2. https://www.hackerearth.com/practice/machine-learning/machine-learning-algorithms/beginners-tutorial-on-xgboost-parameter-tuning-r/tutorial/
 3. https://datascience.stackexchange.com/questions/13960/how-to-choose-a-classifier-after-cross-validation
 4. https://stats.stackexchange.com/questions/65128/nested-cross-validation-for-model-selection
 5. [Graphic on nested resampling](https://mlr-org.github.io/mlr-tutorial/release/html/nested_resampling/index.html)
