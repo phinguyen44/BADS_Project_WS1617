@@ -39,6 +39,7 @@
     - each output must be calibrated first
 5. Platt scaling to calibrate -> smooths out so they better match posterior probabilities - also has an effect of reducing false positives (only in this case, by shifting predictions downward slightly)
     - Calibration should be done on a separately trained set, then the output of the training set should be passed through the calibrated model (Niculescu)
+    - Add reliability plots to show how each output changed
 
 ## Model Evaluation
 
