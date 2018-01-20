@@ -15,7 +15,7 @@
 
 # TODO:
 # Price bins
-# Delivery binsjuu
+# Delivery bins
 
 
 rm(list = ls())
