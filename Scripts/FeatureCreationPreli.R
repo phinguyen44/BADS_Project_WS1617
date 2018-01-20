@@ -1,4 +1,3 @@
-
 ################################################################################
 # 
 #   Feature Creation and Extraction
@@ -11,8 +10,8 @@
 rm(list = ls())
 
 # Adjust your working directory
-setwd("")
-getwd()
+wd = file.path(Sys.getenv("HOME"),"/Documents/Projects/bads-ws1718-group21/Data")
+setwd(wd)
 
 # LOAD NECESSARY PACKAGES & DATA
 # List all packages needed for session
@@ -32,6 +31,7 @@ lapply(neededPackages, function(x) suppressPackageStartupMessages(
 
 # Load dataset
 load("BADS_WS1718_known_imp1.RData")
+dat.input = dat.input1
 
 ############################################################################
 

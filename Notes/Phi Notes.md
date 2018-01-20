@@ -8,8 +8,13 @@
     2. Order information
     3. Item information
     4. Additional information that we would like but can't add (e.g. online reviews, checkout process, etc.)
-3. How does xgboost handle non-linear interactions? Can it create a non-linear decision boundary with being fed linear features? - apparently yes it can! since it's a tree, automatatically detects non-linear feature interactions (STILL NEED PAPER FOR THIS)
+3. How does xgboost handle non-linear interactions? Can it create a non-linear decision boundary with being fed linear features? - apparently yes it can! since it's a tree, automatically detects non-linear feature interactions (STILL NEED PAPER FOR THIS)
+    - Note that omitting the `no.return` variable and only including it in post-processing reduces the overall performance. why? maybe because of interactions?
 4. Do we need to do any type of feature selection? Does it natively do feature selection? - looks like it does!
+5. Use [WOE](https://stats.stackexchange.com/questions/189568/replacing-variables-by-woe-weight-of-evidence-in-logistic-regression/229039) - includes advantages and disadvantages
+    - Don't forget to 0 out cases in unknown set if they don't appear in known set
+    - How do we prevent overfitting (bias) with WOE? Use cross-validation then perform WOE on the variables
+6. Wrapper and filter for feature selection
 
 ## Model Generation
 
@@ -23,16 +28,20 @@
     4. Minimum loss reduction - regularization (gamma)
     5. Subspace ratio of columns
     6. Minimum sum of instance weight
-4. Should we apply some heterogeneous ensembling? What are the benefits
+4. Should we apply some heterogeneous ensembling? What are the benefits (Carauna et al)
 5. Platt scaling to calibrate -> smooths out so they better match posterior probabilities - also has an effect of reducing false positives (only in this case, by shifting predictions downward slightly)
+    - Calibration should be done on a separately trained set, then the output of the training set should be passed through the calibrated model
 
 ## Model Evaluation
 
-1. Do we need to cross-validate? If so, why? Does boosting natively do cross-validation? - looks like it can handle cross-validation
-    - Remember to add notes on what exactly cross-validation does (reduce out-of-sample error)
+1. Do we need to cross-validate? If so, why?
+    - Cross-validation does one of two things: 1) model selection (by finding best hyperparameters OR averaging results) 2) error estimation of a model (measure of out-of-sample accuracy)
+
 2. [Cost-sensitive classification](https://mlr-org.github.io/mlr-tutorial/release/html/cost_sensitive_classif/index.html#class-dependent-misclassification-costs)
 
 ## Prediction
+
+1. We should aim to focus on extreme cases (namely, we should only predict return if we're reasonably confident)
 
 ## Additional Notes
 
@@ -53,3 +62,5 @@
 1. https://www.hackerearth.com/practice/machine-learning/machine-learning-algorithms/beginners-tutorial-on-xgboost-parameter-tuning-r/tutorial/
 2. https://www.analyticsvidhya.com/blog/2016/08/practicing-machine-learning-techniques-in-r-with-mlr-package/
 3. https://gormanalysis.com/gradient-boosting-explained/
+4. https://datascience.stackexchange.com/questions/13960/how-to-choose-a-classifier-after-cross-validation
+4. https://stats.stackexchange.com/questions/65128/nested-cross-validation-for-model-selection

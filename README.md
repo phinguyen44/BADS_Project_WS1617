@@ -33,17 +33,21 @@ D) Compare known (training) and unknown data set
   - do data set belong to same population? See lecture notes on this
   => the answer is probably yes
 
-E) Model creation
+E) Baseline Model creation
 
 - simple logistic regression (from individual assignment)
 - neural network (make sure to standardize variables)
 - Random forest (sensible to variables with too many levels) + bagging
  (or gradient boosted tree (usually slightly better than RF))
+- Variable selectiob: Mix of filter (remove very poor variables first) and
+                      wrappers (stepwise backward deletion)
 
 F) Model evaluation & comparison
 - N-fold cross-validation -> calculate average AUC and plot
 - ROC
-- Last step: Try averaging results from all models or buid log model on all models 
+
+G) Create heterogenous ensemble model
+- average results from all models or buid log model on all models 
  => check whether gives best results
 
-G) Predictions
+H) Predictions
