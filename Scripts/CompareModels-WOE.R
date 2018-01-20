@@ -35,11 +35,10 @@ source("Scripts/Helpful-Models.R")
 # select variables
 df.train <- dat.input2 %>%
     dplyr::select(age, user_state, user_title, user_purchase_num, 
-                  user_id, #user_id_WOE,
+                  user_id, 
                   deliver.time, order_year, order_month, weekday, no.return,
                   order_size, 
                   item_id, item_color, item_size, brand_id,
-                  #item_id_WOE, item_color_WOE, item_size_WOE, brand_id_WOE,
                   order_same_item, order_same_cs, order_same_cb, order_same_bs,
                   item_price,
                   return)
@@ -70,10 +69,9 @@ mods <- list(lr = lr.mod,
 # CROSS-VALIDATION
 
 # split training set into k-folds
-# within loop, WOE calculated on train set and applied to test set
-# within loop, model is fit on training data to find best meta parameters
-# within loop, model will predict best values on holdout set, store values
-# final model is made by fitting model (including hyperparameter tuning) to whole data set, after using nested cross-validation to get an idea of the performance I could reasonably expect to get from that model
+# inner loop calculates WOE for each split, does hyperparameter tuning
+# outer loop estimates out-of-sample performance
+# final model is made by fitting model (including hyperparameter tuning) to whole data set
 
 start1 <- Sys.time()
 
@@ -223,8 +221,8 @@ tr <- tr %>%
                   deliver.time, order_year, order_month, weekday, no.return,
                   order_size, 
                   item_id_WOE, item_color_WOE, item_size_WOE, brand_id_WOE,
-                  order_same_item, # order_same_cs, order_same_cb, 
-                  # order_same_bs,
+                  order_same_item, order_same_cs, order_same_cb, 
+                  order_same_bs,
                   item_price,
                   return)
 
@@ -234,8 +232,8 @@ ts <- ts %>%
                   deliver.time, order_year, order_month, weekday, no.return,
                   order_size, 
                   item_id_WOE, item_color_WOE, item_size_WOE, brand_id_WOE,
-                  order_same_item, # order_same_cs, order_same_cb, 
-                  # order_same_bs,
+                  order_same_item, order_same_cs, order_same_cb, 
+                  order_same_bs,
                   item_price,
                   return)
 

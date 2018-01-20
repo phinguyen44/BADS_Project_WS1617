@@ -34,10 +34,11 @@
 
 ## Model Evaluation
 
-1. Do we need to cross-validate? If so, why?
-    - Cross-validation does one of two things: 1) model selection (by finding best hyperparameters OR averaging results) 2) error estimation of a model (measure of out-of-sample accuracy)
-
-2. [Cost-sensitive classification](https://mlr-org.github.io/mlr-tutorial/release/html/cost_sensitive_classif/index.html#class-dependent-misclassification-costs)
+1. Cross-validation does one of two things: 1) model selection (by finding best hyperparameters OR averaging results) 2) error estimation of a model (measure of out-of-sample accuracy)
+2. Benchmark experiments - show performance of cross-validation across resampling iterations. Plot as a ggplot with error bars
+3. Create plots of classifier performance as a function of decision threshold for binary classification: `df = generateThreshVsPerfData(pred, measures = list(fpr, fnr, mmce))  `
+    - From there we can also plot ROC curves: `plotROCCurves(df)`
+4. [Cost-sensitive classification](https://mlr-org.github.io/mlr-tutorial/release/html/cost_sensitive_classif/index.html#class-dependent-misclassification-costs)
 
 ## Prediction
 
@@ -59,8 +60,8 @@
 
 ## Resources
 
-1. https://www.hackerearth.com/practice/machine-learning/machine-learning-algorithms/beginners-tutorial-on-xgboost-parameter-tuning-r/tutorial/
-2. https://www.analyticsvidhya.com/blog/2016/08/practicing-machine-learning-techniques-in-r-with-mlr-package/
-3. https://gormanalysis.com/gradient-boosting-explained/
-4. https://datascience.stackexchange.com/questions/13960/how-to-choose-a-classifier-after-cross-validation
+1. https://www.analyticsvidhya.com/blog/2016/08/practicing-machine-learning-techniques-in-r-with-mlr-package/
+2. https://gormanalysis.com/gradient-boosting-explained/
+3. https://datascience.stackexchange.com/questions/13960/how-to-choose-a-classifier-after-cross-validation
 4. https://stats.stackexchange.com/questions/65128/nested-cross-validation-for-model-selection
+5. [Graphic on nested resampling](https://mlr-org.github.io/mlr-tutorial/release/html/nested_resampling/index.html)
