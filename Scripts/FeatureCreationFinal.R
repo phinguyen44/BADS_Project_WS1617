@@ -13,6 +13,11 @@
 #
 ################################################################################
 
+# TODO:
+# Price bins
+# Delivery binsjuu
+
+
 rm(list = ls())
 
 # Adjust your working directory
@@ -180,9 +185,9 @@ dat.input1  <- dat.input1 %>%
         item.categoryi = ifelse(item_size %in% vec.acces, "acces", item.categoryi),
         all.categories = list(item.categoryi),
         check.cat      = length(unique(unlist(all.categories))),
-        item.category  = ifelse(check.cat > 2, "unknown", min(item.categoryi))) 
-
-dat.input1 <-dat.input1[, -c(30:32)]
+        item.category  = ifelse(check.cat > 2, "unknown", min(item.categoryi)))  %>% 
+    dplyr:: select(
+        -item.categoryi, - all.categories, -check.cat)
 
 # Clean up
 rm(sizes, k, z, vec.cloth, vec.child, vec.pants, vec.shoes, vec.acces)
@@ -195,29 +200,8 @@ dat.input1  <- dat.input1 %>%
         item.subcategory = ifelse(item_price <= quantile(item_price, 0.25),  "cheap", "neutral"),
         item.subcategory = ifelse(item_price >= quantile(item_price, 0.75), "luxus", item.subcategory))
 
-# Group brands with clustering: Review whether this makes sense
-brand.cluster  <- dat.input1 %>% 
-    group_by(brand_id) %>% 
-    dplyr::  summarise(
-        range.age.brand       = max(age) - min(age),
-        mean.age.brand        = mean(age),
-        mean.price.brand      = mean(item_price),
-        range.price.brand     = max(item_price) - min(item_price),
-        nu.orders.brand       = length(item_id),
-        sum.price.brand       = sum(item_price),
-        nu.items.brand        = length(unique(item_id)),
-        nu.color.brand        = length(unique(item_color)),
-        nu.size.brand         = length(unique(item_size)),
-        nu.category.brand     = length(unique(item.category)))
-
 ### End of item based features  ###
-
-
-
-
-
 #############################################################################
-
 ############################################################################
 ### B) Feature creation on order level ######################################
 # Definition of basket: Items bought by customer on same day
@@ -227,34 +211,47 @@ dat.input1  <- dat.input1 %>%
              group_by(user_id, order_date) %>% 
     dplyr::  mutate(
                     basket.value = sum(item_price),
-                    basket.size  = length(order_item_id),
-                    basket.big   = ifelse(basket.size > 1, "yes", "no"))
+                    basket.size  = n(),
+                    basket.big   = ifelse(basket.size > 1, 1, 0))
 
 # Find similar items within one basket (disregarding color/size)
 dat.input1  <- dat.input1 %>% 
     group_by(user_id, order_date, item_id) %>% 
     dplyr::  mutate(
-        item.basket.muti    = length(item_id),
-        item.basket.multiD = ifelse(item.basket.muti > 1, "yes", "no"))
+        order.same.item    = n(),
+        order.same.itemD   = ifelse(order.same.item > 1, 1, 0))
 
 # Find similar items within one basket of different size
 dat.input1  <- dat.input1 %>% 
     group_by(user_id, order_date, item_id) %>% 
     dplyr::  mutate(
         item.basket.size.diff     = length(item_size),
-        item.basket.size.diffD    = ifelse(item.basket.size.diff > 1, "yes", "no"))
+        item.basket.size.diffD    = ifelse(item.basket.size.diff > 1, 1, 0))
+
+# Find similar items within same category in one basket(regardless of size)
+dat.input1  <- dat.input1 %>% 
+    group_by(user_id, order_date, item.category) %>% 
+    dplyr::  mutate(
+        item.basket.same.category   = n(),
+        item.basket.same.categoryD  = ifelse(item.basket.same.category > 1, 1, 0))
+
+# Find similar items within same category in one basket (differing in size)
+dat.input1  <- dat.input1 %>% 
+    group_by(user_id, order_date, item.category) %>% 
+    dplyr::  mutate(
+        item.basket.category.size.diff   = length(item_size),
+        item.basket.category.size.diffD  = ifelse(item.basket.category.size.diff > 1, 1, 0))
 
 # Firt order on day of registration
 dat.input1$first.order <- as.factor(ifelse(dat.input1$user_reg_date == 
-                                           dat.input1$order_date, "yes", "no"))
+                                           dat.input1$order_date, 1, 0))
 
-# Further optional feature: See whether duplicate item have different size
-
+### End of order based features  ###
 ############################################################################
 ### C) Feature creation on customer level ##################################
 
-# remember: account age
-
+### Account age at time of order
+dat.input1$account.age.order <- dat.input1$order_date - dat.input1$user_reg_date
 
 #### Construct income average for Bundeslaender
 income.bl.dat <- data.frame(
@@ -262,12 +259,12 @@ income.bl.dat <- data.frame(
            ncol = 3))
 
 # New data frame containing external information on Bundeslaender
-colnames(income.bl.dat)  <- c("user_state", "income.bl", "West")
+colnames(income.bl.dat)  <- c("user_state", "income.bl", "WestGerm")
 income.bl.dat$user_state <- as.factor(levels(dat.input1$user_state))
 income.bl.dat$income.bl  <- c(42.62, 42.95, 35.42, 26.84, 46.75, 60.91,
                               42.73, 32.59, 25.02, 36.54, 33.58, 34.89,
                               27.89, 25.82, 30.48, 27.17)
-income.bl.dat$West <- as.factor(c(1,1,0,0,1,1,1,1,0,1,1,1,0,0,1,0))
+income.bl.dat$WestGerm <- as.factor(c(1,1,0,0,1,1,1,1,0,1,1,1,0,0,1,0))
 
 dat.input1 <- merge(dat.input1, income.bl.dat, by = "user_state" )
 
@@ -333,22 +330,82 @@ dat.input1$price.inc.ratio <- dat.input1$item_price / dat.input1$income.ind
 # Some clean up
 rm(income.bl.dat, income.age.dat, income.age, age.group)
 
+### End of customer based features  ###
+#############################################################################
+#############################################################################
+### Addition to b) Grouping brands (must be done at the end) ################
+
+# Group brands with clustering: Review whether this makes sense
+brand.cluster  <- dat.input1 %>% 
+    group_by(brand_id) %>% 
+    dplyr::  summarise(
+        range.age.brand       = max(age) - min(age),
+        mean.age.brand        = mean(age),
+        mean.price.brand      = mean(item_price),
+        range.price.brand     = max(item_price) - min(item_price),
+        nu.orders.brand       = length(item_id),
+        sum.price.brand       = sum(item_price),
+        nu.items.brand        = length(unique(item_id)),
+        nu.color.brand        = length(unique(item_color)),
+        nu.size.brand         = length(unique(item_size)),
+        nu.category.brand     = length(unique(item.category)),
+        mean.income.brand     = mean(income.ind),
+        range.income.brand    = max(income.ind) -min(income.ind))
+
+# Dendogramm based on hclust suggests 3 clusters
+d <- dist(scale(brand.cluster[,-1]), method = "euclidean")
+cluster.hier <- hclust(d, method = "ward.D")
+plot(cluster.hier)
+
+# Extract 3 clusters and centroids
+clusters <- cutree(cluster.hier, k=3) 
+clust.centroid = function(i, dat, clusters) {
+    ind = (clusters == i)
+    colMeans(dat[ind,])
+}
+centroids <- sapply(unique(clusters), 
+                   clust.centroid, scale(brand.cluster[,-1]), 
+                   clusters)
+
+# Calculate 3 cluster based on k-means
+brand.cluster$brand.cluster <- kmeans(scale(brand.cluster[,-1]), 
+                                centers = t(centroids))$cluster
+
+dat.input1 <- merge(dat.input1, brand.cluster[, c(1,14)], by = "brand_id")
+
+# Clean up
+rm(brand.cluster, centroids)
+#############################################################################
+#############################################################################
+
+# Final formatting
+
+dat.input1 <- dat.input1 %>% 
+    mutate(item_id                         = factor(item_id),
+           brand_id                        = factor(brand_id),
+           user_id                         = factor(user_id),
+           weekday                         = factor(weekday),
+           order_year                      = factor(order_year),
+           order_item_id                   = factor(order_item_id),
+           item_id                         = factor(item_id),
+           item_size                       = factor(item_size),
+           max.price.paid                  = factor(max.price.paid),
+           min.price.paid                  = factor(min.price.paid),
+           item.category                   = factor(item.category),
+           item.subcategory                = factor(item.subcategory),
+           basket.big                      = factor(basket.big),
+           order.same.itemD                = factor(order.same.itemD),
+           item.basket.size.diffD          = factor(item.basket.size.diffD),
+           item.basket.same.categoryD      = factor(item.basket.same.categoryD),
+           item.basket.category.size.diffD = factor(item.basket.category.size.diffD),
+           first.order                     = factor(first.order),
+           brand.cluster                   = factor(brand.cluster)) %>% 
+    dplyr::select(
+                   -user_dob, -order_date, -order_item_id, -delivery_date,
+                   -user_dob_year, -user_reg_date)
+
+# Export clean data set
+save(dat.input1, file = "BADS_WS1718_known_var.RData" )
 
 
 
-
-##### Notes
-
-
-subgroups  <- dat.input1 %>% 
-    group_by(item.category) %>% 
-    dplyr:: mutate(
-        q1 = quantile(item_price, 0.25),
-        q3 = quantile(item_price, 0.75))
-
-dat.input1$item.subcategory1 <- ifelse(subgroups$item_price <= subgroups$q1,
-                                       "cheap", "neutral")
-dat.input1$item.subcategory1 <- ifelse(subgroups$item_price >= subgroups$q3,
-                                       "luxus", dat.input1$item.subcategory)
-
-rm(subgroups)
