@@ -23,18 +23,17 @@ lr.mod <- function(learner, traintask, testtask) {
     start <- Sys.time()
     # train model
     lr      <- train(lr.model, traintask)
-    lr.pred <- predict(lr, testtask)
-    model   <- lr$learner.model
     
     # predict
-    lr.yhat       <- lr.pred$data$prob.1
+    lr.pred <- predict(lr, testtask)
+    model   <- lr$learner.model
     
     end     <- Sys.time()
     runtime <- end - start
     cat(paste0(learner, " run time: "))
     print(runtime)
     
-    return(list(pred = lr.yhat, model = model))
+    return(list(pred = lr.pred, model = model))
 }
 
 # DECISION TREE
@@ -75,17 +74,16 @@ dt.mod <- function(learner, traintask, testtask) {
     
     # train model
     t.rpart <- train(t.tree, traintask)
-    t.pred  <- predict(t.rpart, testtask)
     
     # predict
-    t.yhat       <- t.pred$data$prob.1
+    t.pred  <- predict(t.rpart, testtask)
     
     end     <- Sys.time()
     runtime <- end - start
     cat(paste0(learner, " run time: "))
     print(runtime)
     
-    return(list(pred = t.yhat, pars = hyperpars))
+    return(list(pred = t.pred, pars = hyperpars))
     
 }
 
@@ -124,17 +122,16 @@ rf.mod <- function(learner, traintask, testtask) {
     
     # train model
     rforest  <- train(rf.tree, traintask)
-    rf.pred  <- predict(rforest, testtask)
     
     # predict
-    rf.yhat       <- rf.pred$data$prob.1
+    rf.pred  <- predict(rforest, testtask)
     
     end     <- Sys.time()
     runtime <- end - start
     cat(paste0(learner, " run time: "))
     print(runtime)
 
-    return(list(pred = rf.yhat, pars = hyperpars))
+    return(list(pred = rf.pred, pars = hyperpars))
 }
 
 # XGB
@@ -175,17 +172,16 @@ xgb.mod <- function(learner, traintask, testtask) {
     hyperpars <- xg_tune$x
     
     xg_model <- train(xg_new, traintask)
-    xg_pred  <- predict(xg_model, testtask)
     
     # predict
-    xg.yhat       <- xg_pred$data$prob.1
+    xg_pred  <- predict(xg_model, testtask)
     
     end     <- Sys.time()
     runtime <- end - start
     cat(paste0(learner, " run time: "))
     print(runtime)
     
-    return(list(pred = xg.yhat, pars = hyperpars))
+    return(list(pred = xg_pred, pars = hyperpars))
     
 }
 
@@ -218,16 +214,15 @@ nn.mod <- function(learner, traintask, testtask) {
     hyperpars <- tune_nn$x
     
     nn_mod  <- train(final_nn, traintask)
-    nn_pred <- predict(nn_mod, testtask)
     
     # predict
-    nn.yhat       <- nn_pred$data$prob.1
+    nn_pred <- predict(nn_mod, testtask)
     
     end     <- Sys.time()
     runtime <- end - start
     cat(paste0(learner, " run time: "))
     print(runtime)
     
-    return(list(pred = nn.yhat, pars = hyperpars))
+    return(list(pred = nn_pred, pars = hyperpars))
     
 }

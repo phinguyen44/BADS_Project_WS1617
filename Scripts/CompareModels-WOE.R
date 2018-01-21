@@ -9,6 +9,8 @@
 # now does feature selection for each model (wrapper? filter?)
 # and platt scaling as option
 # 
+# TODO: remove duplicate variables (e.g. dummy and numeric equivalents)
+# 
 ################################################################################
 
 ################################################################################
@@ -142,7 +144,7 @@ for (i in 1:k) {
             age, age.group, 
             user_state, user_title, WestGerm, income.ind,
             first.order, account.age.order,
-            user_id_WOE, # WOE
+            user_id_WOE, 
             # BASKET VARS
             deliver.time, order_year, order_month, weekday, no.return,
             basket.big, basket.size, basket.value, 
@@ -163,7 +165,7 @@ for (i in 1:k) {
             age, age.group, 
             user_state, user_title, WestGerm, income.ind,
             first.order, account.age.order,
-            user_id_WOE, # WOE
+            user_id_WOE,
             # BASKET VARS
             deliver.time, order_year, order_month, weekday, no.return,
             basket.big, basket.size, basket.value, 
@@ -256,7 +258,7 @@ tr <- tr %>%
         age, age.group, 
         user_state, user_title, WestGerm, income.ind,
         first.order, account.age.order,
-        user_id_WOE, # WOE
+        user_id_WOE,
         # BASKET VARS
         deliver.time, order_year, order_month, weekday, no.return,
         basket.big, basket.size, basket.value, 
@@ -277,7 +279,7 @@ ts <- ts %>%
         age, age.group, 
         user_state, user_title, WestGerm, income.ind,
         first.order, account.age.order,
-        user_id_WOE, # WOE
+        user_id_WOE,
         # BASKET VARS
         deliver.time, order_year, order_month, weekday, no.return,
         basket.big, basket.size, basket.value, 
