@@ -167,7 +167,7 @@ sizes$pants.eu = c("3832", "3432", "3332", "3332", "23", "24", "25", "26",
                    "38", "37",  "40", "42", "44", "48", "50", "52", "54")
 
 sizes$acessoires = c("unsized", "80", "90", "100", "110", "120", "130",
-                     "140", "150", "160" )
+                     "140", "150", "160", "UNSIZED" )
 
 # Find unique sizes to determine category
 k <- unlist(sizes)
@@ -178,7 +178,7 @@ vec.cloth <- unlist(sizes$unique[1:21])
 vec.shoes <- unlist(sizes$unique[22:51])
 vec.child <- unlist(sizes$unique[52:66])
 vec.pants <- unlist(sizes$unique[67:70])
-vec.acces <- unlist(sizes$unique[71:76])
+vec.acces <- unlist(sizes$unique[71:77])
 
 # Assign category to those items with unique size
 dat.input1  <- dat.input1 %>% 
