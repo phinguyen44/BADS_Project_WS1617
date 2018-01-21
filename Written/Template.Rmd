@@ -50,7 +50,7 @@ submitted to
  
 
 \medskip
-Humboldt-Universität zu Berlin \linebreak     
+Humboldt-Universit?t zu Berlin \linebreak     
 School of Business and Economics  \linebreak
 \medskip
 
@@ -59,7 +59,7 @@ Chair  \linebreak
 
 by  \linebreak  
 
-\textbf{Claudia Günther, Phi Nguyen, Julian Winkel}  \linebreak  
+\textbf{Claudia G?nther, Phi Nguyen, Julian Winkel}  \linebreak  
 Immatriculation Numbers \linebreak
 
 
@@ -132,7 +132,7 @@ Insert abstract here
 \newpage
 
 
-\section{Previous Research}
+\section{Literature Review}
 
 
 \subsection{Overview}
@@ -154,7 +154,7 @@ In this format, it is possible to insert pages, too [@Badea_2014, 10-14].
 \clearpage
 \newpage
 
-\section{Data}
+\section{Methodology}
 
 
 

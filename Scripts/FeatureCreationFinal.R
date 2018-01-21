@@ -259,6 +259,13 @@ dat.input1$first.order <- as.factor(ifelse(dat.input1$user_reg_date ==
 ### Account age at time of order
 dat.input1$account.age.order <- dat.input1$order_date - dat.input1$user_reg_date
 
+### Value of total purchases user and number of purchases
+dat.input1  <- dat.input1 %>% 
+    group_by(user_id, order_item_id) %>% 
+    dplyr::mutate(
+        value.purchase.custom   = sum(item_price),
+        items.purchase.custom   = n())
+
 #### Construct income average for Bundeslaender
 income.bl.dat <- data.frame(
     matrix(nrow = length(levels(dat.input1$user_state)), 
@@ -330,6 +337,7 @@ dat.input1 <- merge(dat.input1, income.age.dat, by = "age" )
 
 # Calculate indicator of income based on age and state
 
+# Geometric mean
 dat.input1$income.ind      <- (dat.input1$income.bl * dat.input1$income.age)^0.5
 dat.input1$price.inc.ratio <- dat.input1$item_price / dat.input1$income.ind
 
