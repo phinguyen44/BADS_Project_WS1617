@@ -78,9 +78,9 @@ aggr(dat.input, col=c('navyblue','green'),
   
 dat.input1 = dat.input
   
-mage = median(dat.input1$age, na.rm = TRUE)
+mage = mean(dat.input1$age, na.rm = TRUE)
 
-mdelivertime = median(dat.input1$deliver.time, na.rm = TRUE)
+mdelivertime = mean(dat.input1$deliver.time, na.rm = TRUE)
 
 age.na = is.na(dat.input1$age)
 
