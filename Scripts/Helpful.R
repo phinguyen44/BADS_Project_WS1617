@@ -19,9 +19,7 @@
 # WOE() - self-made WOE function. outputs a vector
 # 
 # MODEL BUILDING:
-# build.glm() - builds predictions and classification table for glm model
 # reliability.plot() - diagram to assess how 'calibrated' a classifier is
-# platt() - platt scaling (performing logistic regression on the classifier output to calibrate model output)
 # 
 # MODEL EVALUATION:
 # performance.met() - calculates basic classification table stuff
@@ -219,50 +217,6 @@ WOE <- function(df, var) {
 ################################################################################
 # MODEL BUILDING
 
-# build glm model (with new platt scale feature!)
-build.glm <- function(mod, trainset, testset, alpha, platt.scaling = FALSE) {
-    
-    if (platt.scaling) {
-        trainset.n  <- trainset
-        samplecalib <- sample(1:nrow(trainset.n), 10000, replace = FALSE)
-        trainset    <- trainset.n[-samplecalib, ]
-        calibset    <- trainset.n[samplecalib, ]
-    }
-    
-    matrix.x  <- model.matrix(mod, data = trainset)
-    mod1      <- cv.glmnet(x = matrix.x, y = trainset$return, alpha = alpha, 
-                         family = "binomial", standardize = TRUE)
-    # plot(mod1)
-    # mod1$lambda.1se
-    coefff = coef(mod1, s = "lambda.1se")
-    
-    # Make prediction
-    new.x <- model.matrix(mod, data = testset)
-    pred  <- predict(mod1, newx = new.x, s = "lambda.1se", type = "response")
-    
-    test  <- data.frame(pred, testset$return, round(pred))
-    names(test) <- c("prob", "actual", "result")
-    
-    # Perform platt scaling
-    if (platt.scaling) {
-        # Make prediction
-        new.xc  <- model.matrix(mod, data = calibset)
-        pred.c  <- predict(mod1, newx = new.xc, s="lambda.1se", type="response")
-        test.c  <- data.frame(pred.c, calibset$return, round(pred.c))
-        names(test.c) <- c("prob", "actual", "result")
-        
-        # Predictions after platt scaling
-        new.pred    <- platt(test.c$actual, test.c$prob)
-        test.c$prob <- new.pred
-    
-    }
-    
-    final <- list(mod = mod1, Coef = coefff, Results = test)
-    if (platt.scaling) final[["Results.Platt"]] <- test.c
-    
-    return(final)
-}
-
 reliability.plot <- function(act, pred, bins = 10) {
     # act: vector of actual values. 0 or 1
     # pred: vector of predictions. real number between 0 and 1
@@ -286,27 +240,8 @@ reliability.plot <- function(act, pred, bins = 10) {
     lines(c(0,1), c(0,1), col = "grey")
     subplot(hist(pred, xlab = "", ylab = "", main = "", xlim = c(0,1), 
                  col="blue"), 
-            grconvertX(c(.8, 1), "npc"), grconvertY(c(0.08, .25), "npc"))
+            grconvertX(c(.8, 1), "npc"), grconvertY(c(0.13, .30), "npc"))
     
-}
-
-platt <- function(act, pred) {
-    
-    ##### THESE STEPS IN MODEL BUILD
-    # splits training data again into model training and calibration (with platt == TRUE arg in function)
-    # train model on test set
-    # predict and score test set (logloss)
-    #####
-    
-    # train the calibration model on calibration set using logistic regression
-    # predict and score calibration set after platt scaling
-    
-    calib   <- data.frame(y = act, x = pred)
-    model   <- glm(y ~ x, calib, family = binomial)
-    
-    # predicting on the cross validation after platt scaling
-    results <- predict(model, calib, type = "response")
-    return(results)
 }
 
 ################################################################################
