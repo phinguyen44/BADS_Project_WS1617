@@ -126,11 +126,12 @@ idx.keep.wrapper <- c(which(colnames(Train) %in% featureSelection$x),
 Train <- Train[,idx.keep.wrapper ]
 
 # Make final estimation and prediction
-logReg <- glm(return ~ age + item_price  + discount.abs + 
-                  discount.pc + is.discount   + user_title + item_category
-                  + item.subcategory + basket.value + basket.size + 
-                  order.same.item + income.ind + income.age + price.inc.ratio
-              + brand_id, 
+logReg <- glm(return ~ age + item_price  + discount.abs + no.return +
+                  discount.pc + is.discount + user_title 
+                  + item.subcategory + basket.value + basket.size + deliver.time + 
+                  order.same.item + income.ind + income.age 
+              
+              , 
               data = dat.input1, family = binomial(link = "logit"))
 
 estimates <- list()
@@ -146,6 +147,8 @@ auc_logReg <- AUC$metrics['AUC']
 auc_logReg
 
 misClassError(Test$return, estimates$logReg, threshold = 0.5)
+estimates$logReg = ifelse(Test$no.return == 1, 0, estimates$logReg)
+
 sensitivity(Test$return, estimates$logReg, threshold = 0.5)
 specificity(Test$return, estimates$logReg, threshold = 0.5)
 
