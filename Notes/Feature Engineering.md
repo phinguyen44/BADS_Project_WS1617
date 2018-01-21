@@ -42,6 +42,7 @@
 | First order of customer | Factor | 2          | Transform order_date, user_reg_daze |
 | Item discount (abs) | Numeric | 1          | Transform item_id, item_price, item_size                     |
 | Item discount (pc) | Numeric | 1          | Transform item_id, item_price, item_size |
+| Item is on discount  | Factor | 2          | Transform item_id, item_price, item_size |
 
 
 
