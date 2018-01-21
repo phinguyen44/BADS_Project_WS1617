@@ -6,6 +6,9 @@
 # BADS project - compare models with cross-validation to estimate out-of-sample
 # error. includes WOE
 # 
+# now does feature selection for each model (wrapper? filter?)
+# and platt scaling as option
+# 
 ################################################################################
 
 ################################################################################
@@ -19,10 +22,11 @@ setwd(wd)
 # Load packages
 needs(tidyverse, magrittr, purrr, infuser,
       caret, mlr, xgboost, gbm, rpart, e1071, MASS, nnet, 
-      mice, pROC, parallel, parallelMap)
+      mice, pROC, parallel, parallelMap,
+      FSelector)
 
 # Load data
-load("Data/BADS_WS1718_known_feat.RData")
+load("Data/BADS_WS1718_known_var.RData")
 df.known <- read.csv("Data/BADS_WS1718_known.csv")
 
 # Source performance metric calculations
@@ -33,15 +37,26 @@ source("Scripts/Helpful-Models.R")
 # FEATURES
 
 # select variables
-df.train <- dat.input2 %>%
-    dplyr::select(age, user_state, user_title, user_purchase_num, 
-                  user_id, 
-                  deliver.time, order_year, order_month, weekday, no.return,
-                  order_size, 
-                  item_id, item_color, item_size, brand_id,
-                  order_same_item, order_same_cs, order_same_cb, order_same_bs,
-                  item_price,
-                  return)
+df.train <- dat.input1 %>%
+    dplyr::select(
+        # DEMOGRAPHIC VARS
+        age, age.group, 
+        user_state, user_title, WestGerm, income.ind,
+        first.order, account.age.order,
+        user_id, # WOE
+        # BASKET VARS
+        deliver.time, order_year, order_month, weekday, no.return,
+        basket.big, basket.size, basket.value, 
+        order.same.item, item.basket.size.diff, item.basket.same.category, 
+        item.basket.category.size.diff, 
+        order.same.itemD, item.basket.size.diffD, item.basket.same.categoryD,
+        item.basket.category.size.diffD,
+        # ITEM VARS
+        item_id, item_color, item_size, brand_id, # WOE
+        brand.cluster, item.color.group, item.category, item.subcategory,
+        discount.abs, discount.pc, is.discount, 
+        item_price, item_priceB, price.inc.ratio,
+        return)
 
 ################################################################################
 # INITIAL SPLIT
@@ -122,26 +137,46 @@ for (i in 1:k) {
     
     # select right variables for dataset
     tr.f <- tr.f %>%
-        dplyr::select(age, user_state, user_title, user_purchase_num, 
-                      user_id_WOE,
-                      deliver.time, order_year, order_month, weekday, no.return,
-                      order_size, 
-                      item_id_WOE, item_color_WOE, item_size_WOE, brand_id_WOE,
-                      order_same_item, order_same_cs, order_same_cb, 
-                      order_same_bs,
-                      item_price,
-                      return)
+        dplyr::select(
+            # DEMOGRAPHIC VARS
+            age, age.group, 
+            user_state, user_title, WestGerm, income.ind,
+            first.order, account.age.order,
+            user_id_WOE, # WOE
+            # BASKET VARS
+            deliver.time, order_year, order_month, weekday, no.return,
+            basket.big, basket.size, basket.value, 
+            order.same.item, item.basket.size.diff, item.basket.same.category, 
+            item.basket.category.size.diff, 
+            order.same.itemD,item.basket.size.diffD, item.basket.same.categoryD,
+            item.basket.category.size.diffD,
+            # ITEM VARS
+            item_id_WOE, item_color_WOE, item_size_WOE, brand_id_WOE,       
+            brand.cluster, item.color.group, item.category, item.subcategory,
+            discount.abs, discount.pc, is.discount, 
+            item_price, item_priceB, price.inc.ratio,
+            return)
     
     ts.f <- ts.f %>%
-        dplyr::select(age, user_state, user_title, user_purchase_num, 
-                      user_id_WOE,
-                      deliver.time, order_year, order_month, weekday, no.return,
-                      order_size, 
-                      item_id_WOE, item_color_WOE, item_size_WOE, brand_id_WOE,
-                      order_same_item, order_same_cs, order_same_cb, 
-                      order_same_bs,
-                      item_price,
-                      return)
+        dplyr::select(
+            # DEMOGRAPHIC VARS
+            age, age.group, 
+            user_state, user_title, WestGerm, income.ind,
+            first.order, account.age.order,
+            user_id_WOE, # WOE
+            # BASKET VARS
+            deliver.time, order_year, order_month, weekday, no.return,
+            basket.big, basket.size, basket.value, 
+            order.same.item, item.basket.size.diff, item.basket.same.category, 
+            item.basket.category.size.diff, 
+            order.same.itemD,item.basket.size.diffD, item.basket.same.categoryD,
+            item.basket.category.size.diffD,
+            # ITEM VARS
+            item_id_WOE, item_color_WOE, item_size_WOE, brand_id_WOE,       
+            brand.cluster, item.color.group, item.category, item.subcategory,
+            discount.abs, discount.pc, is.discount, 
+            item_price, item_priceB, price.inc.ratio,
+            return)
     
     # make model task
     traint.f <- makeClassifTask(data = tr.f, target = "return", positive = 1)
@@ -216,26 +251,46 @@ ts[is.na(ts)] <- 0
 
 # select right variables for dataset
 tr <- tr %>%
-    dplyr::select(age, user_state, user_title, user_purchase_num, 
-                  user_id_WOE,
-                  deliver.time, order_year, order_month, weekday, no.return,
-                  order_size, 
-                  item_id_WOE, item_color_WOE, item_size_WOE, brand_id_WOE,
-                  order_same_item, order_same_cs, order_same_cb, 
-                  order_same_bs,
-                  item_price,
-                  return)
+    dplyr::select(
+        # DEMOGRAPHIC VARS
+        age, age.group, 
+        user_state, user_title, WestGerm, income.ind,
+        first.order, account.age.order,
+        user_id_WOE, # WOE
+        # BASKET VARS
+        deliver.time, order_year, order_month, weekday, no.return,
+        basket.big, basket.size, basket.value, 
+        order.same.item, item.basket.size.diff, item.basket.same.category, 
+        item.basket.category.size.diff, 
+        order.same.itemD,item.basket.size.diffD, item.basket.same.categoryD,
+        item.basket.category.size.diffD,
+        # ITEM VARS
+        item_id_WOE, item_color_WOE, item_size_WOE, brand_id_WOE,       
+        brand.cluster, item.color.group, item.category, item.subcategory,
+        discount.abs, discount.pc, is.discount, 
+        item_price, item_priceB, price.inc.ratio,
+        return)
 
 ts <- ts %>%
-    dplyr::select(age, user_state, user_title, user_purchase_num, 
-                  user_id_WOE,
-                  deliver.time, order_year, order_month, weekday, no.return,
-                  order_size, 
-                  item_id_WOE, item_color_WOE, item_size_WOE, brand_id_WOE,
-                  order_same_item, order_same_cs, order_same_cb, 
-                  order_same_bs,
-                  item_price,
-                  return)
+    dplyr::select(
+        # DEMOGRAPHIC VARS
+        age, age.group, 
+        user_state, user_title, WestGerm, income.ind,
+        first.order, account.age.order,
+        user_id_WOE, # WOE
+        # BASKET VARS
+        deliver.time, order_year, order_month, weekday, no.return,
+        basket.big, basket.size, basket.value, 
+        order.same.item, item.basket.size.diff, item.basket.same.category, 
+        item.basket.category.size.diff, 
+        order.same.itemD,item.basket.size.diffD, item.basket.same.categoryD,
+        item.basket.category.size.diffD,
+        # ITEM VARS
+        item_id_WOE, item_color_WOE, item_size_WOE, brand_id_WOE,       
+        brand.cluster, item.color.group, item.category, item.subcategory,
+        discount.abs, discount.pc, is.discount, 
+        item_price, item_priceB, price.inc.ratio,
+        return)
 
 traintask <- makeClassifTask(data = tr, target = "return", positive = 1)
 testtask  <- makeClassifTask(data = ts, target = "return", positive = 1)
