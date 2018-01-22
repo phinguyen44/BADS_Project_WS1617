@@ -4,12 +4,14 @@
 
 1. How to handle imputation? Both academically (aka with papers) and technically (with packages like MICE)
 2. In the future do something like mahalanobis transformation.
-3. How does xgboost handle non-linear interactions? Can it create a non-linear decision boundary with being fed linear features? - apparently yes it can! since it's a tree, automatically detects non-linear feature interactions (STILL NEED PAPER FOR THIS)
+3. How does xgboost (or all the models) handle non-linear interactions? Can it create a non-linear decision boundary with being fed linear features? - apparently yes it can! since it's a tree, automatically detects non-linear feature interactions (STILL NEED PAPER FOR THIS)
     - Note that omitting the `no.return` variable and only including it in post-processing reduces the overall performance. why? maybe because of interactions?
 4. Use [WOE](https://stats.stackexchange.com/questions/189568/replacing-variables-by-woe-weight-of-evidence-in-logistic-regression/229039) - includes advantages and disadvantages
     - Don't forget to 0 out cases in unknown set if they don't appear in known set
     - How do we prevent overfitting (bias) with WOE? Use cross-validation then perform WOE on the variables
 5. Wrapper and filter for feature selection
+    - within the inner loop, use a wrapper
+    - add plots for filtering and using your functions
 
 ## Model Generation
 
@@ -41,6 +43,7 @@
 5. Platt scaling to calibrate -> smooths out so they better match posterior probabilities - also has an effect of reducing false positives (only in this case, by shifting predictions downward slightly)
     - Calibration should be done on a separately trained set, then the output of the training set should be passed through the calibrated model (Niculescu)
     - Add reliability plots to show how each output changed
+    - See notes on [posterior probabilities](https://en.wikipedia.org/wiki/Posterior_probability) on wikipedia
 
 ## Model Evaluation
 
@@ -48,6 +51,7 @@
 2. Benchmark experiments - show performance of cross-validation across resampling iterations. Plot as a ggplot with error bars
 3. Create plots of classifier performance as a function of decision threshold for binary classification: `df = generateThreshVsPerfData(list(lda = pred1, ksvm = pred2), measures = list(fpr, fnr, mmce))`
     - From there we can also plot ROC curves: `plotROCCurves(df)`
+    - Plot reliability plots
 4. [Cost-sensitive classification](https://mlr-org.github.io/mlr-tutorial/release/html/cost_sensitive_classif/index.html#class-dependent-misclassification-costs)
 
 ## Prediction
