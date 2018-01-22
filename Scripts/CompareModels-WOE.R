@@ -226,6 +226,8 @@ colnames(hp.df$xgb) <- names(hp.t$xgb)
 hp.df$nn
 hp.df$xgb
 
+# TODO: Do the same thing but with the calibrated results
+
 ################################################################################
 # TRAIN FINAL MODEL
 

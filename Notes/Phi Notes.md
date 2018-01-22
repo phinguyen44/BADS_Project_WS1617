@@ -51,8 +51,10 @@
 2. Benchmark experiments - show performance of cross-validation across resampling iterations. Plot as a ggplot with error bars
 3. Create plots of classifier performance as a function of decision threshold for binary classification: `df = generateThreshVsPerfData(list(lda = pred1, ksvm = pred2), measures = list(fpr, fnr, mmce))`
     - From there we can also plot ROC curves: `plotROCCurves(df)`
+    - Maybe instead of mmce, we do results of our cost matrix
     - Plot reliability plots
 4. [Cost-sensitive classification](https://mlr-org.github.io/mlr-tutorial/release/html/cost_sensitive_classif/index.html#class-dependent-misclassification-costs)
+    - Could each model have it's own cutoff? i.e. minimize cost at individual model, then minimize at total?
 
 ## Prediction
 
