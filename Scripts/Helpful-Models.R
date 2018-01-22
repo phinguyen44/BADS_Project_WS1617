@@ -21,8 +21,6 @@
 # TODO: FOR EACH MODEL:
 # 1) add a feature selection wrapper (either filter or wrapper or both)
 
-# TODO: finish calibration for rest of models!
-
 calib.part <- function(tr) {
     tr.p <- tr
     
@@ -38,10 +36,10 @@ calib.part <- function(tr) {
     return(list(tr = tr, cs = cs, tr.label = tr.label, cs.label = cs.label))
 }
 
-calib.mod <- function(lr, calibtask) {
+calib.mod <- function(mod, pred, calibtask, cs.label) {
     
     # predict on calib set
-    calib.pred <- predict(lr, calibtask)
+    calib.pred <- predict(mod, calibtask)
     
     # train logreg on calib set
     clearner <- makeLearner("classif.logreg", predict.type = "prob")
@@ -50,7 +48,7 @@ calib.mod <- function(lr, calibtask) {
     calib.m  <- train(clearner, ctask)
     
     # pass test set prediction through calibrated model
-    test.pred <- data.frame(y = lr.pred$data$truth, x = lr.pred$data$prob.1)
+    test.pred <- data.frame(y = pred$data$truth, x = pred$data$prob.1)
     task <- makeClassifTask(data = test.pred, target = "y", positive = 1)
     lr.pred.calib <- predict(calib.m, task)
     
@@ -83,14 +81,19 @@ lr.mod <- function(learner, tr, ts, calib = FALSE) {
     lr.pred <- predict(lr, testtask)
 
     # pass prediction through calibrated model
-    if (calib == TRUE) lr.pred.calib <- calib.mod(lr, calibtask)
+    if (calib == TRUE) {
+        lr.pred.calib <- calib.mod(lr, lr.pred, calibtask, cs.label)
+    }
     
     end     <- Sys.time()
     runtime <- end - start
     cat(paste0(learner, " run time: "))
     print(runtime)
     
-    return(list(pred = lr.pred, pred.calib = lr.pred.calib))
+    output <- list(pred = lr.pred)
+    if (calib == TRUE) output[['pred.calib']] <- lr.pred.calib
+    
+    return(output)
 }
 
 # DECISION TREE
@@ -149,14 +152,19 @@ dt.mod <- function(learner, tr, ts, calib = FALSE) {
     t.pred  <- predict(t.rpart, testtask)
     
     # pass prediction through calibrated model
-    if (calib == TRUE) t.pred.calib <- calib.mod(t.rpart, calibtask)
+    if (calib == TRUE) {
+        t.pred.calib <- calib.mod(t.rpart, t.pred, calibtask, cs.label)
+    }
     
     end     <- Sys.time()
     runtime <- end - start
     cat(paste0(learner, " run time: "))
     print(runtime)
     
-    return(list(pred = t.pred, pred.calib = t.pred.calib, pars = hyperpars))
+    output <- list(pred = t.pred, pars = hyperpars)
+    if (calib == TRUE) output[['pred.calib']] <- t.pred.calib
+    
+    return(output)
     
 }
 
@@ -213,14 +221,19 @@ rf.mod <- function(learner, tr, ts, calib = FALSE) {
     rf.pred  <- predict(rforest, testtask)
     
     # pass prediction through calibrated model
-    if (calib == TRUE) rf.pred.calib <- calib.mod(rforest, calibtask)
+    if (calib == TRUE) {
+        rf.pred.calib <- calib.mod(rforest, rf.pred, calibtask, cs.label)
+    }
     
     end     <- Sys.time()
     runtime <- end - start
     cat(paste0(learner, " run time: "))
     print(runtime)
+
+    output <- list(pred = rf.pred, pars = hyperpars)
+    if (calib == TRUE) output[['pred.calib']] <- rf.pred.calib
     
-    return(list(pred = rf.pred, pred.calib = rf.pred.calib, pars = hyperpars))
+    return(output)
 }
 
 # XGB
@@ -280,14 +293,19 @@ xgb.mod <- function(learner, tr, ts, calib = FALSE) {
     xg_pred  <- predict(xg_model, testtask)
     
     # pass prediction through calibrated model
-    if (calib == TRUE) xg.pred.calib <- calib.mod(xg_model, calibtask)
+    if (calib == TRUE) {
+        xg.pred.calib <- calib.mod(xg_model, xg_pred, calibtask, cs.label)
+    }
     
     end     <- Sys.time()
     runtime <- end - start
     cat(paste0(learner, " run time: "))
     print(runtime)
     
-    return(list(pred = xg_pred, pred.calib = xg.pred.calib, pars = hyperpars))
+    output <- list(pred = xg_pred, pars = hyperpars)
+    if (calib == TRUE) output[['pred.calib']] <- xg.pred.calib
+    
+    return(output)
 }
 
 # NNET
@@ -337,13 +355,17 @@ nn.mod <- function(learner, tr, ts, calib = FALSE) {
     nn_pred <- predict(nn_mod, testtask)
     
     # pass prediction through calibrated model
-    if (calib == TRUE) nn.pred.calib <- calib.mod(nn_mod, calibtask)
+    if (calib == TRUE) {
+        nn.pred.calib <- calib.mod(nn_mod, nn_pred, calibtask, cs.label)
+    }
     
     end     <- Sys.time()
     runtime <- end - start
     cat(paste0(learner, " run time: "))
     print(runtime)
     
-    return(list(pred = nn_pred, pred.calib = nn.pred.calib, pars = hyperpars))
+    output <- list(pred = nn_pred, pars = hyperpars)
+    if (calib == TRUE) output[['pred.calib']] <- nn.pred.calib
     
+    return(output)
 }

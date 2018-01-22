@@ -64,10 +64,11 @@ df.train <- dat.input1 %>%
 # INITIAL SPLIT
 
 # SPLIT DATA
-set.seed(3210)
+set.seed(321)
 idx.train <- createDataPartition(y = df.train$return, p = 0.8, list = FALSE)
 tr <- df.train[idx.train, ]   # training set
 ts <- df.train[-idx.train, ]  # test set
+summary(ts$item.category)
 
 tr.label <- tr$return
 ts.label <- ts$return
@@ -185,7 +186,8 @@ for (i in 1:k) {
     testt.f  <- makeClassifTask(data = ts.f, target = "return", positive = 1)
     
     # TRAIN MODEL
-    yhat[[i]]   <- map2(mods, learners, function(f, x) f(x, traint.f, testt.f))
+    yhat[[i]]   <- map2(mods, learners, 
+                        function(f, x) f(x, tr.f, ts.f, calib=TRUE))
     
     # GET ACTUAL VALUES AND STORE THEM
     actual[[i]] <- ts.label.f
@@ -194,6 +196,8 @@ for (i in 1:k) {
     foldruntime[i] <- end - start
     
 }
+
+# TODO: REDO THIS SECTION!!!!
 
 # Check stability of cross-validation (metaparameters, error)
 alldata  <- transpose(yhat)
@@ -294,14 +298,24 @@ ts <- ts %>%
         item_price, item_priceB, price.inc.ratio,
         return)
 
-traintask <- makeClassifTask(data = tr, target = "return", positive = 1)
-testtask  <- makeClassifTask(data = ts, target = "return", positive = 1)
-
 # TRAIN MODEL
-fin   <- map2(mods, learners, function(f, x) f(x, traintask, testtask))
-fin.r <- lapply(fin, function(x) sapply(x$pred, function(y) round(y)))
-cMat  <- lapply(fin.r, function(x) confusionMatrix(x, ts.label, positive = "1"))
+fin   <- map2(mods, learners, function(f, x) f(x, tr, ts, calib = TRUE))
+
+# GET PREDICTIONS
+pred   <- lapply(fin, function(x) x$pred$data$prob.1)
+pred.r <- lapply(pred, round)
+cMat   <- lapply(pred.r, 
+                 function(x) confusionMatrix(x, ts.label, positive = "1"))
 cMat
+
+# GET PLATT PREDICTIONS
+pred.p   <- lapply(fin, function(x) x$pred.calib$data$prob.1)
+pred.r.p <- lapply(pred.p, round)
+cMat.p   <- lapply(pred.r.p, 
+                   function(x) confusionMatrix(x, ts.label, positive = "1"))
+cMat.p
+
+# TODO: reliability plots
 
 # SAVE prediction results (on test set)
 fin.name  <- infuse("Data/Predictions - Phi/run_{{rundate}}_yhat.Rdata",
@@ -314,3 +328,14 @@ save(cMat, file = cMat.name)
 
 end1 <- Sys.time()
 end1-start1
+
+################################################################################
+# ENSEMBLE
+
+################################################################################
+# BENCHMARK PLOTS
+
+# reliability, etc.
+
+################################################################################
+# PREDICTION
