@@ -97,7 +97,7 @@ k <- 5
 folds <- createFolds(tr$return, k = k, list = TRUE)
 str(folds)
 
-foldruntime <- rep(0, 10)
+foldruntime <- rep(0, k)
 yhat        <- vector("list", length = k)
 yhat.r      <- yhat
 actual      <- yhat

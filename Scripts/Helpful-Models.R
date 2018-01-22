@@ -15,7 +15,6 @@
 # gradient boosting (xgb)
 # neural net (nnet) - single hidden layer neural network
 #
-# 
 ################################################################################
 
 # TODO: FOR EACH MODEL:
