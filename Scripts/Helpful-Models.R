@@ -56,10 +56,7 @@ calib.mod <- function(mod, pred, calibtask, cs.label) {
 
 # LOGISTIC
 lr.mod <- function(learner, tr, ts, calib = FALSE) {
-
-    # make learner
-    lr.model  <- makeLearner(learner, predict.type = "prob")
-
+    
     # split data for calibration
     if (calib == TRUE) {
         calib.data <- calib.part(tr)
@@ -74,8 +71,19 @@ lr.mod <- function(learner, tr, ts, calib = FALSE) {
     testtask  <- makeClassifTask(data = ts, target = "return", positive = 1)
 
     start <- Sys.time()
+    
+    # make learner
+    lr.model <- makeLearner(learner, predict.type = "prob")
+    # randomer <- makeFeatSelControlRandom(maxit = 20L, prob = 0.8)
+    # rdesc    <- makeResampleDesc("Holdout")
+    # lr.model <- makeFeatSelWrapper(lr.model,
+    #                                control    = randomer,
+    #                                resampling = rdesc)
+    
     # train model
     lr      <- train(lr.model, traintask)
+    # getFeatSelResult(lr)
+    
     # predict
     lr.pred <- predict(lr, testtask)
 
@@ -98,9 +106,6 @@ lr.mod <- function(learner, tr, ts, calib = FALSE) {
 # DECISION TREE
 dt.mod <- function(learner, tr, ts, calib = FALSE) {
 
-    # make learner
-    makeatree <- makeLearner(learner, predict.type = "prob")
-
     # split data for calibration
     if (calib == TRUE) {
         calib.data <- calib.part(tr)
@@ -114,6 +119,9 @@ dt.mod <- function(learner, tr, ts, calib = FALSE) {
     traintask <- makeClassifTask(data = tr, target = "return", positive = 1)
     testtask  <- makeClassifTask(data = ts, target = "return", positive = 1)
 
+    # make learner
+    makeatree <- makeLearner(learner, predict.type = "prob")
+    
     # cross-validation
     set_cv <- makeResampleDesc("CV",iters = 4L)
 
@@ -170,10 +178,6 @@ dt.mod <- function(learner, tr, ts, calib = FALSE) {
 # RANDOM FOREST
 rf.mod <- function(learner, tr, ts, calib = FALSE) {
 
-    # make Learner
-    rf <- makeLearner(learner, predict.type = "prob",
-                      par.vals = list(ntree = 200, mtry = 3, importance = TRUE))
-
     # split data for calibration
     if (calib == TRUE) {
         calib.data <- calib.part(tr)
@@ -187,6 +191,10 @@ rf.mod <- function(learner, tr, ts, calib = FALSE) {
     traintask <- makeClassifTask(data = tr, target = "return", positive = 1)
     testtask  <- makeClassifTask(data = ts, target = "return", positive = 1)
 
+    # make Learner
+    rf <- makeLearner(learner, predict.type = "prob",
+                      par.vals = list(ntree = 200, mtry = 3, importance = TRUE))
+    
     # hyperparameters
     rf_param <- makeParamSet(
         makeIntegerParam("ntree",lower = 50, upper = 200),
@@ -238,9 +246,6 @@ rf.mod <- function(learner, tr, ts, calib = FALSE) {
 # XGB
 xgb.mod <- function(learner, tr, ts, calib = FALSE) {
 
-    # make learner
-    xg_set <- makeLearner(learner, predict.type = "prob")
-
     # split data for calibration
     if (calib == TRUE) {
         calib.data <- calib.part(tr)
@@ -258,6 +263,9 @@ xgb.mod <- function(learner, tr, ts, calib = FALSE) {
     # one hot encoding
     traintask <- createDummyFeatures(obj = traintask)
     testtask  <- createDummyFeatures(obj = testtask)
+    
+    # make learner
+    xg_set <- makeLearner(learner, predict.type = "prob")
 
     rancontrol <- makeTuneControlRandom(maxit = 30L)
     set_cv     <- makeResampleDesc("CV",iters = 4L)
@@ -310,8 +318,6 @@ xgb.mod <- function(learner, tr, ts, calib = FALSE) {
 # NNET
 nn.mod <- function(learner, tr, ts, calib = FALSE) {
 
-    nn <- makeLearner(learner, predict.type = "prob")
-
     # split data for calibration
     if (calib == TRUE) {
         calib.data <- calib.part(tr)
@@ -325,6 +331,8 @@ nn.mod <- function(learner, tr, ts, calib = FALSE) {
     traintask <- makeClassifTask(data = tr, target = "return", positive = 1)
     testtask  <- makeClassifTask(data = ts, target = "return", positive = 1)
 
+    nn <- makeLearner(learner, predict.type = "prob")
+    
     rancontrol <- makeTuneControlRandom(maxit = 30L)
     set_cv     <- makeResampleDesc("CV",iters = 4L)
 

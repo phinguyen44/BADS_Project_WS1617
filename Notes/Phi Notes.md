@@ -12,6 +12,8 @@
 5. Wrapper and filter for feature selection
     - within the inner loop, use a wrapper
     - add plots for filtering and using your functions
+    - wrapper uses the performance of a learning algorithm to assess usefulness of a feature set. learner is trained repeatedly on different feature subsets and the subset that leads to best performance is chosen
+    - advantage of wrapper is the ability to check interactions; however it is incredibly computationally intensive
 
 ## Model Generation
 

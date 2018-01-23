@@ -68,7 +68,6 @@ set.seed(321)
 idx.train <- createDataPartition(y = df.train$return, p = 0.8, list = FALSE)
 tr <- df.train[idx.train, ]   # training set
 ts <- df.train[-idx.train, ]  # test set
-summary(ts$item.category)
 
 tr.label <- tr$return
 ts.label <- ts$return
@@ -197,18 +196,19 @@ for (i in 1:k) {
 
 }
 
-# TODO: REDO THIS SECTION!!!!
-
 # Check stability of cross-validation (metaparameters, error)
 alldata  <- transpose(yhat)
 alldata2 <- lapply(alldata, transpose)
 
 # predictions for each model
-pred <- lapply(alldata2, function(x) lapply(x$pred, function(y) round(y)))
+preds   <- lapply(alldata2, 
+                  function(x) lapply(x$pred, function(y) y$data$prob.1))
+preds.r <- lapply(preds, 
+                  function(x) lapply(x, function(y) round(y)))
 
 # get prediction accuracy
 get.acc  <- function(x, act) confusionMatrix(x, act, positive="1")$overall[1]
-pred.acc <- lapply(pred, function(x) map2_dbl(x, actual, get.acc))
+pred.acc <- lapply(preds.r, function(x) map2_dbl(x, actual, get.acc))
 acc.mean <- lapply(pred.acc, mean)
 acc.se   <- lapply(pred.acc, sd)
 
@@ -216,15 +216,17 @@ acc.mean
 acc.se
 
 # hyperparameters (examine)
-hp    <- lapply(alldata2[2:3], function(x) lapply(x$pars, function(y) y))
+hp    <- lapply(alldata2[2:4], function(x) lapply(x$pars, function(y) y))
 hp.t  <- lapply(hp, transpose)
 hp.df <- lapply(hp.t, function(x)
     data.frame(matrix(unlist(x), ncol = length(x))))
 colnames(hp.df$nn)  <- names(hp.t$nn)
 colnames(hp.df$xgb) <- names(hp.t$xgb)
+colnames(hp.df$rf)  <- names(hp.t$rf)
 
 hp.df$nn
 hp.df$xgb
+hp.df$rf
 
 # TODO: Do the same thing but with the calibrated results
 
@@ -310,7 +312,7 @@ cMat   <- lapply(pred.r,
                  function(x) confusionMatrix(x, ts.label, positive = "1"))
 cMat
 
-# GET PLATT PREDICTIONS
+# GET CALIBRATED PREDICTIONS
 pred.p   <- lapply(fin, function(x) x$pred.calib$data$prob.1)
 pred.r.p <- lapply(pred.p, round)
 cMat.p   <- lapply(pred.r.p,
@@ -325,7 +327,7 @@ fin.name  <- infuse("Data/Predictions - Phi/run_{{rundate}}_yhat.Rdata",
 act.name  <- infuse("Data/Predictions - Phi/run_{{rundate}}_y.Rdata",
                     rundate = strftime(Sys.Date(), "%Y%m%d"))
 
-save(pred.p, file = fin.name)
+save(pred, file = fin.name)
 save(ts.label, file = act.name)
 
 end1 <- Sys.time()

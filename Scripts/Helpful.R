@@ -28,8 +28,6 @@
 # cost.fxn() - calculates cost function as described in paper
 # rev.gain.fxn() - calculates revenue gain over case where no message is sent
 # 
-# TODO: ROCINFO: http://ethen8181.github.io/machine-learning/unbalanced/unbalanced.html#interpretation-and-reporting - for imbalanced cost functions
-# 
 ################################################################################
 
 ################################################################################
