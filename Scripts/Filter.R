@@ -20,7 +20,7 @@ getwd()
 # LOAD NECESSARY PACKAGES & DATA
 # List all packages needed for session
 neededPackages <- c("tidyverse", "dplyr", "caret", "InformationValue",
-                    "klaR")
+                    "klaR", "Hmisc")
 allPackages    <- c(neededPackages %in% installed.packages()[,"Package"])
 
 # Install packages (if not already installed)
@@ -47,19 +47,26 @@ load("BADS_WS1718_known_var.RData")
 dat.input1$return <- as.factor(dat.input1$return)
 
 getFisherscore <- function(variable, return){
-                   Mean = tapply(variable, return, mean)
-                  sigma = tapply(variable, return, sd)
-             difference = abs(diff(Mean))
-    coefficient <- as.numeric(difference / sqrt(sum(sigma^2)))
+                  bothMeans   = tapply(variable, return, mean)
+                  featureMean = mean(variable)
+                  diff.pos.sq = (bothMeans[1] - featureMean)^2
+                  diff.neg.sq = (bothMeans[2] - featureMean)^2
+                  nominator   = diff.pos.sq+ diff.neg.sq
+                  bothSigma   = tapply(variable, return, sd)
+                  denominator = (bothSigma[1])^2 + (bothSigma[2])^2
+    coefficient <- as.numeric(nominator / denominator)
     return(coefficient)
 }
 
 # Extract fisher score for all categorical variables
 allFisherscores <- apply(dat.input1[,sapply(dat.input1, is.numeric)], 
-                       2, Score.fisher, dat.input1$return)
+                       2, getFisherscore, dat.input1$return)
 
 # Examine Fisher scores
-allFisherscores
+allFisherscores[order(allFisherscores)]
+
+# Find variables with high correlation
+rcorr(as.matrix(dat.input1[, sapply(dat.input1, class) == "numeric"]), type="pearson")
 
 # Information value based on WOE
 woe.scores <- woe(return ~ ., data = dat.input1, zeroadj = 1)
@@ -69,6 +76,10 @@ woe.filter[low.woe.idx]
 # low WOE for: user_state, user_title, order_year, weekday, 
 #item.color.group, item.basket.size.diffD, order_year, oder.same.itemD
 #first.order , WestGerm, brand.cluster
+
+
+
+
 
 
 # Remove variable with low information value

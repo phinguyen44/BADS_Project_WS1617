@@ -80,7 +80,7 @@ dat.input1 = dat.input
   
 mage = mean(dat.input1$age, na.rm = TRUE)
 
-mdelivertime = mean(dat.input1$deliver.time, na.rm = TRUE)
+mdelivertime = median(dat.input1$deliver.time, na.rm = TRUE)
 
 age.na = is.na(dat.input1$age)
 
