@@ -46,6 +46,8 @@ load("BADS_WS1718_known_var.RData")
 #TODO: Put Fisher score function in Helpful source file
 dat.input1$return <- as.factor(dat.input1$return)
 
+
+### A) Numeric variables
 getFisherscore <- function(variable, return){
                   bothMeans   = tapply(variable, return, mean)
                   featureMean = mean(variable)
@@ -66,26 +68,33 @@ allFisherscores <- apply(dat.input1[,sapply(dat.input1, is.numeric)],
 allFisherscores[order(allFisherscores)]
 
 # Find variables with high correlation
-rcorr(as.matrix(dat.input1[, sapply(dat.input1, class) == "numeric"]), type="pearson")
+Nums.dat <- cbind(dat.input1[, sapply(dat.input1, class) == "numeric"],
+                  dat.input1[, sapply(dat.input1, class) == "integer"])
+Pcorr1 <- rcorr(as.matrix(Nums.dat), type="pearson")
+Pcorr1$r
+rm(Nums.dat)
+
+#Remove variables with low Fisher score and high correlation (redundant)
+# discount.abs
 
 # Information value based on WOE
 woe.scores <- woe(return ~ ., data = dat.input1, zeroadj = 1)
 woe.filter <- woe.scores$IV
-low.woe.idx <- which(woe.scores$IV <= 0.01)
+low.woe.idx <- which(woe.scores$IV <= 0.02)
 woe.filter[low.woe.idx]
 # low WOE for: user_state, user_title, order_year, weekday, 
 #item.color.group, item.basket.size.diffD, order_year, oder.same.itemD
 #first.order , WestGerm, brand.cluster
 
-
-
-
-
-
-# Remove variable with low information value
+# Remove variable with low information value or redundancy
 dat.input1 <- dat.input1 %>% 
-    dplyr::select(
-#        -user_dob, -ord)
+    dplyr::select( - discount.abs, -user_state, -user_title,
+                   - order_month, - weekday, - order_year,
+                   - item.color.group, -order.same.itemD, 
+                   - item.basket.size.diffD, - first.order,
+                   - WestGerm, - age.group, -brand.cluster,
+                   - item.basket.size.diff
+)
 
 # Export final data set
 save(dat.input1, file = "BADS_WS1718_known_var.RData" )
