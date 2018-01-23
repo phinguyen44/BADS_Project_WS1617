@@ -240,8 +240,6 @@ hp.df$nn
 hp.df$xgb
 hp.df$rf
 
-# TODO: Do the same thing but with the calibrated results
-
 ################################################################################
 # TRAIN FINAL MODEL
 
@@ -275,43 +273,37 @@ ts[is.na(ts)] <- 0
 tr <- tr %>%
     dplyr::select(
         # DEMOGRAPHIC VARS
-        age, age.group,
+        age.group,
         user_state, user_title, WestGerm, income.ind,
         first.order, account.age.order,
         user_id_WOE,
         # BASKET VARS
         deliver.time, order_year, order_month, weekday, no.return,
-        basket.big, basket.size, basket.value,
-        order.same.item, item.basket.size.diff, item.basket.same.category,
-        item.basket.category.size.diff,
+        basket.size, basket.value,
         order.same.itemD,item.basket.size.diffD, item.basket.same.categoryD,
         item.basket.category.size.diffD,
         # ITEM VARS
         item_id_WOE, item_color_WOE, item_size_WOE, brand_id_WOE,
-        brand.cluster, item.color.group, item.category, item.subcategory,
-        discount.abs, discount.pc, is.discount,
-        item_price, item_priceB, price.inc.ratio,
+        brand.cluster, item.category, item.subcategory,is.discount,
+        item_priceB, price.inc.ratio,
         return)
 
 ts <- ts %>%
     dplyr::select(
         # DEMOGRAPHIC VARS
-        age, age.group,
+        age.group,
         user_state, user_title, WestGerm, income.ind,
         first.order, account.age.order,
         user_id_WOE,
         # BASKET VARS
         deliver.time, order_year, order_month, weekday, no.return,
-        basket.big, basket.size, basket.value,
-        order.same.item, item.basket.size.diff, item.basket.same.category,
-        item.basket.category.size.diff,
+        basket.size, basket.value,
         order.same.itemD,item.basket.size.diffD, item.basket.same.categoryD,
         item.basket.category.size.diffD,
         # ITEM VARS
         item_id_WOE, item_color_WOE, item_size_WOE, brand_id_WOE,
-        brand.cluster, item.color.group, item.category, item.subcategory,
-        discount.abs, discount.pc, is.discount,
-        item_price, item_priceB, price.inc.ratio,
+        brand.cluster, item.category, item.subcategory,is.discount,
+        item_priceB, price.inc.ratio,
         return)
 
 # TRAIN MODEL
@@ -325,11 +317,11 @@ cMat   <- lapply(pred.r,
 cMat
 
 # GET CALIBRATED PREDICTIONS
-pred.p   <- lapply(fin, function(x) x$pred.calib$data$prob.1)
-pred.r.p <- lapply(pred.p, round)
-cMat.p   <- lapply(pred.r.p,
+pred.c   <- lapply(fin, function(x) x$pred.calib$data$prob.1)
+pred.r.c <- lapply(pred.c, round)
+cMat.c   <- lapply(pred.r.c,
                    function(x) confusionMatrix(x, ts.label, positive = "1"))
-cMat.p
+cMat.c
 
 # TODO: reliability plots
 
@@ -351,7 +343,11 @@ end1-start1
 ################################################################################
 # BENCHMARK PLOTS
 
-# reliability, etc.
+# Reliability plots to compare original vs calibrated results
+for (i in 1:length(pred)) reliability.plot(ts.label, pred[[i]], pred.c[[i]], 10)
+
+# TODO: solve resizing issues, add titles
+# does calibration improve estimates?
 
 ################################################################################
 # PREDICTION
