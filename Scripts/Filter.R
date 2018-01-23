@@ -80,11 +80,11 @@ rm(Nums.dat)
 # Information value based on WOE
 woe.scores <- woe(return ~ ., data = dat.input1, zeroadj = 1)
 woe.filter <- woe.scores$IV
-low.woe.idx <- which(woe.scores$IV <= 0.02)
+
+# Check out WOE close to 0.2 (print up to 0.4)
+low.woe.idx <- which(woe.scores$IV <= 0.04)
 woe.filter[low.woe.idx]
-# low WOE for: user_state, user_title, order_year, weekday, 
-#item.color.group, item.basket.size.diffD, order_year, oder.same.itemD
-#first.order , WestGerm, brand.cluster
+
 
 # Remove variable with low information value or redundancy
 dat.input1 <- dat.input1 %>% 
@@ -92,11 +92,14 @@ dat.input1 <- dat.input1 %>%
                    - order_month, - weekday, - order_year,
                    - item.color.group, -order.same.itemD, 
                    - item.basket.size.diffD, - first.order,
+                   - item.basket.same.categoryD, - item.basket.category.size.diffD,
                    - WestGerm, - age.group, -brand.cluster,
-                   - item.basket.size.diff
-)
+                   - item.basket.size.diff, - order.same.item,
+                   - basket.big)
+
+dat.ready <- dat.input1
 
 # Export final data set
-save(dat.input1, file = "BADS_WS1718_known_var.RData" )
+save(dat.ready, file = "BADS_WS1718_known_ready.RData" )
 
 
