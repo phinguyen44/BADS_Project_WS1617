@@ -205,6 +205,10 @@ preds   <- lapply(alldata2,
                   function(x) lapply(x$pred, function(y) y$data$prob.1))
 preds.r <- lapply(preds, 
                   function(x) lapply(x, function(y) round(y)))
+p.calib <- lapply(alldata2, 
+                  function(x) lapply(x$pred.calib, function(y) y$data$prob.1))
+p.calib.r <- lapply(p.calib, 
+                    function(x) lapply(x, function(y) round(y)))
 
 # get prediction accuracy
 get.acc  <- function(x, act) confusionMatrix(x, act, positive="1")$overall[1]
@@ -214,6 +218,14 @@ acc.se   <- lapply(pred.acc, sd)
 
 acc.mean
 acc.se
+
+# get prediction accuracy for calibrated results
+pred.acc.c <- lapply(p.calib.r, function(x) map2_dbl(x, actual, get.acc))
+acc.mean.c <- lapply(pred.acc.c, mean)
+acc.se.c   <- lapply(pred.acc.c, sd)
+
+acc.mean.c
+acc.se.c
 
 # hyperparameters (examine)
 hp    <- lapply(alldata2[2:4], function(x) lapply(x$pars, function(y) y))
