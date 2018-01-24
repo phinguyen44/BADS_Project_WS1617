@@ -58,6 +58,8 @@
 4. [Cost-sensitive classification](https://mlr-org.github.io/mlr-tutorial/release/html/cost_sensitive_classif/index.html#class-dependent-misclassification-costs)
     - Could each model have it's own cutoff? i.e. minimize cost at individual model, then minimize at total?
     - In our cost matrix, a false positive is an opportunity cost, but a False Negative is actual cost (show table)
+    - Our problem is one of example-dependent misclassification costs - that is, costs are associated at the individual case-level, on the price of the item in question.
+    - We can either use an ROCIV approach (as described by Fawcett 2006) and find the optimal cutoff point, or use a naive bayes approach for each individual (extension of approach in Elkan 2001)
 
 ## Prediction
 
