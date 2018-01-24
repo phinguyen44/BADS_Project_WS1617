@@ -57,6 +57,7 @@
     - Plot reliability plots
 4. [Cost-sensitive classification](https://mlr-org.github.io/mlr-tutorial/release/html/cost_sensitive_classif/index.html#class-dependent-misclassification-costs)
     - Could each model have it's own cutoff? i.e. minimize cost at individual model, then minimize at total?
+    - In our cost matrix, a false positive is an opportunity cost, but a False Negative is actual cost (show table)
 
 ## Prediction
 
