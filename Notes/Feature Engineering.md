@@ -28,13 +28,11 @@
 | Order Year                 | Factor  | 2          | Transform order_date                             |
 | Order Month                | Factor  | 12         | Transform order_date                             |
 | Order Day of Week          | Factor  | 7          | Transform order_date                             |
-| Basket Value               | Numeric | 1          | Transform order_date, user_id, item_price     |
-| Basket Size                | Numeric | 1          | Transform order_date, user_id 
-               |
-| Basket size > 1            | Factor  | 2          | Transform order_date, user_id
-               |
-| Same item in basket (D)    | Factor  | 2          | Transform order_date, user_id, item_id        |
-| Same items in basket       | Numeric | 1          | Transform order_date, user_id, item_id        |
+| Basket Value               | Numeric | 1          | Transform order_date, user_id, item_price        |
+| Basket Size                | Numeric | 1          | Transform order_date, user_id                    |
+| Basket size > 1            | Factor  | 2          | Transform order_date, user_id                    |
+| Same item in basket (D)    | Factor  | 2          | Transform order_date, user_id, item_id           |
+| Same items in basket       | Numeric | 1          | Transform order_date, user_id, item_id           |
 | Same items in basket diff size  | Numeric | 1          | Transform order_date, user_id, item_id, item_size |
 | Same items in basket diff size (D) | Factor | 2          | Transform order_date, user_id, item_id, item_size|
 | No. items in basket same category  | Numeric | 1          | Transform order_date, user_id, item_id, item_category |
@@ -57,7 +55,6 @@
 | Item ID                                                  | Factor  | 2656       | WOE or malhanoblis                               |
 | Brand ID                                                 | Factor  | 155        | WOE or malhanoblis                               |
 | Item Color                                               | Factor  | 84         | Group same colors together, WOE or malhanoblis   |
-or malhanoblis                               |
 | Item basic Color                                               | Factor  | 9         | Group same basic colors together  |
 | Item Size                                                | Factor  | 114        | Group same levels together, , WOE or malhanoblis |
 | Product category (Shoes, Pants, clothing.)                   | Factor  | 5        | Group with unique sizes                                            |
