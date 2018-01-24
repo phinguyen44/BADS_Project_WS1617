@@ -13,7 +13,7 @@ geometry: margin = 3.5cm
 bibliography: references.bib
 ---
 
-```{r, eval = TRUE, echo = FALSE, include = FALSE, cache = TRUE} 
+```{r, eval = TRUE, echo = FALSE, include = FALSE, cache = TRUE}
 # source("C:/Users/Julian/cms/bachelor-thesis_Winkel/impl/voiproduction.R")
 
 ```
@@ -32,7 +32,7 @@ knitr::opts_chunk$set(fig.pos = 'H')
             {1.25ex \@plus .25ex}%
             {\normalfont\normalsize\bfseries}}
 \makeatother
-\setcounter{secnumdepth}{4} 
+\setcounter{secnumdepth}{4}
 \setcounter{tocdepth}{4}    
 
 \bigskip
@@ -49,7 +49,7 @@ submitted to
 
 \textbf{First Prof} \linebreak
 \textbf{Second Prof}  \linebreak
- 
+
 
 \medskip
 Humboldt-Universit?t zu Berlin \linebreak     
@@ -57,7 +57,7 @@ School of Business and Economics  \linebreak
 \medskip
 
 
-Chair  \linebreak 
+Chair  \linebreak
 
 by  \linebreak  
 
@@ -76,7 +76,7 @@ Anything else we want to say
 \medskip
 
 
-Berlin, Date 
+Berlin, Date
 
 \end{center}
 
@@ -116,7 +116,7 @@ Insert abstract here
 \begin{tabular}{ll}
 \textbf{ANN} & Artificial Neural Network     \\
 \textbf{LM} & Linear Model    \\
- 
+
 \end{tabular}
 
 
@@ -196,7 +196,7 @@ Missing values in delivery time, caused by missing delivery dates, are clearly n
 \newpage
 
 \begin{Large}
-\textbf{Declaration of Authorship} 
+\textbf{Declaration of Authorship}
 \end{Large}
 
 \bigskip
@@ -208,13 +208,3 @@ TEXT
 \bigskip
 
 15.01.2018
-
-
-
-
-
-
-
-
-
-

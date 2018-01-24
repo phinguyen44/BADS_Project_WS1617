@@ -336,6 +336,7 @@ dat.input1 <- merge(dat.input1, income.age.dat, by = "age" )
 
 # Calculate indicator of income based on age and state
 
+# Geometric mean
 dat.input1$income.ind      <- (dat.input1$income.bl * dat.input1$income.age)^0.5
 dat.input1$price.inc.ratio <- dat.input1$item_price / dat.input1$income.ind
 
