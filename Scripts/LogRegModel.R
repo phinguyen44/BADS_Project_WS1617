@@ -73,7 +73,7 @@ woe.scores <- woe(return ~ ., data = Train, zeroadj = 1)
 woe.scores$IV
 
 # Create new Train and Test data set including woe
-Train1 <- cbind(return = Train$return, woe.scores$xnew)
+Train1 <- cbind(return = dat.input1$return, woe.scores$xnew)
 Test1 <- predict(woe.scores, newdata = Test, replace = TRUE)
 
 # Index for variables to be removed
@@ -126,12 +126,17 @@ idx.keep.wrapper <- c(which(colnames(Train) %in% featureSelection$x),
 Train <- Train[,idx.keep.wrapper ]
 
 # Make final estimation and prediction
-logReg <- glm(return ~ ., 
-              data = Train1, family = binomial(link = "logit"))
+logReg <- glm(return ~ age + item_price  + discount.abs + no.return +
+                  discount.pc + is.discount + user_title 
+                  + item.subcategory + basket.value + basket.size + deliver.time + 
+                  order.same.item + income.ind + income.age 
+              
+              , 
+              data = dat.input1, family = binomial(link = "logit"))
 
 estimates <- list()
 
-estimates[["logReg"]] <- predict(logReg, newdata = Test1, type = "response", 
+estimates[["logReg"]] <- predict(logReg, newdata = Test, type = "response", 
                                  replace = TRUE)
 
 
@@ -142,6 +147,8 @@ auc_logReg <- AUC$metrics['AUC']
 auc_logReg
 
 misClassError(Test$return, estimates$logReg, threshold = 0.5)
+estimates$logReg = ifelse(Test$no.return == 1, 0, estimates$logReg)
+
 sensitivity(Test$return, estimates$logReg, threshold = 0.5)
 specificity(Test$return, estimates$logReg, threshold = 0.5)
 

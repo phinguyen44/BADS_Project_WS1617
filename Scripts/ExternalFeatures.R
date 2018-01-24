@@ -239,11 +239,7 @@ plot(item_agg$Group.1, item_agg$x.mn)
 
 woe.scores <- woe(return ~ ., data = dat.input1, zeroadj = 1)
 woe.scores$IV
-library("caret") 
-library(hmeasure)
-library(InformationValue)
-library(mlr)
-library(klaR)
+
 
 Score.fisher <- function(var, target){
     classMeans <- tapply(var, target, mean)
@@ -257,4 +253,6 @@ Score.fisher <- function(var, target){
 Scores.fisher <- apply(dat.input1[,sapply(dat.input1, is.numeric)], 
                        2, Score.fisher, dat.input1$return)
 
-
+############################################################################
+############################################################################
+### Filtering based on information criteria ################################

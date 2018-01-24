@@ -51,6 +51,8 @@ ggplot(dat.input, aes(x=age)) +
     geom_vline(aes(xintercept=mean(age, na.rm=T)), 
                color="red", linetype="dashed", size=1) 
 
+# Age is roughly normally distributed
+
 summary(dat.input$deliver.time)
 
 # Plot probability density
@@ -59,9 +61,8 @@ ggplot(dat.input, aes(x=deliver.time)) +
     geom_vline(aes(xintercept=mean(deliver.time, na.rm=T)), 
                color="red", linetype="dashed", size=1) 
 
-
 # Not normally distributed, rather log normal
-# Outliers can be a problem
+# Outliers can be a problem: Median advisable
 
 # Step 2: Analyze NA pattern
 md.pattern(dat.input)
@@ -80,7 +81,7 @@ dat.input1 = dat.input
   
 mage = mean(dat.input1$age, na.rm = TRUE)
 
-mdelivertime = mean(dat.input1$deliver.time, na.rm = TRUE)
+mdelivertime = median(dat.input1$deliver.time, na.rm = TRUE)
 
 age.na = is.na(dat.input1$age)
 

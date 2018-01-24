@@ -229,12 +229,18 @@ dat.input1  <- dat.input1 %>%
         order.same.item    = n(),
         order.same.itemD   = ifelse(order.same.item > 1, 1, 0))
 
+# Find similar items within one basket of same size
+dat.input1  <- dat.input1 %>% 
+    group_by(user_id, order_date, item_id, item_size) %>% 
+    dplyr::mutate(
+        item.basket.size.same     = n())
+
 # Find similar items within one basket of different size
 dat.input1  <- dat.input1 %>% 
     group_by(user_id, order_date, item_id) %>% 
     dplyr::mutate(
-        item.basket.size.diff     = length(item_size),
-        item.basket.size.diffD    = ifelse(item.basket.size.diff > 1, 1, 0))
+        item.basket.size.diff     = length(unique(item_size)),
+        item.basket.size.diffD    =  ifelse(item.basket.size.diff > 1, 1, 0))
 
 # Find similar items within same category in one basket(regardless of size)
 dat.input1  <- dat.input1 %>% 
@@ -247,7 +253,7 @@ dat.input1  <- dat.input1 %>%
 dat.input1  <- dat.input1 %>% 
     group_by(user_id, order_date, item.category) %>% 
     dplyr::mutate(
-        item.basket.category.size.diff   = length(item_size),
+        item.basket.category.size.diff   = length(unique(item_size)),
         item.basket.category.size.diffD  = ifelse(item.basket.category.size.diff > 1, 1, 0))
 
 # First order on day of registration
@@ -332,6 +338,7 @@ dat.input1 <- merge(dat.input1, income.age.dat, by = "age" )
 
 # Calculate indicator of income based on age and state
 
+# Geometric mean
 dat.input1$income.ind      <- (dat.input1$income.bl * dat.input1$income.age)^0.5
 dat.input1$price.inc.ratio <- dat.input1$item_price / dat.input1$income.ind
 
