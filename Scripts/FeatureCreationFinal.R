@@ -167,7 +167,7 @@ sizes$pants.eu = c("3832", "3432", "3332", "3332", "23", "24", "25", "26",
                    "38", "37",  "40", "42", "44", "48", "50", "52", "54")
 
 sizes$acessoires = c("unsized", "80", "90", "100", "110", "120", "130",
-                     "140", "150", "160" )
+                     "140", "150", "160", "UNSIZED" )
 
 # Find unique sizes to determine category
 k <- unlist(sizes)
@@ -178,7 +178,7 @@ vec.cloth <- unlist(sizes$unique[1:21])
 vec.shoes <- unlist(sizes$unique[22:51])
 vec.child <- unlist(sizes$unique[52:66])
 vec.pants <- unlist(sizes$unique[67:70])
-vec.acces <- unlist(sizes$unique[71:76])
+vec.acces <- unlist(sizes$unique[71:77])
 
 # Assign category to those items with unique size
 dat.input1  <- dat.input1 %>% 
@@ -227,12 +227,18 @@ dat.input1  <- dat.input1 %>%
         order.same.item    = n(),
         order.same.itemD   = ifelse(order.same.item > 1, 1, 0))
 
+# Find similar items within one basket of same size
+dat.input1  <- dat.input1 %>% 
+    group_by(user_id, order_date, item_id, item_size) %>% 
+    dplyr::mutate(
+        item.basket.size.same     = n())
+
 # Find similar items within one basket of different size
 dat.input1  <- dat.input1 %>% 
     group_by(user_id, order_date, item_id) %>% 
     dplyr::mutate(
-        item.basket.size.diff     = length(item_size),
-        item.basket.size.diffD    = ifelse(item.basket.size.diff > 1, 1, 0))
+        item.basket.size.diff     = length(unique(item_size)),
+        item.basket.size.diffD    =  ifelse(item.basket.size.diff > 1, 1, 0))
 
 # Find similar items within same category in one basket(regardless of size)
 dat.input1  <- dat.input1 %>% 
@@ -245,7 +251,7 @@ dat.input1  <- dat.input1 %>%
 dat.input1  <- dat.input1 %>% 
     group_by(user_id, order_date, item.category) %>% 
     dplyr::mutate(
-        item.basket.category.size.diff   = length(item_size),
+        item.basket.category.size.diff   = length(unique(item_size)),
         item.basket.category.size.diffD  = ifelse(item.basket.category.size.diff > 1, 1, 0))
 
 # First order on day of registration
