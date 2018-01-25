@@ -22,7 +22,7 @@ lr.mod <- function(learner, traintask, testtask) {
     
     start <- Sys.time()
     # train model
-    lr      <- train(lr.model, traintask)
+    lr      <- mlr::train(lr.model, traintask)
     lr.pred <- predict(lr, testtask)
     model   <- lr$learner.model
     
@@ -74,7 +74,7 @@ dt.mod <- function(learner, traintask, testtask) {
     hyperpars <- stune$x
     
     # train model
-    t.rpart <- train(t.tree, traintask)
+    t.rpart <- mlr::train(t.tree, traintask)
     t.pred  <- predict(t.rpart, testtask)
     
     # predict
@@ -123,7 +123,7 @@ rf.mod <- function(learner, traintask, testtask) {
     hyperpars <- rf_tune$x
     
     # train model
-    rforest  <- train(rf.tree, traintask)
+    rforest  <- mlr::train(rf.tree, traintask)
     rf.pred  <- predict(rforest, testtask)
     
     # predict
@@ -174,7 +174,7 @@ xgb.mod <- function(learner, traintask, testtask) {
     xg_new <- setHyperPars(learner = xg_set, par.vals = xg_tune$x)
     hyperpars <- xg_tune$x
     
-    xg_model <- train(xg_new, traintask)
+    xg_model <- mlr::train(xg_new, traintask)
     xg_pred  <- predict(xg_model, testtask)
     
     # predict
@@ -217,7 +217,7 @@ nn.mod <- function(learner, traintask, testtask) {
     final_nn <- setHyperPars(learner = nn, par.vals = tune_nn$x)
     hyperpars <- tune_nn$x
     
-    nn_mod  <- train(final_nn, traintask)
+    nn_mod  <- mlr::train(final_nn, traintask)
     nn_pred <- predict(nn_mod, testtask)
     
     # predict
