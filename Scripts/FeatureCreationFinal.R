@@ -262,6 +262,13 @@ dat.input1$first.order <- as.factor(ifelse(dat.input1$user_reg_date ==
 ############################################################################
 ### C) Feature creation on customer level ##################################
 
+### Relational data of customer
+dat.input1  <- dat.input1 %>% 
+    group_by(user_id) %>% 
+    dplyr::mutate(
+        user.total.expen = sum(item_price),
+        user.total.items = n())
+
 ### Account age at time of order
 dat.input1$account.age.order <- dat.input1$order_date - dat.input1$user_reg_date
 
@@ -391,7 +398,7 @@ rm(brand.cluster, centroids)
 #############################################################################
 #############################################################################
 
-# Final formatting
+# Final formatting & Removal of (almost) zero variance features
 dat.input1 <- dat.input1 %>% 
     dplyr::mutate(item_id                  = factor(item_id),
            brand_id                        = factor(brand_id),

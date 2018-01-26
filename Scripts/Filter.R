@@ -70,8 +70,8 @@ allFisherscores[order(allFisherscores)]
 # Find variables with high correlation
 Nums.dat <- cbind(dat.input1[, sapply(dat.input1, class) == "numeric"],
                   dat.input1[, sapply(dat.input1, class) == "integer"])
-Pcorr1 <- rcorr(as.matrix(Nums.dat), type="pearson")
-Pcorr1$r
+Pcorr <- rcorr(as.matrix(Nums.dat), type="pearson")
+Pcorr$r
 rm(Nums.dat)
 
 #Remove variables with low Fisher score and high correlation (redundant)
@@ -95,7 +95,7 @@ dat.input1 <- dat.input1 %>%
                    - item.basket.same.categoryD, - item.basket.category.size.diffD,
                    - WestGerm, - age.group, -brand.cluster,
                    - item.basket.size.diff, - order.same.item,
-                   - basket.big)
+                   - basket.big, -user.total.items)
 
 dat.ready <- dat.input1
 
