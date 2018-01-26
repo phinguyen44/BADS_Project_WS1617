@@ -52,7 +52,7 @@ source("Scripts/Helpful.R")
 # make sure that the price of 0 is an extra category!
 
 
-# Item discount and pric paid: calculate discount based on max price per item & size
+# Item discount and price paid: calculate discount based on max price per item & size
 
 dat.input1  <- dat.input1 %>% 
     group_by(item_id, item_size) %>% 
@@ -405,6 +405,7 @@ dat.input1 <- dat.input1 %>%
            user_id                         = factor(user_id),
            weekday                         = factor(weekday),
            account.age.order               = as.numeric(account.age.order),
+           age.NA                          = as.factor(age.NA),
            order_year                      = factor(order_year),
            item_id                         = factor(item_id),
            item_size                       = factor(item_size),

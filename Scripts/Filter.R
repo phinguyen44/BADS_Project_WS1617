@@ -95,7 +95,7 @@ dat.input1 <- dat.input1 %>%
                    - item.basket.same.categoryD, - item.basket.category.size.diffD,
                    - WestGerm, - age.group, -brand.cluster,
                    - item.basket.size.diff, - order.same.item,
-                   - basket.big, -user.total.items)
+                   - basket.big, -user.total.items, - age.NA)
 
 dat.ready <- dat.input1
 
