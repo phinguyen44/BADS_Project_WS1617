@@ -105,7 +105,7 @@ dat.input1 <- dat.input1 %>%
 
 # Create a random, stratified test and training set 
 set.seed(123)
-part.ind <- createDataPartition(y = dat.input1$return, p = 0.75, list = FALSE) 
+part.ind <- createDataPartition(y = dat.input1$return, p = 0.67, list = FALSE) 
 Test <-  dat.input1[-part.ind , ]
 Train <- dat.input1[part.ind , ] 
 
@@ -129,7 +129,7 @@ Model.dat   <- rbind(Train.final, Test.final) #merge both data set for mlr
 #rm(Train.dat, Train.final, Test.dat, Test.final)
 
 # Create task for backward selection
-Selection.Task <- makeClassifTask(data = Model.dat[,-c(18,20,22:24)], target = "return", positive = "1")
+Selection.Task <- makeClassifTask(data = Model.dat[,], target = "return", positive = "1")
 RandomForest   <- makeLearner("classif.randomForest", 
                   predict.type = "prob", 
                   par.vals = list("replace" = TRUE, "importance" = FALSE))
@@ -138,15 +138,15 @@ RandomForest   <- makeLearner("classif.randomForest",
 SearchCtrl <- makeFeatSelControlSequential(method = "sbs", alpha = 0.01) 
 
 # Indicate training and test set
-rin <- makeFixedHoldoutInstance(train.inds = 1:75001, 
-                                 test.inds = 75002:100000, 
+rin <- makeFixedHoldoutInstance(train.inds = 1:67001, 
+                                 test.inds = 67002:100000, 
                                       size = 100000)
 # Sanity check of Training and Test set
 rin
 
 # Feature selection 
 Selection <- selectFeatures(RandomForest, task = Selection.Task, resampling = rin,
-                                   control = SearchCtrl, measures = mlr::acc,
+                                   control = SearchCtrl, measures = mlr::auc,
                                    show.info = TRUE)
 # Extract the selected variables
 (selected.features <- Selection$x)
