@@ -60,6 +60,10 @@ df.train <- dat.input1 %>%
         item_price, item_priceB, price.inc.ratio,
         return)
 
+# TODO: DELETE
+# TEST
+df.train <- df.train[1:5000, ]
+
 ################################################################################
 # INITIAL SPLIT
 
@@ -82,6 +86,8 @@ mods <- list(lr = lr.mod,
              xgb = xgb.mod,
              rf = rf.mod)
 
+ts.price <- ts$item_price[-idx.train]
+
 ################################################################################
 # CROSS-VALIDATION
 
@@ -100,6 +106,7 @@ foldruntime <- rep(0, k)
 yhat        <- vector("list", length = k)
 yhat.r      <- yhat
 actual      <- yhat
+ts.price.f  <- yhat
 
 for (i in 1:k) {
 
@@ -110,6 +117,8 @@ for (i in 1:k) {
 
     tr.label.f <- tr.f$return
     ts.label.f <- ts.f$return
+    
+    ts.price.f[[i]] <- ts.f$item_price
 
     # add in WOE variables
     tr.f$user_id_WOE <- WOE(tr.f, "user_id")
@@ -239,6 +248,8 @@ colnames(hp.df$rf)  <- names(hp.t$rf)
 hp.df$nn
 hp.df$xgb
 hp.df$rf
+
+# TODO: APPLY COST MATRIX
 
 ################################################################################
 # TRAIN FINAL MODEL
