@@ -7,8 +7,9 @@
 ################################################################################
 # Description:
 # Filter a subset of variables from entire variable set based on information
-# criteria (WOE information value and Fisher score)
-# Reduce dimensionality and prevent overfitting
+### Filter criteria: WOE information value and Fisher score
+# Backward-selection wrapper based on Random Forest
+
 ################################################################################
 
 rm(list = ls())
@@ -20,7 +21,7 @@ getwd()
 # LOAD NECESSARY PACKAGES & DATA
 # List all packages needed for session
 neededPackages <- c("tidyverse", "dplyr", "caret", "InformationValue",
-                    "klaR", "Hmisc")
+                    "klaR", "Hmisc", "mlr")
 allPackages    <- c(neededPackages %in% installed.packages()[,"Package"])
 
 # Install packages (if not already installed)
@@ -95,11 +96,64 @@ dat.input1 <- dat.input1 %>%
                    - item.basket.same.categoryD, - item.basket.category.size.diffD,
                    - WestGerm, - age.group, -brand.cluster,
                    - item.basket.size.diff, - order.same.item,
-                   - basket.big, -user.total.items, - age.NA)
+                   - basket.big, -user.total.items, - age.NA,
+                   - income.bl)
 
-dat.ready <- dat.input1
+############################################################################
+############################################################################
+### Wrapper based on backward selection#####################################
+
+# Create a random, stratified test and training set 
+set.seed(123)
+part.ind <- createDataPartition(y = dat.input1$return, p = 0.75, list = FALSE) 
+Test <-  dat.input1[-part.ind , ]
+Train <- dat.input1[part.ind , ] 
+
+# Standardize both data sets 
+
+Train.dat <- data.frame(cbind(scale(Train[, sapply(dat.input1, class) == "numeric"]),
+                              scale(Train[, sapply(dat.input1, class) == "integer"]),
+                                    Train[, sapply(dat.input1, class) == "factor"]))
+
+Test.dat <- data.frame(cbind(scale(Test[, sapply(dat.input1, class) == "numeric"]),
+                             scale(Test[, sapply(dat.input1, class) == "integer"]),
+                                   Test[, sapply(dat.input1, class) == "factor"]))
+
+# Calculate WOE for Train and project onto Test 
+WOE.scores  <- woe(return ~ ., data = Train.dat, zeroadj = 1)
+Train.final <- data.frame(cbind(WOE.scores$xnew, return = Train$return))
+Test.final  <- predict(WOE.scores, newdata = Test.dat, replace = TRUE)
+
+# Set up Data set for Wrapper and clean up
+Model.dat   <- rbind(Train.final, Test.final) #merge both data set for mlr
+#rm(Train.dat, Train.final, Test.dat, Test.final)
+
+# Create task for backward selection
+Selection.Task <- makeClassifTask(data = Model.dat[,-c(18,20,22:24)], target = "return", positive = "1")
+RandomForest   <- makeLearner("classif.randomForest", 
+                  predict.type = "prob", 
+                  par.vals = list("replace" = TRUE, "importance" = FALSE))
+
+# Selection control for sequential backward search
+SearchCtrl <- makeFeatSelControlSequential(method = "sbs", alpha = 0.01) 
+
+# Indicate training and test set
+rin <- makeFixedHoldoutInstance(train.inds = 1:75001, 
+                                 test.inds = 75002:100000, 
+                                      size = 100000)
+# Sanity check of Training and Test set
+rin
+
+# Feature selection 
+Selection <- selectFeatures(RandomForest, task = Selection.Task, resampling = rin,
+                                   control = SearchCtrl, measures = mlr::acc,
+                                   show.info = TRUE)
+# Extract the selected variables
+(selected.features <- Selection$x)
+
+# Define final data set
+dat.ready <- Train[,selected.features]
 
 # Export final data set
 save(dat.ready, file = "BADS_WS1718_known_ready.RData" )
-
 
