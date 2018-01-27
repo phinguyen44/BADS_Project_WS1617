@@ -449,3 +449,34 @@ for (i in 1:length(pred)) reliability.plot(ts.label, pred[[i]], pred.c[[i]], 10)
 
 ################################################################################
 # PREDICTION
+
+
+
+
+##### 
+fin.new = list()
+fin.new$lr$data$response = base::sample(c(0,1), 2000, replace = TRUE)
+fin.new$nn$data$response = base::sample(c(0,1), 2000, replace = TRUE)
+
+# Build majority vote ensemble model
+
+
+
+lapply(fin.new, function(z){
+  
+  lr.pred = as.numeric(levels(z$lr$data$response))
+  nn.pred = as.numeric(levels(z$nn$data$response))
+  
+  m = mean(lr.pred, nn.pred) # mean can be in 0.25 increments between 0 and 1
+  
+  
+  m.idx = which(m == 0.5) # model prediction unclear when m == 0.5. Classify risk
+  
+  
+  
+  r = round(m) # 
+  
+  
+})
+
+
