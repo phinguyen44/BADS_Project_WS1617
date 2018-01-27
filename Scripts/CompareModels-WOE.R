@@ -272,7 +272,7 @@ hp.df$nn
 hp.df$xgb
 hp.df$rf
 
-# TODO: APPLY COST MATRIX
+# TODO: APPLY COST MATRIX TO FIND MIN COST
 
 ################################################################################
 # TRAIN FINAL MODEL
@@ -374,69 +374,6 @@ end1-start1
 ################################################################################
 # ENSEMBLE
 
-# TODO: after optimizing cost matrix
-
-# ENSEMBLE: currently just for best accuracy
-
-# initialize
-acc.e    <- rep(NA, length(pred))
-order.e  <- rep(NA, length(pred))
-y.orig.e <- vector('list', length(pred))
-
-# start with best classifier
-class1        <- sapply(cMat, function(x) x$overall['Accuracy'])
-names(class1) <- names(cMat)
-acc.e[1]      <- class1[which(class1 == max(class1))]
-order.e[1]    <- names(class1)[which(class1 == max(class1))]
-
-y.idx  <- which(names(pred) == order.e[1])
-
-for (i in 1:length(pred)) {
-    y.orig.e[[i]] <- pred[[y.idx]]
-}
-
-for (i in 2:length(class1)) {
-    
-    # add classifiers and average predictions
-    y.new <- purrr::map2(y.orig.e, pred, function(x,y) data.frame(cbind(x,y)))
-    y.avg <- lapply(y.new, rowMeans)
-    
-    # find best classifier score
-    cMat.in <- lapply(y.avg, 
-                      function(x) confusionMatrix(
-                          round(x), ts.label, positive = "1"))
-    class.in    <- sapply(cMat, function(x) x$overall['Accuracy'])
-    names(class.in) <- names(cMat)
-    
-    idx.in      <- which(class.in == max(class.in))
-    start.in    <- paste0(names(class.in)[idx.in])
-    acc.in      <- class.in[idx.in]
-    
-    # stop if accuracy doesn't improve
-    if (acc.in <= acc.e[i-1]) {
-        
-        order.final <- order.e[i-1]
-        acc.final   <- acc.e[i-1]
-        
-        break
-    }
-    
-    # continue otherwise
-    order.e[i] <- paste0(order.e[i-1], ',', start.in)
-    acc.e[i]   <- acc.in
-    
-    # get new average
-    for (i in 1:length(pred)) {
-        y.orig.e[[i]] <- y.avg[[idx.in]]
-    }
-    
-    order.final <- order.e[i]
-    acc.final   <- acc.e[i]
-    
-}
-
-order.final
-acc.final
 
 ################################################################################
 # BENCHMARK PLOTS
@@ -450,33 +387,28 @@ for (i in 1:length(pred)) reliability.plot(ts.label, pred[[i]], pred.c[[i]], 10)
 ################################################################################
 # PREDICTION
 
+# Build majority vote ensemble model, tie is broken by best model
+to.numeric <- function(pred.object) {
+    
+    response  <- pred.object$data$response
+    predicted <- as.numeric(levels(response))[response]
+    
+    return(predicted)
+    
+}
 
+# which is best model?
+best.mod <- which.max(final.cost)
 
+# in case of tie, use prediction of best
+the.response <- data.frame(sapply(fin.new, to.numeric))
+the.means    <- rowMeans(the.response)
+m.idx        <- which(the.means == 0.5)
 
-##### 
-fin.new = list()
-fin.new$lr$data$response = base::sample(c(0,1), 2000, replace = TRUE)
-fin.new$nn$data$response = base::sample(c(0,1), 2000, replace = TRUE)
+# get final results
+final.results <- the.means
+final.results[m.idx] <- the.response[m.idx, best.mod]
+final.results <- round(final.results)
 
-# Build majority vote ensemble model
-
-
-
-lapply(fin.new, function(z){
-  
-  lr.pred = as.numeric(levels(z$lr$data$response))
-  nn.pred = as.numeric(levels(z$nn$data$response))
-  
-  m = mean(lr.pred, nn.pred) # mean can be in 0.25 increments between 0 and 1
-  
-  
-  m.idx = which(m == 0.5) # model prediction unclear when m == 0.5. Classify risk
-  
-  
-  
-  r = round(m) # 
-  
-  
-})
-
-
+# final cost?
+cost.calc(threshold=0.5, act=ts.label, pred=final.results, cost=ts.price)

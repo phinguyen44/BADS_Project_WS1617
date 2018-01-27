@@ -17,9 +17,6 @@
 #
 ################################################################################
 
-# TODO: FOR EACH MODEL:
-# 1) add a feature selection wrapper (either filter or wrapper or both)
-
 calib.part <- function(tr) {
     tr.p <- tr
 
@@ -145,7 +142,7 @@ dt.mod <- function(learner, tr, ts, calib = FALSE) {
                         task       = traintask,
                         par.set    = gs,
                         control    = gscontrol,
-                        measures   = acc)
+                        measures   = auc)
     parallelStop()
 
     # use hyperparameters
@@ -214,7 +211,7 @@ rf.mod <- function(learner, tr, ts, calib = FALSE) {
                              task       = traintask,
                              par.set    = rf_param,
                              control    = rancontrol,
-                             measures   = acc)
+                             measures   = auc)
     parallelStop()
 
     # set hyperparameters
@@ -285,7 +282,7 @@ xgb.mod <- function(learner, tr, ts, calib = FALSE) {
     xg_tune <- tuneParams(learner     = xg_set,
                           task       = traintask,
                           resampling = set_cv,
-                          measures   = acc,
+                          measures   = auc,
                           par.set    = xg_ps,
                           control    = rancontrol
     )
@@ -347,7 +344,7 @@ nn.mod <- function(learner, tr, ts, calib = FALSE) {
     tune_nn <- tuneParams(learner    = nn,
                           task       = traintask,
                           resampling = set_cv,
-                          measures   = acc,
+                          measures   = auc,
                           par.set    = nn_par,
                           control    = rancontrol
     )
