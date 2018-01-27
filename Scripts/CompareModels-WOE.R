@@ -232,27 +232,32 @@ acc.se
 thresh.list = preds
 
 for(i in 1:length(learners)){ # 2
+  
+  d = data.frame()
+  
   for(j in 1:k){  # 5
     print(i)
     print(j)
     
-    thresh.list[[i]][[j]] = find.threshold(act = actual[[j]], pred = preds[[i]][[j]], cost = ts.price.f[[j]])
+    initial = find.threshold(act = actual[[j]], pred = preds[[i]][[j]], cost = ts.price.f[[j]])
+    d = rbind(d, initial)
     
-    print(thresh.list[[i]][[j]])
+    print(d)
   }
+  
+  thresh.list[[i]] <- d
+  
 }
 
+thresh.mean.l = lapply(thresh.list, function(z){
+  
+  m = mean(z$threshold)
+  
+  return(m)
+  
+})
 
-
-#find.threshold(act = actual[[1]], pred = preds$lr[[1]], cost = ts.price.f[[1]])
-
-
-# for(i in 1:length(actual)){
-#   
-#   pred 
-#   find.threshold(actual[[i]], )
-#   
-# }
+setThreshold(yhat[[1]]$lr$pred, thresh.mean.l$lr[1])
 
 
 
