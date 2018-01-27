@@ -18,14 +18,13 @@
 rm(list = ls())
 
 # Adjust your working directory
-wd = file.path(Sys.getenv("HOME"),"/Documents/Projects/bads-ws1718-group21")
+wd = file.path(Sys.getenv("USERPROFILE"),"/bads-ws1718-group21")
 setwd(wd)
 
 # Load packages
 needs(tidyverse, magrittr, purrr, infuser,
       caret, mlr, xgboost, gbm, rpart, e1071, MASS, nnet,
-      mice, pROC, parallel, parallelMap,
-      FSelector)
+      mice, pROC, parallel, parallelMap)
 
 # Load data
 load("Data/BADS_WS1718_known_var.RData")
@@ -78,13 +77,13 @@ ts.label <- ts$return
 
 ## LIST OF FUNCTIONS
 learners <- list(lr = "classif.logreg",
-                 nn  = "classif.nnet",
-                 xgb = "classif.xgboost",
-                 rf = "classif.randomForest")
+                 nn  = "classif.nnet")#,
+                 #xgb = "classif.xgboost",
+                 #rf = "classif.randomForest")
 mods <- list(lr = lr.mod,
-             nn  = nn.mod,
-             xgb = xgb.mod,
-             rf = rf.mod)
+             nn  = nn.mod)#,
+             #xgb = xgb.mod,
+             #rf = rf.mod)
 
 ts.price <- ts$item_price[-idx.train]
 
