@@ -61,7 +61,7 @@ df.train <- dat.input1 %>%
 
 # TODO: DELETE
 # TEST
-df.train <- df.train[1:5000, ]
+df.train <- df.train[1:10000, ]
 
 ################################################################################
 # INITIAL SPLIT
@@ -226,6 +226,35 @@ acc.se   <- lapply(pred.acc, sd)
 
 acc.mean
 acc.se
+
+# Adjust Threshold
+
+thresh.list = preds
+
+for(i in 1:length(learners)){ # 2
+  for(j in 1:k){  # 5
+    print(i)
+    print(j)
+    
+    thresh.list[[i]][[j]] = find.threshold(act = actual[[j]], pred = preds[[i]][[j]], cost = ts.price.f[[j]])
+    
+    print(thresh.list[[i]][[j]])
+  }
+}
+
+
+
+#find.threshold(act = actual[[1]], pred = preds$lr[[1]], cost = ts.price.f[[1]])
+
+
+# for(i in 1:length(actual)){
+#   
+#   pred 
+#   find.threshold(actual[[i]], )
+#   
+# }
+
+
 
 # get prediction accuracy for calibrated results
 pred.acc.c <- lapply(p.calib.r, function(x) map2_dbl(x, actual, get.acc))
