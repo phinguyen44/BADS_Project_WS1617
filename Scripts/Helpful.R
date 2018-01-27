@@ -284,7 +284,7 @@ find.threshold <- function(act, pred, cost) {
     
     all.acc  <- sapply(threshold, function(x) acc.calc(x, act, pred))
     all.cost <- sapply(threshold, 
-                       function(x) cost.calc(x, act, pred, sample.cost))
+                       function(x) cost.calc(x, act, pred, cost))
     combined <- data.frame(threshold = threshold, 
                            accuracy  = all.acc, 
                            cost      = all.cost)
