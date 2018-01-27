@@ -21,9 +21,10 @@
 # reliability.plot() - diagram to assess how 'calibrated' a classifier is
 # 
 # MODEL EVALUATION:
-# log.loss() - calculates log loss error
-# brier.score() - calculates brier score
-# cost.fxn() - calculates cost function as described in paper
+# acc.calc() - calculates accuracy for a given threshold
+# cost.calc() - calculates costs (from cost matrix) for a given threshold
+# find.threshold() - finds optimal threshold that minimizes costs
+# plot.threshold() - plots cost and accuracy at different thresholds
 # 
 ################################################################################
 
@@ -250,24 +251,88 @@ reliability.plot <- function(act, pred, pred.c, bins = 10) {
 ################################################################################
 # MODEL EVALUATION
 
-log.loss <- function(act, pred) {
-    eps  <- 1e-15
-    nr   <- length(pred)
-    pred <- matrix(sapply(pred, function(x) max(eps,x)), nrow = nr) 
-    pred <- matrix(sapply(pred, function(x) min(1-eps,x)), nrow = nr)
-    ll   <- sum(act*log(pred) + (1-act)*log(1-pred))
-    ll   <-  ll * -1/(length(act)) 
-    return(ll)
+# accuracy
+acc.calc <- function(threshold, act, pred) {
+    decision  <- ifelse(pred > threshold, 1, 0)
+    confusion <- table(Prediction = decision, True = act)
+    accuracy  <- sum(diag(confusion)) / sum(confusion)
+    return(accuracy)
 }
 
-brier.score <- function(act, pred) {
-    nr    <- length(pred)
-    brier <- (1/nr) * sum((pred - act)^2)
-    return(brier)
+# costs
+cost.calc <- function(threshold, act, pred, cost) {
+    compare <- data.frame(act = act, pred = pred, cost = cost)
+    compare <- compare %>% 
+        dplyr::mutate(decision = case_when(pred > threshold  ~ 1,
+                                           pred <= threshold ~ 0),
+                      class    = case_when(act == decision & act == 1 ~ "TP",
+                                           act == decision & act == 0 ~ "TN",
+                                           act != decision & act == 1 ~ "FN",
+                                           act != decision & act == 0 ~ "FP"),
+                      penalty  = case_when(class == "FP" ~ -0.5*cost,
+                                           class == "FN" ~ -0.5*5*(3+0.1*cost),
+                                           class %in% c("TP", "TN") ~ 0))
+    
+    sum.costs <- sum(compare$penalty)
+    return(sum.costs)
 }
 
-cost.fxn <- function(act, pred, cost) {
-    fp <- (1-act) * pred * (-0.5) * cost           # rev lost from FP misclass
-    fn <- act * (1 - pred) * (-0.5)*5*(3+0.1*cost) # rev lost from FN misclass
-    return(sum(fp + fn))
+# find threshold for given predictions
+find.threshold <- function(act, pred, cost) {
+    
+    threshold <- seq(0, 1, by = 0.01)
+    
+    all.acc  <- sapply(threshold, function(x) acc.calc(x, act, pred))
+    all.cost <- sapply(threshold, 
+                       function(x) cost.calc(x, act, pred, sample.cost))
+    combined <- data.frame(threshold = threshold, 
+                           accuracy  = all.acc, 
+                           cost      = all.cost)
+    best.cutoff <- combined$threshold[which(all.cost == max(all.cost))]
+    min.cost    <- max(all.cost)
+    
+    final <- data.frame(threshold = best.cutoff, cost = min.cost)
+    
+    return(final)
+}
+
+# plot 
+plot.threshold <- function(act, pred, cost) {
+    
+    threshold <- seq(0, 1, by = 0.02)
+    
+    all.acc  <- sapply(threshold, function(x) acc.calc(x, act, pred))
+    all.cost <- sapply(threshold, 
+                       function(x) cost.calc(x, act, pred, cost))
+    combined <- data.frame(threshold = threshold, 
+                           accuracy  = all.acc, 
+                           cost      = all.cost)
+    best.cutoff <- combined$threshold[which(all.cost == max(all.cost))]
+    
+    require(gridExtra)
+    # plot
+    p1 <- ggplot(data = combined, aes(x = threshold, y = accuracy)) +
+        geom_line() + 
+        geom_vline(xintercept = best.cutoff, color = "red", alpha = 0.7) +
+        geom_label(aes(best.cutoff, min(accuracy), label = best.cutoff), 
+                   size = 3, color = "red") + 
+        
+        labs(title = "Accuracy") + 
+        labs(subtitle = "Red line indicates cutoff that minimizes costs") + 
+        
+        theme(plot.title = element_text(size=16)) +
+        theme(plot.subtitle = element_text(size=10, color = "#7F7F7F"))
+    p2 <- ggplot(data = combined, aes(x = threshold, y = cost)) +
+        geom_line() + 
+        geom_vline(xintercept = best.cutoff, color = "red", alpha = 0.7) +
+        geom_label(aes(best.cutoff, min(all.cost), label = best.cutoff), 
+                   size = 3, color = "red") + 
+        
+        labs(title = "Total Cost") + 
+        labs(subtitle = "Red line indicates cutoff that minimizes costs") + 
+        
+        theme(plot.title = element_text(size=16)) +
+        theme(plot.subtitle = element_text(size=10, color = "#7F7F7F"))
+    
+    return(grid.arrange(p1, p2, ncol=2))
 }

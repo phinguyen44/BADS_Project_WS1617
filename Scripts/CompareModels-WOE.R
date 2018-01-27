@@ -340,62 +340,7 @@ end1-start1
 ################################################################################
 # ENSEMBLE
 
-# currently just for best accuracy
-
-# initialize
-acc.e    <- rep(NA, length(pred))
-order.e  <- rep(NA, length(pred))
-y.orig.e <- vector('list', length(pred))
-
-# start with best classifier
-class1        <- sapply(cMat, function(x) x$overall['Accuracy'])
-names(class1) <- names(cMat)
-acc.e[1]      <- class1[which(class1 == max(class1))]
-order.e[1]    <- names(class1)[which(class1 == max(class1))]
-
-y.idx  <- which(names(pred) == order.e[1])
-
-for (i in 1:length(pred)) {
-    y.orig.e[i] <- y.orig
-}
-
-for (i in 2:length(class1)) {
-    
-    # add classifiers and average predictions
-    y.new <- purrr::map2(y.orig.e, pred, function(x,y) data.frame(cbind(x,y)))
-    y.avg <- lapply(y.new, rowMeans)
-    
-    # find best classifier score
-    cMat.in <- lapply(y.avg, 
-                      function(x) confusionMatrix(
-                          round(x), ts.label, positive = "1"))
-    class.in    <- sapply(cMat, function(x) x$overall['Accuracy'])
-    names(class.in) <- names(cMat)
-    start.in    <- paste0(names(class.in)[which(class.in == max(class.in))])
-    acc.in      <- class.in[which(class.in == max(class.in))]
-    
-    # stop if accuracy doesn't improve
-    if (acc.in <= acc.e[i-1]) {
-        
-        order.final <- order.e[i-1]
-        acc.final   <- acc.e[i-1]
-        
-        break
-    }
-    
-    # continue otherwise
-    order.e[i] <- paste0(order.e[i-1], ',', start.in)
-    acc.e[i]   <- acc.in
-    
-    y.orig.e   <- y.new
-    
-    order.final <- order.e[i]
-    acc.final   <- acc.e[i]
- 
-}
-
-order.final
-acc.final
+# TODO: after optimizing cost matrix
 
 ################################################################################
 # BENCHMARK PLOTS

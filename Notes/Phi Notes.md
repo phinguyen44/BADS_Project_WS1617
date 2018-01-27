@@ -10,7 +10,6 @@
     - Don't forget to 0 out cases in unknown set if they don't appear in known set
     - How do we prevent overfitting (bias) with WOE? Use cross-validation then perform WOE on the variables
 5. Wrapper and filter for feature selection
-    - within the inner loop, use a wrapper
     - add plots for filtering and using your functions
     - wrapper uses the performance of a learning algorithm to assess usefulness of a feature set. learner is trained repeatedly on different feature subsets and the subset that leads to best performance is chosen
     - advantage of wrapper is the ability to check interactions; however it is incredibly computationally intensive
@@ -50,20 +49,16 @@
 ## Model Evaluation
 
 1. Cross-validation does one of two things: 1) model selection (by finding best hyperparameters OR averaging results) 2) error estimation of a model (measure of out-of-sample accuracy)
-2. Benchmark experiments - show performance of cross-validation across resampling iterations. Plot as a ggplot with error bars
-3. Create plots of classifier performance as a function of decision threshold for binary classification: `df = generateThreshVsPerfData(list(lda = pred1, ksvm = pred2), measures = list(fpr, fnr, mmce))`
-    - From there we can also plot ROC curves: `plotROCCurves(df)`
-    - Maybe instead of mmce, we do results of our cost matrix
-    - Plot reliability plots
+2. Benchmark experiments - show performance of cross-validation across resampling iterations. Plot as a ggplot with error bars.
+    - CV also gets best cutoff (average)
+    - Plots that compare cost & accuracy
 4. [Cost-sensitive classification](https://mlr-org.github.io/mlr-tutorial/release/html/cost_sensitive_classif/index.html#class-dependent-misclassification-costs)
     - Could each model have it's own cutoff? i.e. minimize cost at individual model, then minimize at total?
     - In our cost matrix, a false positive is an opportunity cost, but a False Negative is actual cost (show table)
     - Our problem is one of example-dependent misclassification costs - that is, costs are associated at the individual case-level, on the price of the item in question.
-    - We can either use an ROCIV approach (as described by Fawcett 2006) and find the optimal cutoff point, or use a naive bayes approach for each individual (extension of approach in Elkan 2001)
+    - Our approach is an extension of the ROCIV approach (as described by Fawcett 2006) but used to find optimal cutoff point
 
 ## Prediction
-
-1. We should aim to focus on extreme cases (namely, we should only predict return if we're reasonably confident)
 
 ## Additional Notes
 
