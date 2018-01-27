@@ -18,7 +18,7 @@
 rm(list = ls())
 
 # Adjust your working directory
-wd = file.path(Sys.getenv("USERPROFILE"),"/bads-ws1718-group21")
+wd = file.path(Sys.getenv("HOME"),"documents/projects/bads-ws1718-group21")
 setwd(wd)
 
 # Load packages
@@ -75,6 +75,7 @@ ts <- df.train[-idx.train, ]  # test set
 tr.label <- tr$return
 ts.label <- ts$return
 
+# TODO: do all
 ## LIST OF FUNCTIONS
 learners <- list(lr = "classif.logreg",
                  nn  = "classif.nnet")#,
@@ -85,7 +86,8 @@ mods <- list(lr = lr.mod,
              #xgb = xgb.mod,
              #rf = rf.mod)
 
-ts.price <- ts$item_price[-idx.train]
+# GET price for later
+ts.price <- df.train$item_price[-idx.train]
 
 ################################################################################
 # CROSS-VALIDATION
@@ -227,20 +229,17 @@ acc.se   <- lapply(pred.acc, sd)
 acc.mean
 acc.se
 
-# Adjust Threshold
-
-thresh.list = preds
-
-for(i in 1:length(learners)){ # 2
-  
-  d = data.frame()
-  
-  for(j in 1:k){  # 5
-    print(i)
-    print(j)
+# Find appropriate threshold
+thresh.list <- preds
+for (i in 1:length(learners)) { # 2
     
-    initial = find.threshold(act = actual[[j]], pred = preds[[i]][[j]], cost = ts.price.f[[j]])
-    d = rbind(d, initial)
+    d <- data.frame()
+    
+    for(j in 1:k) {  # 5
+        initial <- find.threshold(act  = actual[[j]], 
+                                  pred = preds[[i]][[j]], 
+                                  cost = ts.price.f[[j]])
+        d <- rbind(d, initial)
     
     print(d)
   }
@@ -249,17 +248,8 @@ for(i in 1:length(learners)){ # 2
   
 }
 
-thresh.mean.l = lapply(thresh.list, function(z){
-  
-  m = mean(z$threshold)
-  
-  return(m)
-  
-})
-
-setThreshold(yhat[[1]]$lr$pred, thresh.mean.l$lr[1])
-
-
+# Use this mean
+thresh.mean.l <- lapply(thresh.list, function(x) mean(x$threshold))
 
 # get prediction accuracy for calibrated results
 pred.acc.c <- lapply(p.calib.r, function(x) map2_dbl(x, actual, get.acc))
@@ -318,40 +308,40 @@ tr <- tr %>%
     dplyr::select(
         # DEMOGRAPHIC VARS
         age.group,
-        user_state, user_title, WestGerm, income.ind,
-        first.order, account.age.order,
+        user_state, user_title, 
         user_id_WOE,
         # BASKET VARS
-        deliver.time, order_year, order_month, weekday, no.return,
-        basket.size, basket.value,
-        order.same.itemD,item.basket.size.diffD, item.basket.same.categoryD,
-        item.basket.category.size.diffD,
+        deliver.time, order_year, order_month,
         # ITEM VARS
         item_id_WOE, item_color_WOE, item_size_WOE, brand_id_WOE,
-        brand.cluster, item.category, item.subcategory,is.discount,
         item_priceB, price.inc.ratio,
         return)
+
+# TODO: RETURN THIS TO IT'S ORIGINAL STATE
 
 ts <- ts %>%
     dplyr::select(
         # DEMOGRAPHIC VARS
         age.group,
-        user_state, user_title, WestGerm, income.ind,
-        first.order, account.age.order,
+        user_state, user_title, 
         user_id_WOE,
         # BASKET VARS
-        deliver.time, order_year, order_month, weekday, no.return,
-        basket.size, basket.value,
-        order.same.itemD,item.basket.size.diffD, item.basket.same.categoryD,
-        item.basket.category.size.diffD,
+        deliver.time, order_year, order_month,
         # ITEM VARS
         item_id_WOE, item_color_WOE, item_size_WOE, brand_id_WOE,
-        brand.cluster, item.category, item.subcategory,is.discount,
         item_priceB, price.inc.ratio,
         return)
 
 # TRAIN MODEL
 fin   <- map2(mods, learners, function(f, x) f(x, tr, ts, calib = TRUE))
+
+# APPLY NEW THRESHOLD
+# TODO: DO THIS FOR THE FINAL
+fin.new <- map2(fin, thresh.mean.l, function(x,y) setThreshold(x$pred,y))
+
+# get accuracy and cost
+final.acc  <- map2(fin.new, thresh.mean.l, function(x,y) acc.calc(y, ts.label, pred = x$data$prob.1))
+final.cost <- map2(fin.new, thresh.mean.l, function(x,y) cost.calc(y, ts.label, pred = x$data$prob.1, cost = ts.price))
 
 # GET PREDICTIONS
 pred   <- lapply(fin, function(x) x$pred$data$prob.1)
@@ -385,6 +375,68 @@ end1-start1
 # ENSEMBLE
 
 # TODO: after optimizing cost matrix
+
+# ENSEMBLE: currently just for best accuracy
+
+# initialize
+acc.e    <- rep(NA, length(pred))
+order.e  <- rep(NA, length(pred))
+y.orig.e <- vector('list', length(pred))
+
+# start with best classifier
+class1        <- sapply(cMat, function(x) x$overall['Accuracy'])
+names(class1) <- names(cMat)
+acc.e[1]      <- class1[which(class1 == max(class1))]
+order.e[1]    <- names(class1)[which(class1 == max(class1))]
+
+y.idx  <- which(names(pred) == order.e[1])
+
+for (i in 1:length(pred)) {
+    y.orig.e[[i]] <- pred[[y.idx]]
+}
+
+for (i in 2:length(class1)) {
+    
+    # add classifiers and average predictions
+    y.new <- purrr::map2(y.orig.e, pred, function(x,y) data.frame(cbind(x,y)))
+    y.avg <- lapply(y.new, rowMeans)
+    
+    # find best classifier score
+    cMat.in <- lapply(y.avg, 
+                      function(x) confusionMatrix(
+                          round(x), ts.label, positive = "1"))
+    class.in    <- sapply(cMat, function(x) x$overall['Accuracy'])
+    names(class.in) <- names(cMat)
+    
+    idx.in      <- which(class.in == max(class.in))
+    start.in    <- paste0(names(class.in)[idx.in])
+    acc.in      <- class.in[idx.in]
+    
+    # stop if accuracy doesn't improve
+    if (acc.in <= acc.e[i-1]) {
+        
+        order.final <- order.e[i-1]
+        acc.final   <- acc.e[i-1]
+        
+        break
+    }
+    
+    # continue otherwise
+    order.e[i] <- paste0(order.e[i-1], ',', start.in)
+    acc.e[i]   <- acc.in
+    
+    # get new average
+    for (i in 1:length(pred)) {
+        y.orig.e[[i]] <- y.avg[[idx.in]]
+    }
+    
+    order.final <- order.e[i]
+    acc.final   <- acc.e[i]
+    
+}
+
+order.final
+acc.final
 
 ################################################################################
 # BENCHMARK PLOTS
