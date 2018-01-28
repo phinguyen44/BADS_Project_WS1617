@@ -3,13 +3,8 @@
 #
 ################################################################################
 # Description:
-# BADS project - compare models with cross-validation to estimate out-of-sample
-# error. includes WOE
-#
-# now does feature selection for each model (wrapper? filter?)
-# and platt scaling as option
-#
-# TODO: remove duplicate variables (e.g. dummy and numeric equivalents)
+# 
+# BADS project - build candidate models, do cross-validation, build ensemble
 #
 ################################################################################
 
@@ -59,10 +54,6 @@ df.train <- dat.input1 %>%
         item_price, item_priceB, price.inc.ratio,
         return)
 
-# TODO: DELETE
-# TEST
-df.train <- df.train[1:10000, ]
-
 ################################################################################
 # INITIAL SPLIT
 
@@ -75,16 +66,15 @@ ts <- df.train[-idx.train, ]  # test set
 tr.label <- tr$return
 ts.label <- ts$return
 
-# TODO: do all
 ## LIST OF FUNCTIONS
 learners <- list(lr = "classif.logreg",
-                 nn  = "classif.nnet")#,
-                 #xgb = "classif.xgboost",
-                 #rf = "classif.randomForest")
+                 nn  = "classif.nnet",
+                 xgb = "classif.xgboost",
+                 rf = "classif.randomForest")
 mods <- list(lr = lr.mod,
-             nn  = nn.mod)#,
-             #xgb = xgb.mod,
-             #rf = rf.mod)
+             nn  = nn.mod,
+             xgb = xgb.mod,
+             rf = rf.mod)
 
 # GET price for later
 ts.price <- df.train$item_price[-idx.train]
@@ -110,6 +100,8 @@ actual      <- yhat
 ts.price.f  <- yhat
 
 for (i in 1:k) {
+    
+    print(infuse("Starting Run #: {{iter}}", iter = i))
 
     start <- Sys.time()
 
@@ -151,43 +143,37 @@ for (i in 1:k) {
     tr.f <- tr.f %>%
         dplyr::select(
             # DEMOGRAPHIC VARS
-            age, age.group,
-            user_state, user_title, WestGerm, income.ind,
+            age,
+            user_state, user_title, 
             first.order, account.age.order,
             user_id_WOE,
             # BASKET VARS
-            deliver.time, order_year, order_month, weekday, no.return,
-            basket.big, basket.size, basket.value,
-            order.same.item, item.basket.size.diff, item.basket.same.category,
-            item.basket.category.size.diff,
-            order.same.itemD,item.basket.size.diffD, item.basket.same.categoryD,
-            item.basket.category.size.diffD,
+            deliver.time, order_month, weekday, no.return,
+            basket.size,
+            order.same.itemD,item.basket.size.diffD, 
             # ITEM VARS
-            item_id_WOE, item_color_WOE, item_size_WOE, brand_id_WOE,
-            brand.cluster, item.color.group, item.category, item.subcategory,
-            discount.abs, discount.pc, is.discount,
-            item_price, item_priceB, price.inc.ratio,
+            item_id_WOE, brand_id_WOE,
+            item.category, item.subcategory,
+            is.discount,
+            item_priceB, price.inc.ratio,
             return)
 
     ts.f <- ts.f %>%
         dplyr::select(
             # DEMOGRAPHIC VARS
-            age, age.group,
-            user_state, user_title, WestGerm, income.ind,
+            age,
+            user_state, user_title, 
             first.order, account.age.order,
             user_id_WOE,
             # BASKET VARS
-            deliver.time, order_year, order_month, weekday, no.return,
-            basket.big, basket.size, basket.value,
-            order.same.item, item.basket.size.diff, item.basket.same.category,
-            item.basket.category.size.diff,
-            order.same.itemD,item.basket.size.diffD, item.basket.same.categoryD,
-            item.basket.category.size.diffD,
+            deliver.time, order_month, weekday, no.return,
+            basket.size,
+            order.same.itemD,item.basket.size.diffD, 
             # ITEM VARS
-            item_id_WOE, item_color_WOE, item_size_WOE, brand_id_WOE,
-            brand.cluster, item.color.group, item.category, item.subcategory,
-            discount.abs, discount.pc, is.discount,
-            item_price, item_priceB, price.inc.ratio,
+            item_id_WOE, brand_id_WOE,
+            item.category, item.subcategory,
+            is.discount,
+            item_priceB, price.inc.ratio,
             return)
 
     # make model task
@@ -206,7 +192,7 @@ for (i in 1:k) {
 
 }
 
-# Check stability of cross-validation (metaparameters, error)
+# Check stability of cross-validation (metaparameters, costs)
 alldata  <- transpose(yhat)
 alldata2 <- lapply(alldata, transpose)
 
@@ -220,44 +206,38 @@ p.calib <- lapply(alldata2,
 p.calib.r <- lapply(p.calib, 
                     function(x) lapply(x, function(y) round(y)))
 
-# get prediction accuracy
-get.acc  <- function(x, act) confusionMatrix(x, act, positive="1")$overall[1]
-pred.acc <- lapply(preds.r, function(x) map2_dbl(x, actual, get.acc))
-acc.mean <- lapply(pred.acc, mean)
-acc.se   <- lapply(pred.acc, sd)
-
-acc.mean
-acc.se
-
 # Find appropriate threshold
-thresh.list <- preds
+thresh.list       <- preds
+thresh.list.calib <- preds
+
 for (i in 1:length(learners)) { # 2
+    d       <- data.frame()
+    d.calib <- data.frame()
     
-    d <- data.frame()
-    
-    for(j in 1:k) {  # 5
+    for (j in 1:k) {  # 5
         initial <- find.threshold(act  = actual[[j]], 
                                   pred = preds[[i]][[j]], 
                                   cost = ts.price.f[[j]])
-        d <- rbind(d, initial)
-    
-    print(d)
+        init.ca <- find.threshold(act  = actual[[j]], 
+                                  pred = p.calib[[i]][[j]], 
+                                  cost = ts.price.f[[j]])
+        d       <- rbind(d, initial)
+        d.calib <- rbind(d.calib, init.ca)
   }
-  
-  thresh.list[[i]] <- d
-  
+  thresh.list[[i]]       <- d
+  thresh.list.calib[[i]] <- d.calib
 }
 
 # Use this mean
-thresh.mean.l <- lapply(thresh.list, function(x) mean(x$threshold))
+thresh.mean.l       <- lapply(thresh.list, function(x) mean(x$threshold))
+thresh.mean.l.calib <- lapply(thresh.list.calib, function(x) mean(x$threshold))
 
-# get prediction accuracy for calibrated results
-pred.acc.c <- lapply(p.calib.r, function(x) map2_dbl(x, actual, get.acc))
-acc.mean.c <- lapply(pred.acc.c, mean)
-acc.se.c   <- lapply(pred.acc.c, sd)
+# Get avg. cost and standard deviation
+avg.cost   <- lapply(thresh.list, function(x) mean(x$cost))
+sd.cost    <- lapply(thresh.list, function(x) sd(x$cost))
 
-acc.mean.c
-acc.se.c
+avg.cost.c <- lapply(thresh.list.calib, function(x) mean(x$cost))
+sd.cost.c  <- lapply(thresh.list.calib, function(x) sd(x$cost))
 
 # hyperparameters (examine)
 hp    <- lapply(alldata2[2:4], function(x) lapply(x$pars, function(y) y))
@@ -272,10 +252,15 @@ hp.df$nn
 hp.df$xgb
 hp.df$rf
 
-# TODO: APPLY COST MATRIX TO FIND MIN COST
+# prediction accuracy (just for good measure)
+get.acc  <- function(x, act) confusionMatrix(x, act, positive="1")$overall[1]
+pred.acc   <- lapply(preds.r, function(x) map2_dbl(x, actual, get.acc))
+pred.acc.c <- lapply(p.calib.r, function(x) map2_dbl(x, actual, get.acc))
 
 ################################################################################
 # TRAIN FINAL MODEL
+
+# TODO: COMPARE CALIBRATED AND UNCALIBRATED RESULTS
 
 # add in WOE variables
 tr$user_id_WOE    <- WOE(tr, "user_id")
@@ -307,28 +292,36 @@ ts[is.na(ts)] <- 0
 tr <- tr %>%
     dplyr::select(
         # DEMOGRAPHIC VARS
-        age.group,
+        age,
         user_state, user_title, 
+        first.order, account.age.order,
         user_id_WOE,
         # BASKET VARS
-        deliver.time, order_year, order_month,
+        deliver.time, order_month, weekday, no.return,
+        basket.size,
+        order.same.itemD,item.basket.size.diffD, 
         # ITEM VARS
-        item_id_WOE, item_color_WOE, item_size_WOE, brand_id_WOE,
+        item_id_WOE, brand_id_WOE,
+        item.category, item.subcategory,
+        is.discount,
         item_priceB, price.inc.ratio,
         return)
-
-# TODO: RETURN THIS TO IT'S ORIGINAL STATE
 
 ts <- ts %>%
     dplyr::select(
         # DEMOGRAPHIC VARS
-        age.group,
+        age,
         user_state, user_title, 
+        first.order, account.age.order,
         user_id_WOE,
         # BASKET VARS
-        deliver.time, order_year, order_month,
+        deliver.time, order_month, weekday, no.return,
+        basket.size,
+        order.same.itemD,item.basket.size.diffD, 
         # ITEM VARS
-        item_id_WOE, item_color_WOE, item_size_WOE, brand_id_WOE,
+        item_id_WOE, brand_id_WOE,
+        item.category, item.subcategory,
+        is.discount,
         item_priceB, price.inc.ratio,
         return)
 
@@ -336,56 +329,34 @@ ts <- ts %>%
 fin   <- map2(mods, learners, function(f, x) f(x, tr, ts, calib = TRUE))
 
 # APPLY NEW THRESHOLD
-# TODO: DO THIS FOR THE FINAL
-fin.new <- map2(fin, thresh.mean.l, function(x,y) setThreshold(x$pred,y))
+fin.new       <- map2(fin, thresh.mean.l, function(x,y) setThreshold(x$pred,y))
+fin.new.calib <- map2(fin, thresh.mean.l.calib, 
+                      function(x,y) setThreshold(x$pred.calib,y))
 
 # get accuracy and cost
 final.acc  <- map2(fin.new, thresh.mean.l, function(x,y) acc.calc(y, ts.label, pred = x$data$prob.1))
 final.cost <- map2(fin.new, thresh.mean.l, function(x,y) cost.calc(y, ts.label, pred = x$data$prob.1, cost = ts.price))
 
+final.acc.calib  <- map2(fin.new.calib, thresh.mean.l.calib, 
+                         function(x,y) acc.calc(y, ts.label, x$data$prob.1))
+final.cost.calib <- map2(fin.new.calib, thresh.mean.l.calib, 
+                         function(x,y) cost.calc(y, 
+                                                 ts.label, 
+                                                 x$data$prob.1, 
+                                                 ts.price))
+
 # GET PREDICTIONS
 pred   <- lapply(fin, function(x) x$pred$data$prob.1)
-pred.r <- lapply(pred, round)
-cMat   <- lapply(pred.r,
-                 function(x) confusionMatrix(x, ts.label, positive = "1"))
-cMat
+pred.c <- lapply(fin, function(x) x$pred.calib$data$prob.1)
 
-# GET CALIBRATED PREDICTIONS
-pred.c   <- lapply(fin, function(x) x$pred.calib$data$prob.1)
-pred.r.c <- lapply(pred.c, round)
-cMat.c   <- lapply(pred.r.c,
-                   function(x) confusionMatrix(x, ts.label, positive = "1"))
-cMat.c
-
-# TODO: reliability plots
-
-# SAVE prediction results (on test set)
-fin.name  <- infuse("Data/Predictions - Phi/run_{{rundate}}_yhat.Rdata",
-                    rundate = strftime(Sys.Date(), "%Y%m%d"))
-act.name  <- infuse("Data/Predictions - Phi/run_{{rundate}}_y.Rdata",
-                    rundate = strftime(Sys.Date(), "%Y%m%d"))
-
-save(pred, file = fin.name)
-save(ts.label, file = act.name)
+# GET HYPERPARAMETERS
+hp.all    <- lapply(fin[2:4], function(x) x$pars)
 
 end1 <- Sys.time()
 end1-start1
 
 ################################################################################
 # ENSEMBLE
-
-
-################################################################################
-# BENCHMARK PLOTS
-
-# Reliability plots to compare original vs calibrated results
-for (i in 1:length(pred)) reliability.plot(ts.label, pred[[i]], pred.c[[i]], 10)
-
-# TODO: solve resizing issues, add titles
-# does calibration improve estimates?
-
-################################################################################
-# PREDICTION
 
 # Build majority vote ensemble model, tie is broken by best model
 to.numeric <- function(pred.object) {
@@ -398,17 +369,43 @@ to.numeric <- function(pred.object) {
 }
 
 # which is best model?
-best.mod <- which.max(final.cost)
+best.mod     <- which.max(final.cost)
+best.mod.cal <- which.max(final.cost.calib)
 
 # in case of tie, use prediction of best
 the.response <- data.frame(sapply(fin.new, to.numeric))
 the.means    <- rowMeans(the.response)
 m.idx        <- which(the.means == 0.5)
 
+the.response.cal <- data.frame(sapply(fin.new.calib, to.numeric))
+the.means.cal    <- rowMeans(the.response.cal)
+m.idx.cal        <- which(the.means.cal == 0.5)
+
 # get final results
-final.results <- the.means
+final.results        <- the.means
 final.results[m.idx] <- the.response[m.idx, best.mod]
-final.results <- round(final.results)
+final.results        <- round(final.results)
+
+final.results.cal            <- the.means.cal
+final.results.cal[m.idx.cal] <- the.response.cal[m.idx.cal, best.mod.cal]
+final.results.cal            <- round(final.results.cal)
 
 # final cost?
 cost.calc(threshold=0.5, act=ts.label, pred=final.results, cost=ts.price)
+cost.calc(threshold=0.5, act=ts.label, pred=final.results.cal, cost=ts.price)
+
+################################################################################
+# BENCHMARK PLOTS
+
+# Reliability plots to compare original vs calibrated results
+for (i in 1:length(pred)) reliability.plot(ts.label, pred[[i]], pred.c[[i]], 10)
+
+# TODO: solve resizing issues, add titles
+# does calibration improve estimates?
+
+# TODO: plot cost bands
+# TODO: plot accuracy bands?
+# TODO: plot threshold / cost plots for each model. should it be from cv loop or final model?
+
+################################################################################
+# PREDICTION

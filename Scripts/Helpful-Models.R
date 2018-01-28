@@ -71,15 +71,9 @@ lr.mod <- function(learner, tr, ts, calib = FALSE) {
     
     # make learner
     lr.model <- makeLearner(learner, predict.type = "prob")
-    # randomer <- makeFeatSelControlRandom(maxit = 20L, prob = 0.8)
-    # rdesc    <- makeResampleDesc("Holdout")
-    # lr.model <- makeFeatSelWrapper(lr.model,
-    #                                control    = randomer,
-    #                                resampling = rdesc)
     
     # train model
     lr      <- train(lr.model, traintask)
-    # getFeatSelResult(lr)
     
     # predict
     lr.pred <- predict(lr, testtask)
@@ -142,7 +136,7 @@ dt.mod <- function(learner, tr, ts, calib = FALSE) {
                         task       = traintask,
                         par.set    = gs,
                         control    = gscontrol,
-                        measures   = auc)
+                        measures   = mlr::auc)
     parallelStop()
 
     # use hyperparameters
@@ -211,7 +205,7 @@ rf.mod <- function(learner, tr, ts, calib = FALSE) {
                              task       = traintask,
                              par.set    = rf_param,
                              control    = rancontrol,
-                             measures   = auc)
+                             measures   = mlr::auc)
     parallelStop()
 
     # set hyperparameters
@@ -282,7 +276,7 @@ xgb.mod <- function(learner, tr, ts, calib = FALSE) {
     xg_tune <- tuneParams(learner     = xg_set,
                           task       = traintask,
                           resampling = set_cv,
-                          measures   = auc,
+                          measures   = mlr::auc,
                           par.set    = xg_ps,
                           control    = rancontrol
     )
@@ -344,7 +338,7 @@ nn.mod <- function(learner, tr, ts, calib = FALSE) {
     tune_nn <- tuneParams(learner    = nn,
                           task       = traintask,
                           resampling = set_cv,
-                          measures   = auc,
+                          measures   = mlr::auc,
                           par.set    = nn_par,
                           control    = rancontrol
     )
