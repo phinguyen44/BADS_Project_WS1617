@@ -95,9 +95,9 @@ dat.input1 <- dat.input1 %>%
                    - item.basket.size.diffD, - first.order,
                    - item.basket.same.categoryD, - item.basket.category.size.diffD,
                    - WestGerm, - age.group, -brand.cluster,
-                   - item.basket.size.diff, - order.same.item,
-                   - basket.big, -user.total.items, - age.NA,
-                   - income.bl)
+                - age.NA)
+
+# - basket.big, -user.total.items, income.bl, item.basket.size.diff, order.same.item
 
 ############################################################################
 ############################################################################
@@ -125,8 +125,8 @@ Train.final <- data.frame(cbind(WOE.scores$xnew, return = Train$return))
 Test.final  <- predict(WOE.scores, newdata = Test.dat, replace = TRUE)
 
 # Set up Data set for Wrapper and clean up
-Model.dat   <- rbind(Train.final, Test.final) #merge both data set for mlr
-#rm(Train.dat, Train.final, Test.dat, Test.final)
+Model.dat   <- rbind(Train.final, Test.final) #merge both data sets for mlr
+rm(Train.dat, Train.final, Test.dat, Test.final)
 
 # Create task for backward selection
 Selection.Task <- makeClassifTask(data = Model.dat[,], target = "return", positive = "1")
@@ -151,8 +151,14 @@ Selection <- selectFeatures(RandomForest, task = Selection.Task, resampling = ri
 # Extract the selected variables
 (selected.features <- Selection$x)
 
+# Replace WOE with orginal variables
+selected.features[9]   <- "item_id"
+selected.features[10]  <- "item_size"
+selected.features[11]  <-  "user_id"
+
+
 # Define final data set
-dat.ready <- Train[,selected.features]
+dat.ready <- dat.input1[,selected.features]
 
 # Export final data set
 save(dat.ready, file = "BADS_WS1718_known_ready.RData" )
