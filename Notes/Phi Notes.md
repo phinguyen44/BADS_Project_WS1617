@@ -3,12 +3,17 @@
 ## Data Preparation
 
 1. How to handle imputation? Both academically (aka with papers) and technically (with packages like MICE)
-2. How does xgboost handle non-linear interactions? Can it create a non-linear decision boundary with being fed linear features? - apparently yes it can! since it's a tree, automatically detects non-linear feature interactions (STILL NEED PAPER FOR THIS)
+2. In the future do something like mahalanobis transformation.
+3. How does xgboost (or all the models) handle non-linear interactions? Can it create a non-linear decision boundary with being fed linear features? - apparently yes it can! since it's a tree, automatically detects non-linear feature interactions (STILL NEED PAPER FOR THIS)
     - Note that omitting the `no.return` variable and only including it in post-processing reduces the overall performance. why? maybe because of interactions?
-5. Use [WOE](https://stats.stackexchange.com/questions/189568/replacing-variables-by-woe-weight-of-evidence-in-logistic-regression/229039) - includes advantages and disadvantages
+4. Use [WOE](https://stats.stackexchange.com/questions/189568/replacing-variables-by-woe-weight-of-evidence-in-logistic-regression/229039) - includes advantages and disadvantages
     - Don't forget to 0 out cases in unknown set if they don't appear in known set
     - How do we prevent overfitting (bias) with WOE? Use cross-validation then perform WOE on the variables
-6. Wrapper and filter for feature selection
+5. Wrapper and filter for feature selection
+    - add plots for filtering and using your functions
+    - wrapper uses the performance of a learning algorithm to assess usefulness of a feature set. learner is trained repeatedly on different feature subsets and the subset that leads to best performance is chosen
+    - advantage of wrapper is the ability to check interactions; however it is incredibly computationally intensive
+6. xgboost and rf already have in-built feature selection (glmnet too but we don't use that)
 
 ## Model Generation
 
@@ -40,18 +45,21 @@
 5. Platt scaling to calibrate -> smooths out so they better match posterior probabilities - also has an effect of reducing false positives (only in this case, by shifting predictions downward slightly)
     - Calibration should be done on a separately trained set, then the output of the training set should be passed through the calibrated model (Niculescu)
     - Add reliability plots to show how each output changed
+    - See notes on [posterior probabilities](https://en.wikipedia.org/wiki/Posterior_probability) on wikipedia
 
 ## Model Evaluation
 
 1. Cross-validation does one of two things: 1) model selection (by finding best hyperparameters OR averaging results) 2) error estimation of a model (measure of out-of-sample accuracy)
-2. Benchmark experiments - show performance of cross-validation across resampling iterations. Plot as a ggplot with error bars
-3. Create plots of classifier performance as a function of decision threshold for binary classification: `df = generateThreshVsPerfData(pred, measures = list(fpr, fnr, mmce))  `
-    - From there we can also plot ROC curves: `plotROCCurves(df)`
+2. Benchmark experiments - show performance of cross-validation across resampling iterations. Plot as a ggplot with error bars.
+    - CV also gets best cutoff (average)
+    - Plots that compare cost & accuracy
 4. [Cost-sensitive classification](https://mlr-org.github.io/mlr-tutorial/release/html/cost_sensitive_classif/index.html#class-dependent-misclassification-costs)
+    - Could each model have it's own cutoff? i.e. minimize cost at individual model, then minimize at total?
+    - In our cost matrix, a false positive is an opportunity cost, but a False Negative is actual cost (show table)
+    - Our problem is one of example-dependent misclassification costs - that is, costs are associated at the individual case-level, on the price of the item in question.
+    - Our approach is an extension of the ROCIV approach (as described by Fawcett 2006) but used to find optimal cutoff point
 
 ## Prediction
-
-1. We should aim to focus on extreme cases (namely, we should only predict return if we're reasonably confident)
 
 ## Additional Notes
 
