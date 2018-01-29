@@ -53,7 +53,7 @@ calib.mod <- function(mod, pred, calibtask, cs.label) {
 
 # LOGISTIC
 lr.mod <- function(learner, tr, ts, calib = FALSE) {
-    
+
     # split data for calibration
     if (calib == TRUE) {
         calib.data <- calib.part(tr)
@@ -68,15 +68,16 @@ lr.mod <- function(learner, tr, ts, calib = FALSE) {
     testtask  <- makeClassifTask(data = ts, target = "return", positive = 1)
 
     start <- Sys.time()
-    
+
     # make learner
     lr.model <- makeLearner(learner, predict.type = "prob")
-    
+
     # train model
-    lr      <- train(lr.model, traintask)
-    
+    lr      <- mlr::train(lr.model, traintask)
+
     # predict
     lr.pred <- predict(lr, testtask)
+    model   <- lr$learner.model
 
     # pass prediction through calibrated model
     if (calib == TRUE) {
@@ -112,7 +113,7 @@ dt.mod <- function(learner, tr, ts, calib = FALSE) {
 
     # make learner
     makeatree <- makeLearner(learner, predict.type = "prob")
-    
+
     # cross-validation
     set_cv <- makeResampleDesc("CV",iters = 4L)
 
@@ -144,7 +145,7 @@ dt.mod <- function(learner, tr, ts, calib = FALSE) {
     hyperpars <- stune$x
 
     # train model
-    t.rpart <- train(t.tree, traintask)
+    t.rpart <- mlr::train(t.tree, traintask)
 
     # predict
     t.pred  <- predict(t.rpart, testtask)
@@ -185,7 +186,7 @@ rf.mod <- function(learner, tr, ts, calib = FALSE) {
     # make Learner
     rf <- makeLearner(learner, predict.type = "prob",
                       par.vals = list(ntree = 200, mtry = 3, importance = TRUE))
-    
+
     # hyperparameters
     rf_param <- makeParamSet(
         makeIntegerParam("ntree",lower = 50, upper = 200),
@@ -213,7 +214,7 @@ rf.mod <- function(learner, tr, ts, calib = FALSE) {
     hyperpars <- rf_tune$x
 
     # train model
-    rforest  <- train(rf.tree, traintask)
+    rforest  <- mlr::train(rf.tree, traintask)
 
     # predict
     rf.pred  <- predict(rforest, testtask)
@@ -254,7 +255,7 @@ xgb.mod <- function(learner, tr, ts, calib = FALSE) {
     # one hot encoding
     traintask <- createDummyFeatures(obj = traintask)
     testtask  <- createDummyFeatures(obj = testtask)
-    
+
     # make learner
     xg_set <- makeLearner(learner, predict.type = "prob")
 
@@ -285,7 +286,7 @@ xgb.mod <- function(learner, tr, ts, calib = FALSE) {
     xg_new <- setHyperPars(learner = xg_set, par.vals = xg_tune$x)
     hyperpars <- xg_tune$x
 
-    xg_model <- train(xg_new, traintask)
+    xg_model <- mlr::train(xg_new, traintask)
 
     # predict
     xg_pred  <- predict(xg_model, testtask)
@@ -323,7 +324,7 @@ nn.mod <- function(learner, tr, ts, calib = FALSE) {
     testtask  <- makeClassifTask(data = ts, target = "return", positive = 1)
 
     nn <- makeLearner(learner, predict.type = "prob")
-    
+
     rancontrol <- makeTuneControlRandom(maxit = 30L)
     set_cv     <- makeResampleDesc("CV",iters = 4L)
 
@@ -347,7 +348,7 @@ nn.mod <- function(learner, tr, ts, calib = FALSE) {
     final_nn <- setHyperPars(learner = nn, par.vals = tune_nn$x)
     hyperpars <- tune_nn$x
 
-    nn_mod  <- train(final_nn, traintask)
+    nn_mod  <- mlr::train(final_nn, traintask)
 
     # predict
     nn_pred <- predict(nn_mod, testtask)

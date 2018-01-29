@@ -18,7 +18,7 @@ getwd()
 
 # LOAD NECESSARY PACKAGES & DATA
 # List all packages needed for session
-neededPackages <- c("ggplot2", "mice", "VIM")
+neededPackages <- c("ggplot2", "mice", "VIM", "dplyr", "Hmisc")
 allPackages    <- c(neededPackages %in% installed.packages()[,"Package"])
 
 # Install packages (if not already installed)
@@ -75,15 +75,15 @@ aggr(dat.input, col=c('navyblue','green'),
 # Age and delivery time do not seem to be missing jointly
     
 ############################################################################
-### Method 1: Based on median
+### Method 1: Based on mean(age) and median (deliver time)
   
-dat.input1 = dat.input
+dat.input1 <- dat.input
   
-mage = mean(dat.input1$age, na.rm = TRUE)
+mage <- mean(dat.input1$age, na.rm = TRUE)
 
-mdelivertime = median(dat.input1$deliver.time, na.rm = TRUE)
+mdelivertime <- median(dat.input1$deliver.time, na.rm = TRUE)
 
-age.na = is.na(dat.input1$age)
+age.na <- is.na(dat.input1$age)
 
 dat.input1$age[age.na] <- mage
 
@@ -118,20 +118,53 @@ save(dat.input1, file = "BADS_WS1718_known_imp1.RData" )
  
 ############################################################################
 ### Method 2: Based on Maximum Likelihood
-## Assumption: Data missing at completely at random
+## Assumption: Data missing (completely) at random
 
-dat.input2 = dat.input
+dat.input2 <- dat.input
 
-# Selection of suitable variables for age imputation: user_title, brand_id, item_size, item_price
+# Selection of suitable variables for age imputation: 
+# Numerical variables: High correlation (known from expl. analysis) 
 
-# Attention: only run when necessary, take a lot of time
-age.imp <- mice(dat.input2[, c("age", "user_title", "brand_id", "item_size", 
-                           "item_price")],m=5,maxit=50,meth='pmm',seed=123)
+### Relational data of customer
+dat.input2  <- dat.input2 %>% 
+    group_by(user_id) %>% 
+    dplyr::mutate(
+        user.total.expen = sum(item_price),
+        user.total.items = n())
+
+dat.input2  <- dat.input2 %>% 
+    group_by(user_id, order_date) %>% 
+    dplyr::mutate(
+        basket.value = sum(item_price),
+        basket.size  = n())
+
+dat.input2$account.age.order <- dat.input2$order_date - dat.input2$user_reg_date
+
+# Check correlation
+Nums.dat <- cbind(dat.input2[, sapply(dat.input2, class) == "numeric"],
+                  dat.input2[, sapply(dat.input2, class) == "integer"])
+Pcorr <- rcorr(as.matrix(Nums.dat), type="pearson")
+Pcorr$r
+rm(Nums.dat)
+
+# Attention: only run when necessary, takes a lot of time
+age.imp <- mice(dat.input2[, c("age", "user_title", "item_price", 
+                               "basket.value", "basket.size",
+                             "user.total.expen", "user.total.items")], 
+                            m=5,maxit=50,meth='pmm',seed=123)
+completeData <- list()
+
 m <- 5
 for(i in 1:m){
     completeData[i] <- complete(age.imp, m)
     dat.input2$age[i] <- completeData[i]$age
 }
+
+# Clean up to coherence 
+dat.input2  <- dat.input2 %>% 
+    dplyr::select(- user.total.expen, - user.total.items,
+                  - account.age.order, - basket.value,
+                  - basket.size) %>% 
 
 save(dat.input2, file = "BADS_WS1718_known_imp2.RData")
 

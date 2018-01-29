@@ -40,7 +40,7 @@ names.vec <- colnames(dat.input)
 
 ### Delivery time & not returned
     
-# Declare missing value in delivery date as such
+# Flag missing value in delivery date as such
 delivery_date1 <- ifelse(dat.input$delivery_date == "?", NA, TRUE)
 dat.input$delivery_date <- dat.input$delivery_date[delivery_date1]
 
@@ -109,6 +109,9 @@ dat.input$order_year <- as.numeric(dat.input$order_year)
 # Calculate age of customer
 dat.input$age <- dat.input$order_year - dat.input$user_dob_year
 
+#Flag missing values in age
+dat.input$age.NA <- ifelse(is.na(dat.input$age), 1, 0)
+
 rm(year)
 
 # Mark unplausible age entries as NA
@@ -146,7 +149,8 @@ colnames(dat.input) = c("order_item_id",
                        "weekday",
                        "user_dob_year",
                        "order_year",
-                        "age")
+                        "age",
+                        "age.NA")
     
 ############################################################################
 ### Final formatting
