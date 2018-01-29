@@ -55,7 +55,7 @@ source("Scripts/Helpful.R")
 # Item discount and price paid: calculate discount based on max price per item & size
 
 dat.input1  <- dat.input1 %>% 
-    group_by(item_id, item_size) %>% 
+    group_by(item_id) %>% 
     dplyr::mutate(
         max.price.item.size    = max(item_price),
         min.price.item.size    = min(item_price),
@@ -63,16 +63,14 @@ dat.input1  <- dat.input1 %>%
         discount.abs           = max.price.item.size - item_price,
         discount.pc            = (max.price.item.size - item_price)/
                                  max.price.item.size,
+        discount.pc            = ifelse(discount.pc == "NaN", 0,
+                                        discount.pc ),
         is.discount            = ifelse(discount.abs > 0, 1, 0)) %>% 
     dplyr::select(-max.price.item.size, -min.price.item.size, -range.price.item.size)
 
-# Adjust discount in percentage for zero price
-dat.input1$discount.pc  <- ifelse(dat.input1$discount.pc == "NaN",
-                                  0, dat.input1$discount.pc )
-
 # price bins (discrete)
 price  <- num.check(dat.input1, "item_price")
-priceB <- discrete.bin(price, numbins = 10)
+priceB <- discrete.bin(price, numbins = 16)
 
 # assign bins (manually add 0)
 dat.input1$item_priceB  <- assign.bins(dat.input1, priceB, "item_price")
@@ -405,7 +403,8 @@ dat.input1 <- dat.input1 %>%
            user_id                         = factor(user_id),
            weekday                         = factor(weekday),
            account.age.order               = as.numeric(account.age.order),
-           age.NA                          = as.factor(age.NA),
+           age.NA                          = factor(age.NA),
+           is.discount                     = factor(is.discount),
            order_year                      = factor(order_year),
            item_id                         = factor(item_id),
            item_size                       = factor(item_size),
