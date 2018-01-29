@@ -411,6 +411,7 @@ dat.input1 <- dat.input1 %>%
            item.category                   = factor(item.category),
            item.subcategory                = factor(item.subcategory),
            basket.big                      = factor(basket.big),
+           basket.size                     = factor(basket.size),
            order.same.itemD                = factor(order.same.itemD),
            item.basket.size.diffD          = factor(item.basket.size.diffD),
            item.basket.same.categoryD      = factor(item.basket.same.categoryD),
