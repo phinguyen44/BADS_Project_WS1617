@@ -57,12 +57,6 @@ Scores.fisher <- apply(Train[,sapply(Train, is.numeric)],
 
 Scores.fisher[order(Scores.fisher)]
 
-# Index for variables to be removed
-idx.remove.fisher =  which(colnames(Train) %in% 
-                     names(Scores.fisher[order(Scores.fisher)][1]))
-
-Train <- Train[,-idx.remove.fisher]
-
 # Todo: remove continous variables based on Fisher score (define rule)
 
 ################################################################################

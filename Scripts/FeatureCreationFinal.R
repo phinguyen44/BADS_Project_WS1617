@@ -70,7 +70,7 @@ dat.input1  <- dat.input1 %>%
 
 # price bins (discrete)
 price  <- num.check(dat.input1, "item_price")
-priceB <- discrete.bin(price, numbins = 16)
+priceB <- discrete.bin(price, numbins = 23) #results in 20 bins due to multispan
 
 # assign bins (manually add 0)
 dat.input1$item_priceB  <- assign.bins(dat.input1, priceB, "item_price")

@@ -76,16 +76,14 @@ Pcorr$r
 rm(Nums.dat)
 
 #Remove variables with low Fisher score and high correlation (redundant)
-# discount.abs
 
 # Information value based on WOE
-woe.scores <- woe(return ~ ., data = dat.input1, zeroadj = 1)
+woe.scores <- woe(return ~ ., data = dat, zeroadj = 1)
 woe.filter <- woe.scores$IV
 
 # Check out WOE close to 0.2 (print up to 0.4)
 low.woe.idx <- which(woe.scores$IV <= 0.04)
 woe.filter[low.woe.idx]
-
 
 # Remove variable with low information value or redundancy
 dat.input1 <- dat.input1 %>% 
@@ -96,9 +94,9 @@ dat.input1 <- dat.input1 %>%
                    - item.basket.same.categoryD, - item.basket.category.size.diffD,
                    - WestGerm, - age.group, -brand.cluster,
                    - age.NA, - income.bl, - item_color,
-                   - price.inc.ratio)
+                   - price.inc.ratio, -basket.big)
 
-# - basket.big, -user.total.items, item.basket.size.diff
+# -user.total.items, item.basket.size.diff
 # -order.same.item
 
 ############################################################################
@@ -137,7 +135,7 @@ RandomForest   <- makeLearner("classif.randomForest",
                   par.vals = list("replace" = TRUE, "importance" = FALSE))
 
 # Selection control for sequential backward search
-SearchCtrl <- makeFeatSelControlSequential(method = "sbs", alpha = 0.01) 
+SearchCtrl <- makeFeatSelControlSequential(method = "sbs", beta = -0.01) 
 
 # Indicate training and test set
 rin <- makeFixedHoldoutInstance(train.inds = 1:67001, 
