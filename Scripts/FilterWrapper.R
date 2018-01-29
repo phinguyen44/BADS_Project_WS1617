@@ -95,9 +95,11 @@ dat.input1 <- dat.input1 %>%
                    - item.basket.size.diffD, - first.order,
                    - item.basket.same.categoryD, - item.basket.category.size.diffD,
                    - WestGerm, - age.group, -brand.cluster,
-                - age.NA)
+                   - age.NA, - income.bl, - item_color,
+                   - price.inc.ratio)
 
-# - basket.big, -user.total.items, income.bl, item.basket.size.diff, order.same.item
+# - basket.big, -user.total.items, item.basket.size.diff
+# -order.same.item
 
 ############################################################################
 ############################################################################
