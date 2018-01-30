@@ -68,13 +68,13 @@ ts.label <- ts$return
 
 ## LIST OF FUNCTIONS
 learners <- list(lr = "classif.logreg",
+                 rf = "classif.randomForest",
                  nn  = "classif.nnet",
-                 xgb = "classif.xgboost",
-                 rf = "classif.randomForest")
+                 xgb = "classif.xgboost")
 mods <- list(lr = lr.mod,
+             rf = rf.mod,
              nn  = nn.mod,
-             xgb = xgb.mod,
-             rf = rf.mod)
+             xgb = xgb.mod)
 
 # GET price for later
 ts.price <- df.train$item_price[-idx.train]
@@ -145,15 +145,14 @@ for (i in 1:k) {
             # DEMOGRAPHIC VARS
             age,
             user_state, user_title, 
-            first.order, account.age.order,
             user_id_WOE,
             # BASKET VARS
-            deliver.time, order_month, weekday, no.return,
+            deliver.time, no.return,
             basket.size,
             order.same.itemD,item.basket.size.diffD, 
             # ITEM VARS
             item_id_WOE, brand_id_WOE,
-            item.category, item.subcategory,
+            item.category, 
             is.discount,
             item_priceB, price.inc.ratio,
             return)
@@ -163,15 +162,14 @@ for (i in 1:k) {
             # DEMOGRAPHIC VARS
             age,
             user_state, user_title, 
-            first.order, account.age.order,
             user_id_WOE,
             # BASKET VARS
-            deliver.time, order_month, weekday, no.return,
+            deliver.time, no.return,
             basket.size,
             order.same.itemD,item.basket.size.diffD, 
             # ITEM VARS
             item_id_WOE, brand_id_WOE,
-            item.category, item.subcategory,
+            item.category, 
             is.discount,
             item_priceB, price.inc.ratio,
             return)
@@ -232,12 +230,12 @@ for (i in 1:length(learners)) { # 2
 thresh.mean.l       <- lapply(thresh.list, function(x) mean(x$threshold))
 thresh.mean.l.calib <- lapply(thresh.list.calib, function(x) mean(x$threshold))
 
-# Get avg. cost and standard deviation
+# Get avg. cost and standard error
 avg.cost   <- lapply(thresh.list, function(x) mean(x$cost))
-sd.cost    <- lapply(thresh.list, function(x) sd(x$cost))
+se.cost    <- lapply(thresh.list, function(x) sd(x$cost)/sqrt(k))
 
 avg.cost.c <- lapply(thresh.list.calib, function(x) mean(x$cost))
-sd.cost.c  <- lapply(thresh.list.calib, function(x) sd(x$cost))
+se.cost.c  <- lapply(thresh.list.calib, function(x) sd(x$cost)/sqrt(k))
 
 # hyperparameters (examine)
 hp    <- lapply(alldata2[2:4], function(x) lapply(x$pars, function(y) y))
@@ -259,8 +257,6 @@ pred.acc.c <- lapply(p.calib.r, function(x) map2_dbl(x, actual, get.acc))
 
 ################################################################################
 # TRAIN FINAL MODEL
-
-# TODO: COMPARE CALIBRATED AND UNCALIBRATED RESULTS
 
 # add in WOE variables
 tr$user_id_WOE    <- WOE(tr, "user_id")
@@ -397,15 +393,21 @@ cost.calc(threshold=0.5, act=ts.label, pred=final.results.cal, cost=ts.price)
 ################################################################################
 # BENCHMARK PLOTS
 
-# Reliability plots to compare original vs calibrated results
-for (i in 1:length(pred)) reliability.plot(ts.label, pred[[i]], pred.c[[i]], 10)
-
-# TODO: solve resizing issues, add titles
-# does calibration improve estimates?
+# Reliability plots to compare original vs calibrated results (for 1 fold)
+for (i in 1:length(pred)) {
+    pdf(infuse("Written/Images/ReliabilityPlot-{{model}}.pdf", 
+               model = names(mods[i])),
+        width  = 6,
+        height = 4)
+    reliability.plot(ts.label, pred[[i]], pred.c[[i]], 10)
+    dev.off()
+}
 
 # TODO: plot cost bands
-# TODO: plot accuracy bands?
-# TODO: plot threshold / cost plots for each model. should it be from cv loop or final model?
+# ggplot2
+
+# TODO: plot threshold / cost plots for each model (one of the runs)
+# arbitrarily choose k = 1
 
 ################################################################################
 # PREDICTION

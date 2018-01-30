@@ -32,10 +32,10 @@ calib.part <- function(tr) {
     return(list(tr = tr, cs = cs, tr.label = tr.label, cs.label = cs.label))
 }
 
-calib.mod <- function(mod, pred, calibtask, cs.label) {
+calib.mod <- function(mod, pred, cs, cs.label) {
 
     # predict on calib set
-    calib.pred <- predict(mod, calibtask)
+    calib.pred <- predict(mod, newdata = cs)
 
     # train logreg on calib set
     clearner <- makeLearner("classif.logreg", predict.type = "prob")
@@ -44,9 +44,8 @@ calib.mod <- function(mod, pred, calibtask, cs.label) {
     calib.m  <- train(clearner, ctask)
 
     # pass test set prediction through calibrated model
-    test.pred <- data.frame(y = pred$data$truth, x = pred$data$prob.1)
-    task <- makeClassifTask(data = test.pred, target = "y", positive = 1)
-    lr.pred.calib <- predict(calib.m, task)
+    test.pred     <- data.frame(y = pred$data$truth, x = pred$data$prob.1)
+    lr.pred.calib <- predict(calib.m, newdata = test.pred)
 
     return(lr.pred.calib)
 }
@@ -60,12 +59,9 @@ lr.mod <- function(learner, tr, ts, calib = FALSE) {
         tr         <- calib.data$tr
         cs         <- calib.data$cs
         cs.label   <- calib.data$cs.label
-
-        calibtask <- makeClassifTask(data = cs, target = "return", positive = 1)
     }
 
     traintask <- makeClassifTask(data = tr, target = "return", positive = 1)
-    testtask  <- makeClassifTask(data = ts, target = "return", positive = 1)
 
     start <- Sys.time()
 
@@ -76,12 +72,12 @@ lr.mod <- function(learner, tr, ts, calib = FALSE) {
     lr      <- mlr::train(lr.model, traintask)
 
     # predict
-    lr.pred <- predict(lr, testtask)
+    lr.pred <- predict(lr, newdata = ts)
     model   <- lr$learner.model
 
     # pass prediction through calibrated model
     if (calib == TRUE) {
-        lr.pred.calib <- calib.mod(lr, lr.pred, calibtask, cs.label)
+        lr.pred.calib <- calib.mod(lr, lr.pred, cs, cs.label)
     }
 
     end     <- Sys.time()
@@ -104,12 +100,9 @@ dt.mod <- function(learner, tr, ts, calib = FALSE) {
         tr         <- calib.data$tr
         cs         <- calib.data$cs
         cs.label   <- calib.data$cs.label
-
-        calibtask <- makeClassifTask(data = cs, target = "return", positive = 1)
     }
 
     traintask <- makeClassifTask(data = tr, target = "return", positive = 1)
-    testtask  <- makeClassifTask(data = ts, target = "return", positive = 1)
 
     # make learner
     makeatree <- makeLearner(learner, predict.type = "prob")
@@ -148,11 +141,11 @@ dt.mod <- function(learner, tr, ts, calib = FALSE) {
     t.rpart <- mlr::train(t.tree, traintask)
 
     # predict
-    t.pred  <- predict(t.rpart, testtask)
+    t.pred  <- predict(t.rpart, newdata = ts)
 
     # pass prediction through calibrated model
     if (calib == TRUE) {
-        t.pred.calib <- calib.mod(t.rpart, t.pred, calibtask, cs.label)
+        t.pred.calib <- calib.mod(t.rpart, t.pred, cs, cs.label)
     }
 
     end     <- Sys.time()
@@ -176,12 +169,9 @@ rf.mod <- function(learner, tr, ts, calib = FALSE) {
         tr         <- calib.data$tr
         cs         <- calib.data$cs
         cs.label   <- calib.data$cs.label
-
-        calibtask <- makeClassifTask(data = cs, target = "return", positive = 1)
     }
 
     traintask <- makeClassifTask(data = tr, target = "return", positive = 1)
-    testtask  <- makeClassifTask(data = ts, target = "return", positive = 1)
 
     # make Learner
     rf <- makeLearner(learner, predict.type = "prob",
@@ -189,14 +179,14 @@ rf.mod <- function(learner, tr, ts, calib = FALSE) {
 
     # hyperparameters
     rf_param <- makeParamSet(
-        makeIntegerParam("ntree",lower = 50, upper = 200),
-        makeIntegerParam("mtry", lower = 3, upper = 10),
-        makeIntegerParam("nodesize", lower = 10, upper = 40)
+        makeDiscreteParam("ntree", values = seq(100, 200, by=10)),
+        makeDiscreteParam("nodesize", values = seq(10, 40, by=5)),
+        makeIntegerParam("mtry", lower = 3, upper = 10)
     )
 
     # tune parameters (random rather than grid search faster)
-    rancontrol <- makeTuneControlRandom(maxit = 20L)
-    set_cv     <- makeResampleDesc("CV",iters = 3L)
+    rancontrol <- makeTuneControlRandom(maxit = 30L)
+    set_cv     <- makeResampleDesc("CV",iters = 4L)
 
     start <- Sys.time()
 
@@ -217,11 +207,11 @@ rf.mod <- function(learner, tr, ts, calib = FALSE) {
     rforest  <- mlr::train(rf.tree, traintask)
 
     # predict
-    rf.pred  <- predict(rforest, testtask)
+    rf.pred  <- predict(rforest, newdata = ts)
 
     # pass prediction through calibrated model
     if (calib == TRUE) {
-        rf.pred.calib <- calib.mod(rforest, rf.pred, calibtask, cs.label)
+        rf.pred.calib <- calib.mod(rforest, rf.pred, cs, cs.label)
     }
 
     end     <- Sys.time()
@@ -242,19 +232,15 @@ xgb.mod <- function(learner, tr, ts, calib = FALSE) {
     if (calib == TRUE) {
         calib.data <- calib.part(tr)
         tr         <- calib.data$tr
-        cs         <- calib.data$cs
         cs.label   <- calib.data$cs.label
-
-        calibtask <- makeClassifTask(data = cs, target = "return", positive = 1)
-        calibtask <- createDummyFeatures(obj = calibtask)
+        cs         <- createDummyFeatures(obj = calib.data$cs)
     }
 
     traintask <- makeClassifTask(data = tr, target = "return", positive = 1)
-    testtask  <- makeClassifTask(data = ts, target = "return", positive = 1)
 
     # one hot encoding
     traintask <- createDummyFeatures(obj = traintask)
-    testtask  <- createDummyFeatures(obj = testtask)
+    ts        <- createDummyFeatures(obj = ts)
 
     # make learner
     xg_set <- makeLearner(learner, predict.type = "prob")
@@ -263,7 +249,7 @@ xgb.mod <- function(learner, tr, ts, calib = FALSE) {
     set_cv     <- makeResampleDesc("CV",iters = 4L)
 
     xg_ps <- makeParamSet(
-        makeDiscreteParam("booster", values = c("gbtree", "dart")),
+        makeDiscreteParam("booster", values = c("gbtree")),
         makeDiscreteParam("gamma", values = c(0, 0.1, 0.2)),
         makeDiscreteParam("eta", values = c(0.01, 0.05, 0.1, 0.15)),
         makeDiscreteParam("nrounds", values = c(50, 100, 200)),
@@ -289,11 +275,11 @@ xgb.mod <- function(learner, tr, ts, calib = FALSE) {
     xg_model <- mlr::train(xg_new, traintask)
 
     # predict
-    xg_pred  <- predict(xg_model, testtask)
+    xg_pred  <- predict(xg_model, newdata = ts)
 
     # pass prediction through calibrated model
     if (calib == TRUE) {
-        xg.pred.calib <- calib.mod(xg_model, xg_pred, calibtask, cs.label)
+        xg.pred.calib <- calib.mod(xg_model, xg_pred, cs, cs.label)
     }
 
     end     <- Sys.time()
@@ -316,16 +302,13 @@ nn.mod <- function(learner, tr, ts, calib = FALSE) {
         tr         <- calib.data$tr
         cs         <- calib.data$cs
         cs.label   <- calib.data$cs.label
-
-        calibtask <- makeClassifTask(data = cs, target = "return", positive = 1)
     }
 
     traintask <- makeClassifTask(data = tr, target = "return", positive = 1)
-    testtask  <- makeClassifTask(data = ts, target = "return", positive = 1)
 
     nn <- makeLearner(learner, predict.type = "prob")
 
-    rancontrol <- makeTuneControlRandom(maxit = 30L)
+    rancontrol <- makeTuneControlRandom(maxit = 20L)
     set_cv     <- makeResampleDesc("CV",iters = 4L)
 
     nn_par <- makeParamSet(
@@ -351,11 +334,11 @@ nn.mod <- function(learner, tr, ts, calib = FALSE) {
     nn_mod  <- mlr::train(final_nn, traintask)
 
     # predict
-    nn_pred <- predict(nn_mod, testtask)
+    nn_pred <- predict(nn_mod, newdata = ts)
 
     # pass prediction through calibrated model
     if (calib == TRUE) {
-        nn.pred.calib <- calib.mod(nn_mod, nn_pred, calibtask, cs.label)
+        nn.pred.calib <- calib.mod(nn_mod, nn_pred, cs, cs.label)
     }
 
     end     <- Sys.time()
