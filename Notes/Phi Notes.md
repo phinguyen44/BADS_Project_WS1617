@@ -46,6 +46,7 @@
     - Calibration should be done on a separately trained set, then the output of the training set should be passed through the calibrated model (Niculescu)
     - Add reliability plots to show how each output changed
     - See notes on [posterior probabilities](https://en.wikipedia.org/wiki/Posterior_probability) on wikipedia
+    - Show how improved the logloss metric is
 
 ## Model Evaluation
 
@@ -58,6 +59,7 @@
     - In our cost matrix, a false positive is an opportunity cost, but a False Negative is actual cost (show table)
     - Our problem is one of example-dependent misclassification costs - that is, costs are associated at the individual case-level, on the price of the item in question.
     - Our approach is an extension of the ROCIV approach (as described by Fawcett 2006) but used to find optimal cutoff point
+5. Results from cross-validation are averaged together
 
 ## Prediction
 
