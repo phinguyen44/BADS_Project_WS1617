@@ -252,7 +252,7 @@ xgb.mod <- function(learner, tr, ts, calib = FALSE) {
         makeDiscreteParam("booster", values = c("gbtree")),
         makeDiscreteParam("gamma", values = c(0, 0.1, 0.2)),
         makeDiscreteParam("eta", values = c(0.01, 0.05, 0.1, 0.15)),
-        makeDiscreteParam("nrounds", values = c(50, 100, 200)),
+        makeDiscreteParam("nrounds", values = c(50, 100, 200, 400)),
         makeDiscreteParam("lambda", values = seq(0.3, 0.6, by=0.05)),
         makeIntegerParam("max_depth", lower = 3L, upper = 8L)
     )
@@ -308,12 +308,12 @@ nn.mod <- function(learner, tr, ts, calib = FALSE) {
 
     nn <- makeLearner(learner, predict.type = "prob")
 
-    rancontrol <- makeTuneControlRandom(maxit = 20L)
+    rancontrol <- makeTuneControlRandom(maxit = 30L)
     set_cv     <- makeResampleDesc("CV",iters = 4L)
 
     nn_par <- makeParamSet(
-        makeDiscreteParam("size", values = seq(2, 8, by=1)),
-        makeDiscreteParam("decay", values = seq(0, 0.5, by=0.1))
+        makeDiscreteParam("size", values = seq(3, 8, by=1)),
+        makeDiscreteParam("decay", values = c(1, 0.5, 0.1, 0.05, 1e-2, 1e-3, 1e-4, 1e-5, 1e-6, 1e-7))
     )
 
     start <- Sys.time()

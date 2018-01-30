@@ -1,5 +1,5 @@
 ################################################################################
-# CompareModels.R
+# CrossValidation.R
 #
 ################################################################################
 # Description:
@@ -16,6 +16,7 @@ rm(list = ls())
 wd = file.path(Sys.getenv("HOME"),"documents/projects/bads-ws1718-group21")
 setwd(wd)
 
+# TODO: CHANGE THIS TO BE MORE USABLE FOR ALL PARTIES
 # Load packages
 needs(tidyverse, magrittr, purrr, infuser,
       caret, mlr, xgboost, gbm, rpart, e1071, MASS, nnet,
@@ -23,16 +24,16 @@ needs(tidyverse, magrittr, purrr, infuser,
 
 # Load data
 load("Data/BADS_WS1718_known_var.RData")
-df.known <- read.csv("Data/BADS_WS1718_known.csv")
+df.known   <- read.csv("Data/BADS_WS1718_known.csv")
 
 # Source performance metric calculations
 source("Scripts/Helpful.R")
 source("Scripts/Helpful-Models.R")
 
 ################################################################################
-# FEATURES
+# INITIAL SETUP
 
-# select variables
+# reorder and select variables
 df.train <- dat.input1 %>%
     dplyr::select(
         # DEMOGRAPHIC VARS
@@ -54,17 +55,9 @@ df.train <- dat.input1 %>%
         item_price, item_priceB, price.inc.ratio,
         return)
 
-################################################################################
-# INITIAL SPLIT
-
-# SPLIT DATA
-set.seed(321)
-idx.train <- createDataPartition(y = df.train$return, p = 0.8, list = FALSE)
-tr <- df.train[idx.train, ]   # training set
-ts <- df.train[-idx.train, ]  # test set
-
-tr.label <- tr$return
-ts.label <- ts$return
+# SAVE DATA FOR LATER
+df.label <- df.train$return
+df.price <- df.train$item_price
 
 ## LIST OF FUNCTIONS
 learners <- list(lr = "classif.logreg",
@@ -76,9 +69,6 @@ mods <- list(lr = lr.mod,
              nn  = nn.mod,
              xgb = xgb.mod)
 
-# GET price for later
-ts.price <- df.train$item_price[-idx.train]
-
 ################################################################################
 # CROSS-VALIDATION
 
@@ -89,8 +79,9 @@ ts.price <- df.train$item_price[-idx.train]
 
 start1 <- Sys.time()
 
-k <- 5
-folds <- createFolds(tr$return, k = k, list = TRUE)
+set.seed(321)
+k     <- 5
+folds <- createFolds(df.train$return, k = k, list = TRUE)
 str(folds)
 
 foldruntime <- rep(0, k)
@@ -105,8 +96,8 @@ for (i in 1:k) {
 
     start <- Sys.time()
 
-    tr.f <- tr[-folds[[i]], ] # in CV training
-    ts.f <- tr[folds[[i]], ]  # in CV test
+    tr.f <- df.train[-folds[[i]], ] # in CV training
+    ts.f <- df.train[folds[[i]], ]  # in CV test
 
     tr.label.f <- tr.f$return
     ts.label.f <- ts.f$return
@@ -120,13 +111,16 @@ for (i in 1:k) {
     tr.f$item_size_WOE <- WOE(tr.f, "item_size")
     tr.f$brand_id_WOE <- WOE(tr.f, "brand_id")
 
-    user_id_WOE <- tr.f %>% dplyr::select(user_id, user_id_WOE) %>% distinct
-    item_id_WOE <- tr.f %>% dplyr::select(item_id, item_id_WOE) %>% distinct
-    item_color_WOE <- tr.f %>% dplyr::select(item_color, item_color_WOE) %>%
-        distinct
-    item_size_WOE <- tr.f %>% dplyr::select(item_size, item_size_WOE) %>%
-        distinct
-    brand_id_WOE <- tr.f %>% dplyr::select(brand_id, brand_id_WOE) %>% distinct
+    user_id_WOE <- tr.f %>% 
+        dplyr::select(user_id, user_id_WOE) %>% distinct
+    item_id_WOE <- tr.f %>% 
+        dplyr::select(item_id, item_id_WOE) %>% distinct
+    item_color_WOE <- tr.f %>%
+        dplyr::select(item_color, item_color_WOE) %>% distinct
+    item_size_WOE <- tr.f %>% 
+        dplyr::select(item_size, item_size_WOE) %>% distinct
+    brand_id_WOE <- tr.f %>% 
+        dplyr::select(brand_id, brand_id_WOE) %>% distinct
 
     # apply WOE labels to test set
     ts.f <- ts.f %>%
@@ -195,12 +189,12 @@ alldata  <- transpose(yhat)
 alldata2 <- lapply(alldata, transpose)
 
 # predictions for each model
-preds   <- lapply(alldata2, 
-                  function(x) lapply(x$pred, function(y) y$data$prob.1))
-preds.r <- lapply(preds, 
-                  function(x) lapply(x, function(y) round(y)))
-p.calib <- lapply(alldata2, 
-                  function(x) lapply(x$pred.calib, function(y) y$data$prob.1))
+preds     <- lapply(alldata2, 
+                    function(x) lapply(x$pred, function(y) y$data$prob.1))
+preds.r   <- lapply(preds, 
+                    function(x) lapply(x, function(y) round(y)))
+p.calib   <- lapply(alldata2, 
+                    function(x) lapply(x$pred.calib, function(y) y$data$prob.1))
 p.calib.r <- lapply(p.calib, 
                     function(x) lapply(x, function(y) round(y)))
 
@@ -208,11 +202,14 @@ p.calib.r <- lapply(p.calib,
 thresh.list       <- preds
 thresh.list.calib <- preds
 
-for (i in 1:length(learners)) { # 2
+for (i in 1:length(learners)) { # 4
     d       <- data.frame()
     d.calib <- data.frame()
     
     for (j in 1:k) {  # 5
+        
+        cat(paste0("Get Threshold: ", i, ",", j))
+        
         initial <- find.threshold(act  = actual[[j]], 
                                   pred = preds[[i]][[j]], 
                                   cost = ts.price.f[[j]])
@@ -221,9 +218,9 @@ for (i in 1:length(learners)) { # 2
                                   cost = ts.price.f[[j]])
         d       <- rbind(d, initial)
         d.calib <- rbind(d.calib, init.ca)
-  }
-  thresh.list[[i]]       <- d
-  thresh.list.calib[[i]] <- d.calib
+    }
+    thresh.list[[i]]       <- d
+    thresh.list.calib[[i]] <- d.calib
 }
 
 # Use this mean
@@ -232,9 +229,9 @@ thresh.mean.l.calib <- lapply(thresh.list.calib, function(x) mean(x$threshold))
 
 # Get avg. cost and standard error
 avg.cost   <- lapply(thresh.list, function(x) mean(x$cost))
-se.cost    <- lapply(thresh.list, function(x) sd(x$cost)/sqrt(k))
-
 avg.cost.c <- lapply(thresh.list.calib, function(x) mean(x$cost))
+
+se.cost    <- lapply(thresh.list, function(x) sd(x$cost)/sqrt(k))
 se.cost.c  <- lapply(thresh.list.calib, function(x) sd(x$cost)/sqrt(k))
 
 # hyperparameters (examine)
@@ -251,110 +248,24 @@ hp.df$xgb
 hp.df$rf
 
 # prediction accuracy (just for good measure)
-get.acc  <- function(x, act) confusionMatrix(x, act, positive="1")$overall[1]
+get.acc    <- function(x, act) confusionMatrix(x, act, positive="1")$overall[1]
 pred.acc   <- lapply(preds.r, function(x) map2_dbl(x, actual, get.acc))
 pred.acc.c <- lapply(p.calib.r, function(x) map2_dbl(x, actual, get.acc))
 
-################################################################################
-# TRAIN FINAL MODEL
+avg.acc   <- sapply(pred.acc, mean)
+avg.acc.c <- sapply(pred.acc.c, mean)
 
-# add in WOE variables
-tr$user_id_WOE    <- WOE(tr, "user_id")
-tr$item_id_WOE    <- WOE(tr, "item_id")
-tr$item_color_WOE <- WOE(tr, "item_color")
-tr$item_size_WOE  <- WOE(tr, "item_size")
-tr$brand_id_WOE   <- WOE(tr, "brand_id")
-
-user_id_WOE    <- tr %>% dplyr::select(user_id, user_id_WOE) %>% distinct
-item_id_WOE    <- tr %>% dplyr::select(item_id, item_id_WOE) %>% distinct
-item_color_WOE <- tr %>% dplyr::select(item_color, item_color_WOE) %>%
-    distinct
-item_size_WOE  <- tr %>% dplyr::select(item_size, item_size_WOE) %>%
-    distinct
-brand_id_WOE   <- tr %>% dplyr::select(brand_id, brand_id_WOE) %>% distinct
-
-# apply WOE labels to test set
-ts <- ts %>%
-    left_join(user_id_WOE, "user_id") %>%
-    left_join(item_id_WOE, "item_id") %>%
-    left_join(item_color_WOE, "item_color") %>%
-    left_join(item_size_WOE, "item_size") %>%
-    left_join(brand_id_WOE, "brand_id")
-
-# 0 out NA's
-ts[is.na(ts)] <- 0
-
-# select right variables for dataset
-tr <- tr %>%
-    dplyr::select(
-        # DEMOGRAPHIC VARS
-        age,
-        user_state, user_title, 
-        first.order, account.age.order,
-        user_id_WOE,
-        # BASKET VARS
-        deliver.time, order_month, weekday, no.return,
-        basket.size,
-        order.same.itemD,item.basket.size.diffD, 
-        # ITEM VARS
-        item_id_WOE, brand_id_WOE,
-        item.category, item.subcategory,
-        is.discount,
-        item_priceB, price.inc.ratio,
-        return)
-
-ts <- ts %>%
-    dplyr::select(
-        # DEMOGRAPHIC VARS
-        age,
-        user_state, user_title, 
-        first.order, account.age.order,
-        user_id_WOE,
-        # BASKET VARS
-        deliver.time, order_month, weekday, no.return,
-        basket.size,
-        order.same.itemD,item.basket.size.diffD, 
-        # ITEM VARS
-        item_id_WOE, brand_id_WOE,
-        item.category, item.subcategory,
-        is.discount,
-        item_priceB, price.inc.ratio,
-        return)
-
-# TRAIN MODEL
-fin   <- map2(mods, learners, function(f, x) f(x, tr, ts, calib = TRUE))
-
-# APPLY NEW THRESHOLD
-fin.new       <- map2(fin, thresh.mean.l, function(x,y) setThreshold(x$pred,y))
-fin.new.calib <- map2(fin, thresh.mean.l.calib, 
-                      function(x,y) setThreshold(x$pred.calib,y))
-
-# get accuracy and cost
-final.acc  <- map2(fin.new, thresh.mean.l, function(x,y) acc.calc(y, ts.label, pred = x$data$prob.1))
-final.cost <- map2(fin.new, thresh.mean.l, function(x,y) cost.calc(y, ts.label, pred = x$data$prob.1, cost = ts.price))
-
-final.acc.calib  <- map2(fin.new.calib, thresh.mean.l.calib, 
-                         function(x,y) acc.calc(y, ts.label, x$data$prob.1))
-final.cost.calib <- map2(fin.new.calib, thresh.mean.l.calib, 
-                         function(x,y) cost.calc(y, 
-                                                 ts.label, 
-                                                 x$data$prob.1, 
-                                                 ts.price))
-
-# GET PREDICTIONS
-pred   <- lapply(fin, function(x) x$pred$data$prob.1)
-pred.c <- lapply(fin, function(x) x$pred.calib$data$prob.1)
-
-# GET HYPERPARAMETERS
-hp.all    <- lapply(fin[2:4], function(x) x$pars)
-
-end1 <- Sys.time()
-end1-start1
+acc.se   <- lapply(pred.acc, function(x) sd(x)/length(x))
+acc.c.se <- lapply(pred.acc.c, function(x) sd(x)/length(x))
 
 ################################################################################
 # ENSEMBLE
 
+# TODO: CONSIDER MAKING THIS A FUNCTION!!!
+
 # Build majority vote ensemble model, tie is broken by best model
+
+# converts response to numeric
 to.numeric <- function(pred.object) {
     
     response  <- pred.object$data$response
@@ -377,7 +288,7 @@ the.response.cal <- data.frame(sapply(fin.new.calib, to.numeric))
 the.means.cal    <- rowMeans(the.response.cal)
 m.idx.cal        <- which(the.means.cal == 0.5)
 
-# get final results
+# GET FINAL PREDICTION RESULTS
 final.results        <- the.means
 final.results[m.idx] <- the.response[m.idx, best.mod]
 final.results        <- round(final.results)
@@ -386,28 +297,93 @@ final.results.cal            <- the.means.cal
 final.results.cal[m.idx.cal] <- the.response.cal[m.idx.cal, best.mod.cal]
 final.results.cal            <- round(final.results.cal)
 
-# final cost?
-cost.calc(threshold=0.5, act=ts.label, pred=final.results, cost=ts.price)
-cost.calc(threshold=0.5, act=ts.label, pred=final.results.cal, cost=ts.price)
-
 ################################################################################
-# BENCHMARK PLOTS
+# BENCHMARK EXPERIMENTS
+
+# reorganize predictions for simplicity (used for benchmark experiment)
+pf.up   <- transpose(preds)
+pf.c.up <- transpose(p.calib)
+pf1     <- pf.up[[1]]
+pf1c    <- pf.c.up[[1]]
+act1    <- actual[[1]]
+
+####### RESULTS FROM CALIBRATION:
 
 # Reliability plots to compare original vs calibrated results (for 1 fold)
-for (i in 1:length(pred)) {
+for (i in 1:length(mods)) {
     pdf(infuse("Written/Images/ReliabilityPlot-{{model}}.pdf", 
                model = names(mods[i])),
         width  = 6,
         height = 4)
-    reliability.plot(ts.label, pred[[i]], pred.c[[i]], 10)
+    reliability.plot(act, pf1[[i]], pf1c[[i]], 10)
     dev.off()
 }
 
-# TODO: plot cost bands
-# ggplot2
+# show average logLoss improvements from calibration
+ll <- data.frame(
+    sapply(preds, function(x) map2_dbl(actual, x, ModelMetrics::logLoss))
+)
+ll.c <- data.frame(
+    sapply(p.calib, function(x) map2_dbl(actual, x, ModelMetrics::logLoss))
+)
+ll.avg   <- apply(ll, 2, mean)
+ll.c.avg <- apply(ll.c, 2, mean)
 
-# TODO: plot threshold / cost plots for each model (one of the runs)
-# arbitrarily choose k = 1
+ll.compare <- data.frame(cbind(ll.avg, ll.c.avg))
+colnames(ll.compare) <- c('Uncalibrated', 'Calibrated')
+ll.compare
+
+# show cost / accuracy changes due to calibration
+cost.compare <- data.frame(cbind(unlist(avg.cost), unlist(avg.cost.c)))
+colnames(cost.compare) <- c('Uncalibrated', 'Calibrated')
+cost.compare
+
+acc.compare <- data.frame(cbind(unlist(avg.acc), unlist(avg.acc.c)))
+colnames(acc.compare) <- c('Uncalibrated', 'Calibrated')
+acc.compare
+
+####### RESULTS FROM CROSS-VALIDATION (USING CALIBRATED RESULTS):
+
+# plot cost bands
+cost.df <- data.frame(cbind(unlist(avg.cost.c), unlist(se.cost.c)))
+colnames(cost.df) <- c('Cost', 'SE')
+cost.df$Model <- rownames(cost.df)
+
+p <- ggplot(data = cost.df, aes(x = Model, y = Cost)) + 
+    geom_point() +
+    geom_errorbar(aes(ymin = Cost - SE, ymax = Cost + SE)) + 
+    labs(title = "Total Cost") + 
+    labs(subtitle = infuse("{{num}}-Fold Cross-Validation", num=k)) + 
+    theme(plot.title = element_text(size=16)) +
+    theme(plot.subtitle = element_text(size=10, color = "#7F7F7F")) + 
+    theme_bw()
+p
+
+# plot accuracy bands
+acc.df <- data.frame(cbind(unlist(avg.acc.c), unlist(acc.c.se)))
+colnames(acc.df) <- c('Acc', 'SE')
+acc.df$Model <- rownames(acc.df)
+
+p2 <- ggplot(data = acc.df, aes(x = Model, y = Acc)) + 
+    geom_point() +
+    geom_errorbar(aes(ymin = Acc - SE, ymax = Acc + SE)) + 
+    labs(title = "Accuracy") + 
+    labs(subtitle = infuse("{{num}}-Fold Cross-Validation", num=k)) + 
+    theme(plot.title = element_text(size=16)) +
+    theme(plot.subtitle = element_text(size=10, color = "#7F7F7F")) + 
+    theme_minimal()
+p2
+    
+####### RESULTS FROM THRESHOLD OPTIMIZATION (USING CALIBRATED RESULTS): 
+
+# TODO: plot threshold / cost plots for each model (for 1 fold)
+    
+####### RESULTS FROM ENSEMBLING (USING CALIBRATED RESULTS):
+    
+# TODO: show improvement due to ensembling (average)
 
 ################################################################################
 # PREDICTION
+
+# TODO: how do we report? do we estimate what 'final cost' per cust would be?
+# or maybe final cost per mistake?

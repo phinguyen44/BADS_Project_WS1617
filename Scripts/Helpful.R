@@ -286,7 +286,7 @@ find.threshold <- function(act, pred, cost) {
     combined <- data.frame(threshold = threshold, 
                            accuracy  = all.acc, 
                            cost      = all.cost)
-    best.cutoff <- combined$threshold[which(all.cost == max(all.cost))]
+    best.cutoff <- combined$threshold[which.max(all.cost)]
     min.cost    <- max(all.cost)
     
     final <- data.frame(threshold = best.cutoff, cost = min.cost)
@@ -319,7 +319,9 @@ plot.threshold <- function(act, pred, cost) {
         labs(subtitle = "Red line indicates cutoff that minimizes costs") + 
         
         theme(plot.title = element_text(size=16)) +
-        theme(plot.subtitle = element_text(size=10, color = "#7F7F7F"))
+        theme(plot.subtitle = element_text(size=10, color = "#7F7F7F")) + 
+        theme_bw()
+    
     p2 <- ggplot(data = combined, aes(x = threshold, y = cost)) +
         geom_line() + 
         geom_vline(xintercept = best.cutoff, color = "red", alpha = 0.7) +
@@ -330,7 +332,8 @@ plot.threshold <- function(act, pred, cost) {
         labs(subtitle = "Red line indicates cutoff that minimizes costs") + 
         
         theme(plot.title = element_text(size=16)) +
-        theme(plot.subtitle = element_text(size=10, color = "#7F7F7F"))
+        theme(plot.subtitle = element_text(size=10, color = "#7F7F7F")) + 
+        theme_bw()
     
     return(grid.arrange(p1, p2, ncol=2))
 }
