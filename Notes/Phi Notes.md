@@ -2,25 +2,19 @@
 
 ## Data Preparation
 
-1. How to handle imputation? Both academically (aka with papers) and technically (with packages like MICE)
-2. In the future do something like mahalanobis transformation.
-3. How does xgboost (or all the models) handle non-linear interactions? Can it create a non-linear decision boundary with being fed linear features? - apparently yes it can! since it's a tree, automatically detects non-linear feature interactions (STILL NEED PAPER FOR THIS)
-    - Note that omitting the `no.return` variable and only including it in post-processing reduces the overall performance. why? maybe because of interactions?
-4. Use [WOE](https://stats.stackexchange.com/questions/189568/replacing-variables-by-woe-weight-of-evidence-in-logistic-regression/229039) - includes advantages and disadvantages
+1. In the future do something like mahalanobis transformation.
+2. How does xgboost (or all the models) handle non-linear interactions? Can it create a non-linear decision boundary with being fed linear features? - apparently yes it can! since it's a tree, automatically detects non-linear feature interactions (STILL NEED PAPER FOR THIS)
+3. Use [WOE](https://stats.stackexchange.com/questions/189568/replacing-variables-by-woe-weight-of-evidence-in-logistic-regression/229039) - includes advantages and disadvantages
     - Don't forget to 0 out cases in unknown set if they don't appear in known set
     - How do we prevent overfitting (bias) with WOE? Use cross-validation then perform WOE on the variables
 5. Wrapper and filter for feature selection
-    - add plots for filtering and using your functions
-    - wrapper uses the performance of a learning algorithm to assess usefulness of a feature set. learner is trained repeatedly on different feature subsets and the subset that leads to best performance is chosen
     - advantage of wrapper is the ability to check interactions; however it is incredibly computationally intensive
 6. xgboost and rf already have in-built feature selection (glmnet too but we don't use that)
 
 ## Model Generation
 
 1. How does the gradient boosting work? Combines simple classifiers - each round of boosting corrects error of prior model by using gradients (residuals) - Friedman (2001)
-2. Can gradient accept different loss functions? Apparently yes (can accept any differentiable loss function)
-    1. Alternatively apply cutoff after probabilities have been assigned
-3. Hyperparameters for our models:
+2. Hyperparameters for our models:
     1. xgboost: (first 2 control complexity to prevent overfitting, next 2 add randomness to make training more robust to noise)
         - max_depth: depth of tree. higher values increase complexity / overfitting
         - gamma: minimum loss reduction required to further partition a tree. (regularization) higher values decrease model complexity
@@ -50,16 +44,10 @@
 
 ## Model Evaluation
 
-1. Cross-validation does one of two things: 1) model selection (by finding best hyperparameters OR averaging results) 2) error estimation of a model (measure of out-of-sample accuracy)
-2. Benchmark experiments - show performance of cross-validation across resampling iterations. Plot as a ggplot with error bars.
-    - CV also gets best cutoff (average)
-    - Plots that compare cost & accuracy
-4. [Cost-sensitive classification](https://mlr-org.github.io/mlr-tutorial/release/html/cost_sensitive_classif/index.html#class-dependent-misclassification-costs)
-    - Could each model have it's own cutoff? i.e. minimize cost at individual model, then minimize at total?
+1. [Cost-sensitive classification](https://mlr-org.github.io/mlr-tutorial/release/html/cost_sensitive_classif/index.html#class-dependent-misclassification-costs)
     - In our cost matrix, a false positive is an opportunity cost, but a False Negative is actual cost (show table)
     - Our problem is one of example-dependent misclassification costs - that is, costs are associated at the individual case-level, on the price of the item in question.
     - Our approach is an extension of the ROCIV approach (as described by Fawcett 2006) but used to find optimal cutoff point
-5. Results from cross-validation are averaged together
 
 ## Prediction
 
@@ -81,6 +69,6 @@
 
 1. https://www.analyticsvidhya.com/blog/2016/08/practicing-machine-learning-techniques-in-r-with-mlr-package/
 2. https://www.hackerearth.com/practice/machine-learning/machine-learning-algorithms/beginners-tutorial-on-xgboost-parameter-tuning-r/tutorial/
-3. https://datascience.stackexchange.com/questions/13960/how-to-choose-a-classifier-after-cross-validation
-4. https://stats.stackexchange.com/questions/65128/nested-cross-validation-for-model-selection
-5. [Graphic on nested resampling](https://mlr-org.github.io/mlr-tutorial/release/html/nested_resampling/index.html)
+3. https://stats.stackexchange.com/questions/65128/nested-cross-validation-for-model-selection
+4. [Graphic on nested resampling](https://mlr-org.github.io/mlr-tutorial/release/html/nested_resampling/index.html)
+5. [AUC vs accuracy](https://stats.stackexchange.com/questions/68893/area-under-curve-of-roc-vs-overall-accuracy)

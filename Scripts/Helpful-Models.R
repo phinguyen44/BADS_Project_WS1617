@@ -179,9 +179,9 @@ rf.mod <- function(learner, tr, ts, calib = FALSE) {
 
     # hyperparameters
     rf_param <- makeParamSet(
-        makeDiscreteParam("ntree", values = seq(100, 200, by=10)),
+        makeDiscreteParam("ntree", values = seq(100, 200, by=20)),
         makeDiscreteParam("nodesize", values = seq(10, 40, by=5)),
-        makeIntegerParam("mtry", lower = 3, upper = 10)
+        makeIntegerParam("mtry", lower = 4, upper = 10)
     )
 
     # tune parameters (random rather than grid search faster)

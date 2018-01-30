@@ -16,7 +16,6 @@ rm(list = ls())
 wd = file.path(Sys.getenv("HOME"),"documents/projects/bads-ws1718-group21")
 setwd(wd)
 
-# TODO: CHANGE THIS TO BE MORE USABLE FOR ALL PARTIES
 # List all packages needed for session
 neededPackages <- c("tidyverse", "magrittr", "purrr", "infuser",
                     "caret", "mlr", 
@@ -249,8 +248,6 @@ avg.cost.c <- lapply(thresh.list.calib, function(x) mean(x$cost))
 
 se.cost    <- lapply(thresh.list, function(x) sd(x$cost)/sqrt(k))
 se.cost.c  <- lapply(thresh.list.calib, function(x) sd(x$cost)/sqrt(k))
-
-# Get predictions after
 
 # hyperparameters (examine)
 hp    <- lapply(alldata2[2:4], function(x) lapply(x$pars, function(y) y))
