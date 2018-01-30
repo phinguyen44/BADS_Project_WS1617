@@ -94,12 +94,9 @@ dat.input1 <- dat.input1 %>%
                    - item.color.group, -order.same.itemD, 
                    - item.basket.size.diffD, - first.order,
                    - item.basket.same.categoryD, - item.basket.category.size.diffD,
-                   - WestGerm, - age.group, -brand.cluster,
-                   - age.NA, - income.bl, - item_color, price.inc.ratio)
-#, - basket.big)
-
-# -user.total.items, item.basket.size.diff
-# -order.same.item
+                   - WestGerm, - age.group, - brand.cluster, - basket.big
+                   - age.NA, - income.bl, - item_color, - price.inc.ratio,
+                   - income.age, - order.same.item)
 
 ############################################################################
 ############################################################################
@@ -113,23 +110,19 @@ Train <- dat.input1[part.ind , ]
 
 # To prevent from overfitting, calculate relational data only on train set
 
-### Recalculate relational data of customer
-Train  <- Train %>% 
-    group_by(user_id) %>% 
-    dplyr::mutate(
-        user.total.expen = sum(item_price),
-        user.total.items = n())
-
-# Summarise customer data
+# Summarise customer data based on training set
 Cust.data <- Train %>% 
     group_by(user_id) %>% 
     dplyr::summarise(
         user.total.expen = sum(item_price),
         user.total.items = n())
 
-# Assign information to Test set
+# Assign information to Training and Test set
 Test  <- Test[,-c(23,24)]
+Train <- Train[,-c(23,24)]
 Test  <- left_join(Test, Cust.data, by = "user_id")
+Train  <- left_join(Train, Cust.data, by = "user_id")
+
 Test$user.total.expen <- ifelse(is.na(Test$user.total.expen), 0, Test$user.total.expen)
 Test$user.total.items <- ifelse(is.na(Test$user.total.items), 0, Test$user.total.items)
 rm(Cust.data)
@@ -137,19 +130,19 @@ rm(Cust.data)
 
 # Standardize both data sets 
 
-Train.dat <- data.frame(cbind(scale(Train[, sapply(dat.input1, class) == "numeric"]),
-                              scale(Train[, sapply(dat.input1, class) == "integer"]),
-                                    Train[, sapply(dat.input1, class) == "factor"]))
+Train.dat <- data.frame(cbind(scale(Train[, sapply(Train, class) == "numeric"]),
+                             scale(Train[, sapply(Train, class) == "integer"]),
+                             Train[, sapply(Train, class) == "factor"]))
 
-Test.dat <- data.frame(cbind(scale(Test[, sapply(dat.input1, class) == "numeric"]),
-                             scale(Test[, sapply(dat.input1, class) == "integer"]),
-                                   Test[, sapply(dat.input1, class) == "factor"]))
+Test.dat <- data.frame(cbind(scale(Test[, sapply(Test, class) == "numeric"]),
+                             scale(Test[, sapply(Test, class) == "integer"]),
+                                   Test[, sapply(Test, class) == "factor"]))
 
 # Calculate WOE for Train and project onto Test (exclude dummy variables)
-WOE.scores  <- woe(return ~ ., data = Train.dat[,-c(23,28)], zeroadj = 1)
+WOE.scores  <- woe(return ~ ., data = Train.dat[,-c(21,26)], zeroadj = 1)
 Train.final <- data.frame(cbind(WOE.scores$xnew, 
                                 return = Train$return,
-                                Train.dat[,c(23,28)]))
+                                Train.dat[,c(21,26)]))
 Test.final  <- predict(WOE.scores, newdata = Test.dat, replace = TRUE)
 
 # Set up Data set for Wrapper and clean up
@@ -164,7 +157,7 @@ RandomForest   <- makeLearner("classif.randomForest",
 
 # Selection control for sequential backward search
 SearchCtrl <- makeFeatSelControlSequential(method = "sfbs", alpha = 0.001,
-                                           beta = -0.0001) 
+                                           beta = 0) 
 
 # Indicate training and test set
 rin <- makeFixedHoldoutInstance(train.inds = 1:67001, 
