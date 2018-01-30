@@ -18,11 +18,23 @@ rm(list = ls())
 wd = file.path(Sys.getenv("HOME"),"documents/projects/bads-ws1718-group21")
 setwd(wd)
 
-# TODO: CHANGE THIS TO BE MORE USABLE FOR ALL PARTIES
-# Load packages
-needs(tidyverse, magrittr, purrr, infuser,
-      caret, mlr, xgboost, gbm, rpart, e1071, MASS, nnet,
-      mice, pROC, parallel, parallelMap)
+# List all packages needed for session
+neededPackages <- c("tidyverse", "magrittr", "purrr", "infuser",
+                    "caret", "mlr", 
+                    "xgboost", "gbm", "rpart", "e1071", "MASS", "nnet",
+                    "pROC", "parallel", "parallelMap")
+allPackages    <- c(neededPackages %in% installed.packages()[,"Package"])
+
+# Install packages (if not already installed)
+if (!all(allPackages)) {
+    missingIDX <- which(allPackages == FALSE)
+    needed     <- neededPackages[missingIDX]
+    lapply(needed, install.packages)  
+}
+
+# Load all defined packages
+lapply(neededPackages, function(x) suppressPackageStartupMessages(
+    library(x, character.only = TRUE)))
 
 # Load data
 load("Data/BADS_WS1718_known_ready.RData")

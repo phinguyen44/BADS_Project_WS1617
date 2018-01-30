@@ -17,10 +17,23 @@ wd = file.path(Sys.getenv("HOME"),"documents/projects/bads-ws1718-group21")
 setwd(wd)
 
 # TODO: CHANGE THIS TO BE MORE USABLE FOR ALL PARTIES
-# Load packages
-needs(tidyverse, magrittr, purrr, infuser,
-      caret, mlr, xgboost, gbm, rpart, e1071, MASS, nnet,
-      mice, pROC, parallel, parallelMap)
+# List all packages needed for session
+neededPackages <- c("tidyverse", "magrittr", "purrr", "infuser",
+                    "caret", "mlr", 
+                    "xgboost", "gbm", "rpart", "e1071", "MASS", "nnet",
+                    "pROC", "parallel", "parallelMap")
+allPackages    <- c(neededPackages %in% installed.packages()[,"Package"])
+
+# Install packages (if not already installed)
+if (!all(allPackages)) {
+    missingIDX <- which(allPackages == FALSE)
+    needed     <- neededPackages[missingIDX]
+    lapply(needed, install.packages)  
+}
+
+# Load all defined packages
+lapply(neededPackages, function(x) suppressPackageStartupMessages(
+    library(x, character.only = TRUE)))
 
 # Load data
 load("Data/BADS_WS1718_known_var.RData")
@@ -218,6 +231,9 @@ for (i in 1:length(learners)) { # 4
                                   cost = ts.price.f[[j]])
         d       <- rbind(d, initial)
         d.calib <- rbind(d.calib, init.ca)
+        
+        # TODO: get new prediction list after setting threshold
+        
     }
     thresh.list[[i]]       <- d
     thresh.list.calib[[i]] <- d.calib
@@ -233,6 +249,8 @@ avg.cost.c <- lapply(thresh.list.calib, function(x) mean(x$cost))
 
 se.cost    <- lapply(thresh.list, function(x) sd(x$cost)/sqrt(k))
 se.cost.c  <- lapply(thresh.list.calib, function(x) sd(x$cost)/sqrt(k))
+
+# Get predictions after
 
 # hyperparameters (examine)
 hp    <- lapply(alldata2[2:4], function(x) lapply(x$pars, function(y) y))
@@ -263,39 +281,46 @@ acc.c.se <- lapply(pred.acc.c, function(x) sd(x)/length(x))
 
 # TODO: CONSIDER MAKING THIS A FUNCTION!!!
 
-# Build majority vote ensemble model, tie is broken by best model
-
-# converts response to numeric
-to.numeric <- function(pred.object) {
-    
-    response  <- pred.object$data$response
-    predicted <- as.numeric(levels(response))[response]
-    
-    return(predicted)
-    
-}
-
-# which is best model?
-best.mod     <- which.max(final.cost)
-best.mod.cal <- which.max(final.cost.calib)
-
-# in case of tie, use prediction of best
-the.response <- data.frame(sapply(fin.new, to.numeric))
-the.means    <- rowMeans(the.response)
-m.idx        <- which(the.means == 0.5)
-
-the.response.cal <- data.frame(sapply(fin.new.calib, to.numeric))
-the.means.cal    <- rowMeans(the.response.cal)
-m.idx.cal        <- which(the.means.cal == 0.5)
-
-# GET FINAL PREDICTION RESULTS
-final.results        <- the.means
-final.results[m.idx] <- the.response[m.idx, best.mod]
-final.results        <- round(final.results)
-
-final.results.cal            <- the.means.cal
-final.results.cal[m.idx.cal] <- the.response.cal[m.idx.cal, best.mod.cal]
-final.results.cal            <- round(final.results.cal)
+# # Build majority vote ensemble model, tie is broken by best model
+# 
+# # converts response to numeric
+# to.numeric <- function(pred.object) {
+#     
+#     response  <- pred.object$data$response
+#     predicted <- as.numeric(levels(response))[response]
+#     
+#     return(predicted)
+#     
+# }
+# 
+# ensembler <- function(modlist, costlist) {
+#     
+#     # which is best model?
+#     best.mod.cal <- which.max(costlist)
+#     
+# }
+# 
+# # which is best model?
+# best.mod     <- which.max(final.cost)
+# best.mod.cal <- which.max(final.cost.calib)
+# 
+# # in case of tie, use prediction of best
+# the.response <- data.frame(sapply(fin.new, to.numeric))
+# the.means    <- rowMeans(the.response)
+# m.idx        <- which(the.means == 0.5)
+# 
+# the.response.cal <- data.frame(sapply(fin.new.calib, to.numeric))
+# the.means.cal    <- rowMeans(the.response.cal)
+# m.idx.cal        <- which(the.means.cal == 0.5)
+# 
+# # GET FINAL PREDICTION RESULTS
+# final.results        <- the.means
+# final.results[m.idx] <- the.response[m.idx, best.mod]
+# final.results        <- round(final.results)
+# 
+# final.results.cal            <- the.means.cal
+# final.results.cal[m.idx.cal] <- the.response.cal[m.idx.cal, best.mod.cal]
+# final.results.cal            <- round(final.results.cal)
 
 ################################################################################
 # BENCHMARK EXPERIMENTS
@@ -306,6 +331,7 @@ pf.c.up <- transpose(p.calib)
 pf1     <- pf.up[[1]]
 pf1c    <- pf.c.up[[1]]
 act1    <- actual[[1]]
+cost1   <- ts.price.f[[1]]
 
 ####### RESULTS FROM CALIBRATION:
 
@@ -373,17 +399,13 @@ p2 <- ggplot(data = acc.df, aes(x = Model, y = Acc)) +
     theme(plot.subtitle = element_text(size=10, color = "#7F7F7F")) + 
     theme_minimal()
 p2
+# TODO: how should these plots be arranged?
     
 ####### RESULTS FROM THRESHOLD OPTIMIZATION (USING CALIBRATED RESULTS): 
 
-# TODO: plot threshold / cost plots for each model (for 1 fold)
+# plot threshold / cost plots for each model (for 1 fold)
+lapply(pf1c, function(x) plot.threshold(act1, x, cost1))
     
 ####### RESULTS FROM ENSEMBLING (USING CALIBRATED RESULTS):
     
 # TODO: show improvement due to ensembling (average)
-
-################################################################################
-# PREDICTION
-
-# TODO: how do we report? do we estimate what 'final cost' per cust would be?
-# or maybe final cost per mistake?
