@@ -95,8 +95,8 @@ dat.input1 <- dat.input1 %>%
                    - item.basket.size.diffD, - first.order,
                    - item.basket.same.categoryD, - item.basket.category.size.diffD,
                    - WestGerm, - age.group, -brand.cluster,
-                   - age.NA, - income.bl, - item_color,
-                   - price.inc.ratio, - basket.big)
+                   - age.NA, - income.bl, - item_color, price.inc.ratio)
+#, - basket.big)
 
 # -user.total.items, item.basket.size.diff
 # -order.same.item
@@ -111,6 +111,30 @@ part.ind <- createDataPartition(y = dat.input1$return, p = 0.67, list = FALSE)
 Test <-  dat.input1[-part.ind , ]
 Train <- dat.input1[part.ind , ] 
 
+# To prevent from overfitting, calculate relational data only on train set
+
+### Recalculate relational data of customer
+Train  <- Train %>% 
+    group_by(user_id) %>% 
+    dplyr::mutate(
+        user.total.expen = sum(item_price),
+        user.total.items = n())
+
+# Summarise customer data
+Cust.data <- Train %>% 
+    group_by(user_id) %>% 
+    dplyr::summarise(
+        user.total.expen = sum(item_price),
+        user.total.items = n())
+
+# Assign information to Test set
+Test  <- Test[,-c(23,24)]
+Test  <- left_join(Test, Cust.data, by = "user_id")
+Test$user.total.expen <- ifelse(is.na(Test$user.total.expen), 0, Test$user.total.expen)
+Test$user.total.items <- ifelse(is.na(Test$user.total.items), 0, Test$user.total.items)
+rm(Cust.data)
+
+
 # Standardize both data sets 
 
 Train.dat <- data.frame(cbind(scale(Train[, sapply(dat.input1, class) == "numeric"]),
@@ -121,9 +145,11 @@ Test.dat <- data.frame(cbind(scale(Test[, sapply(dat.input1, class) == "numeric"
                              scale(Test[, sapply(dat.input1, class) == "integer"]),
                                    Test[, sapply(dat.input1, class) == "factor"]))
 
-# Calculate WOE for Train and project onto Test 
-WOE.scores  <- woe(return ~ ., data = Train.dat, zeroadj = 1)
-Train.final <- data.frame(cbind(WOE.scores$xnew, return = Train$return))
+# Calculate WOE for Train and project onto Test (exclude dummy variables)
+WOE.scores  <- woe(return ~ ., data = Train.dat[,-c(23,28)], zeroadj = 1)
+Train.final <- data.frame(cbind(WOE.scores$xnew, 
+                                return = Train$return,
+                                Train.dat[,c(23,28)]))
 Test.final  <- predict(WOE.scores, newdata = Test.dat, replace = TRUE)
 
 # Set up Data set for Wrapper and clean up
@@ -137,7 +163,8 @@ RandomForest   <- makeLearner("classif.randomForest",
                   par.vals = list("replace" = TRUE, "importance" = FALSE))
 
 # Selection control for sequential backward search
-SearchCtrl <- makeFeatSelControlSequential(method = "sbs", beta = - 0.01) 
+SearchCtrl <- makeFeatSelControlSequential(method = "sfbs", alpha = 0.001,
+                                           beta = -0.0001) 
 
 # Indicate training and test set
 rin <- makeFixedHoldoutInstance(train.inds = 1:67001, 
