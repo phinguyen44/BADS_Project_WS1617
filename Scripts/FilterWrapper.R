@@ -156,13 +156,11 @@ RandomForest   <- makeLearner("classif.randomForest",
                   predict.type = "prob", 
                   par.vals = list("replace" = TRUE, "importance" = FALSE))
 
-# Selection control for sequential backward search
+# Selection control for Sequential floating backward selection (SFBS)
 #Alpha: Lower bound for upward step (increase in AUC required)
 #Beta: Lower bound for downward step (if negative, slight decrease in AUC allowed)
 SearchCtrl <- makeFeatSelControlSequential(method = "sfbs", alpha = 0.01,
                                            beta = - 0.001) 
-
-
 
 # Indicate training and test set
 rin <- makeFixedHoldoutInstance(train.inds = 1:67001, 
@@ -176,16 +174,28 @@ Selection <- selectFeatures(RandomForest, task = Selection.Task, resampling = ri
                                    control = SearchCtrl, measures = mlr::auc,
                                    show.info = TRUE)
 # Extract the selected variables
-(selected.features <- Selection$x)
+(Selection$x)
 
-# Replace WOE with orginal variables
-selected.features[9]   <- "item_id"
-selected.features[10]  <- "item_size"
-selected.features[11]  <-  "user_id"
-
+# Replace WOE with orginal variables & add return
+vec.FeatSelection <- Selection$x
+vec.FeatSelection[11]   <- "brand_id"
+vec.FeatSelection[12]   <- "item_id"
+vec.FeatSelection[13]   <- "item_size"
+vec.FeatSelection[14]   <- "user_id"
+vec.FeatSelection[15]   <- "basket_size"
+vec.FeatSelection[18]   <- "return"
 
 # Define final data set
-dat.ready <- dat.input1[,selected.features]
+dat.ready <- dat.input1[,vec.FeatSelection]
+
+# Alternatively, if you cannot run wrapper again
+dat.ready <- dat.input1 %>% 
+    dplyr::select(  age, item_price, deliver.time,
+                    no.return, account.age.order, user.total.expen,
+                    item.basket.size.same, item.basket.size.diff,
+                    item.basket.same.category, user.total.items,
+                    brand_id, item_id, item_size, user_id,
+                    basket.size, basket.big, discount.pc, return)
 
 # Export final data set
 save(dat.ready, file = "BADS_WS1718_known_ready.RData" )

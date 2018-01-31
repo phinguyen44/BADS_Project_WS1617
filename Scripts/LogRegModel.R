@@ -90,7 +90,7 @@ logReg <- glm(return ~.,
 
 summary(logReg)
 
-# Wrapper: Step-wise backward 
+# Wrapper: Sequential floating backward selection (SFBS)
 
 task <- makeClassifTask(data = Train1, target = "return", positive = "1")
 lr <- makeLearner("classif.logreg", 
