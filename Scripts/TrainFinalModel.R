@@ -5,7 +5,7 @@
 # Description:
 # 
 # BADS project - train final model
-# # TODO: standardize
+# TODO: standardize
 #
 ################################################################################
 
@@ -107,7 +107,7 @@ brand_id_WOE   <- df.train %>%
 
 # TODO: THIS ... NEEDS TO BE UPDATED FOR UNKNOWN SET
 # apply WOE labels to test set
-ts <- ts %>%
+df.unknown <- df.unknown %>%
     left_join(user_id_WOE, "user_id") %>%
     left_join(item_id_WOE, "item_id") %>%
     left_join(item_color_WOE, "item_color") %>%
@@ -115,11 +115,11 @@ ts <- ts %>%
     left_join(brand_id_WOE, "brand_id")
 
 # 0 out NA's
-ts[is.na(ts)] <- 0
+df.unknown[is.na(df.unknown)] <- 0
 
 # TODO:
 # select right variables for dataset
-tr <- tr %>%
+df.train <- df.train %>%
     dplyr::select(
         # DEMOGRAPHIC VARS
         age,
@@ -138,7 +138,7 @@ tr <- tr %>%
         return)
 
 # TODO: for final data set
-ts <- ts %>%
+df.unknown <- df.unknown %>%
     dplyr::select(
         # DEMOGRAPHIC VARS
         age,
