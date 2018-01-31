@@ -75,7 +75,8 @@ Pcorr <- rcorr(as.matrix(Nums.dat), type="pearson")
 Pcorr$r
 rm(Nums.dat)
 
-#Remove variables with low Fisher score and high correlation (redundant)
+#Remove variables with low Fisher score  
+# Check high correlation (redundant)
 # discount.abs
 
 # Information value based on WOE
@@ -87,7 +88,7 @@ low.woe.idx <- which(woe.scores$IV <= 0.04)
 woe.filter[low.woe.idx]
 
 
-# Remove variable with low information value or redundancy
+# Remove variable with low information value
 dat.input1 <- dat.input1 %>% 
     dplyr::select( - discount.abs, -user_state, -user_title,
                    - order_month, - weekday, - order_year,
@@ -156,8 +157,12 @@ RandomForest   <- makeLearner("classif.randomForest",
                   par.vals = list("replace" = TRUE, "importance" = FALSE))
 
 # Selection control for sequential backward search
-SearchCtrl <- makeFeatSelControlSequential(method = "sfbs", alpha = 0.001,
-                                           beta = 0) 
+#Alpha: Lower bound for upward step (increase in AUC required)
+#Beta: Lower bound for downward step (if negative, slight decrease in AUC allowed)
+SearchCtrl <- makeFeatSelControlSequential(method = "sfbs", alpha = 0.01,
+                                           beta = - 0.001) 
+
+
 
 # Indicate training and test set
 rin <- makeFixedHoldoutInstance(train.inds = 1:67001, 
