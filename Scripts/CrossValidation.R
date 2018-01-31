@@ -5,7 +5,8 @@
 # Description:
 # 
 # BADS project - build candidate models, do cross-validation, build ensemble
-#
+# TODO: get final list of variables from claudia to standardize
+# 
 ################################################################################
 
 ################################################################################
@@ -266,9 +267,10 @@ run.cost.c.t     <- transpose(run.cost.c)
 run.cost.avg     <- lapply(run.cost.t, function(x) mean(unlist(x)))
 run.cost.c.avg   <- lapply(run.cost.c.t, function(x) mean(unlist(x)))
 
-# Use this mean
+# Use this mean and save
 thresh.mean.l       <- lapply(thresh.list, function(x) mean(x$threshold))
 thresh.mean.l.calib <- lapply(thresh.list.calib, function(x) mean(x$threshold))
+save(thresh.mean.l, file = 'Data/CalibratedThreshold.Rdata')
 
 # Get avg. cost and standard error
 avg.cost   <- lapply(thresh.list, function(x) mean(x$cost))

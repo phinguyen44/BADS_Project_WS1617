@@ -5,8 +5,7 @@
 # Description:
 # 
 # BADS project - train final model
-# 
-# TODO: need to save elements from cross-validation that are needed to train
+# # TODO: standardize
 #
 ################################################################################
 
@@ -38,6 +37,7 @@ lapply(neededPackages, function(x) suppressPackageStartupMessages(
 
 # Load data
 load("Data/BADS_WS1718_known_ready.RData")
+load("Data/CalibratedThreshold.Rdata")
 df.known   <- read.csv("Data/BADS_WS1718_known.csv")
 df.unknown <- read.csv("Data/BADS_WS1718_class_20180115.csv")
 
@@ -117,6 +117,7 @@ ts <- ts %>%
 # 0 out NA's
 ts[is.na(ts)] <- 0
 
+# TODO:
 # select right variables for dataset
 tr <- tr %>%
     dplyr::select(
@@ -158,32 +159,21 @@ ts <- ts %>%
 # TRAIN MODEL
 fin   <- map2(mods, learners, function(f, x) f(x, tr, ts, calib = TRUE))
 
-# # APPLY NEW THRESHOLD
-# fin.new       <- map2(fin, thresh.mean.l, function(x,y) setThreshold(x$pred,y))
-# fin.new.calib <- map2(fin, thresh.mean.l.calib, 
-#                       function(x,y) setThreshold(x$pred.calib,y))
-# 
-# # get accuracy and cost
-# final.acc  <- map2(fin.new, thresh.mean.l, function(x,y) acc.calc(y, ts.label, pred = x$data$prob.1))
-# final.cost <- map2(fin.new, thresh.mean.l, function(x,y) cost.calc(y, ts.label, pred = x$data$prob.1, cost = ts.price))
-# 
-# final.acc.calib  <- map2(fin.new.calib, thresh.mean.l.calib, 
-#                          function(x,y) acc.calc(y, ts.label, x$data$prob.1))
-# final.cost.calib <- map2(fin.new.calib, thresh.mean.l.calib, 
-#                          function(x,y) cost.calc(y, 
-#                                                  ts.label, 
-#                                                  x$data$prob.1, 
-#                                                  ts.price))
+# APPLY NEW THRESHOLD
+fin.new.calib <- map2(fin, thresh.mean.l.calib,
+                      function(x,y) setThreshold(x$pred.calib,y))
 
 # GET PREDICTIONS
-pred   <- lapply(fin, function(x) x$pred$data$prob.1)
-pred.c <- lapply(fin, function(x) x$pred.calib$data$prob.1)
+# pred   <- lapply(fin, function(x) x$pred$data$prob.1)
+# pred.c <- lapply(fin, function(x) x$pred.calib$data$prob.1)
 
 # GET HYPERPARAMETERS
 hp.all    <- lapply(fin[2:4], function(x) x$pars)
 
 ################################################################################
 # ENSEMBLE
+
+
 
 ################################################################################
 # PREDICTION
