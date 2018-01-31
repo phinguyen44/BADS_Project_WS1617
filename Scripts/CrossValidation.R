@@ -89,8 +89,6 @@ mods <- list(lr = lr.mod,
 # outer loop estimates out-of-sample performance
 # final model is made by fitting model (including hyperparameter tuning) to whole data set
 
-start1 <- Sys.time()
-
 set.seed(321)
 k     <- 5
 folds <- createFolds(df.train$return, k = k, list = TRUE)
@@ -196,6 +194,9 @@ for (i in 1:k) {
 
 }
 
+################################################################################
+# CROSS-VALIDATION RESULTS
+
 # Check stability of cross-validation (metaparameters, costs)
 alldata  <- transpose(yhat)
 alldata2 <- lapply(alldata, transpose)
@@ -220,7 +221,7 @@ for (i in 1:length(learners)) { # 4
     
     for (j in 1:k) {  # 5
         
-        cat(paste0("Get Threshold: ", i, ",", j))
+        print(paste0("Get Threshold: ", i, ",", j))
         
         initial <- find.threshold(act  = actual[[j]], 
                                   pred = preds[[i]][[j]], 
@@ -232,11 +233,38 @@ for (i in 1:length(learners)) { # 4
         d.calib <- rbind(d.calib, init.ca)
         
         # TODO: get new prediction list after setting threshold
+        # should be five
         
     }
     thresh.list[[i]]       <- d
     thresh.list.calib[[i]] <- d.calib
 }
+
+# Get predictions after setting threshold
+preds.thresh   <- preds
+p.calib.thresh <- preds
+run.cost       <- preds
+run.cost.c     <- preds
+
+for (i in 1:length(learners)) {
+    for (j in 1:k) {
+        val <- ifelse(preds[[i]][[j]] <= thresh.list[[i]][j, ]$threshold, 0, 1)
+        preds.thresh[[i]][[j]] <- val
+        run.cost[[i]][[j]]     <- thresh.list[[i]][j, ]$cost
+        
+        val2 <- ifelse(p.calib[[i]][[j]] <= 
+                           thresh.list.calib[[i]][j, ]$threshold, 0, 1)
+        p.calib.thresh[[i]][[j]] <- val2
+        run.cost.c[[i]][[j]]     <- thresh.list.calib[[i]][j, ]$cost
+        
+    }
+}
+preds.thresh.t   <- transpose(preds.thresh)
+p.calib.thresh.t <- transpose(p.calib.thresh)
+run.cost.t       <- transpose(run.cost)
+run.cost.c.t     <- transpose(run.cost.c)
+run.cost.avg     <- lapply(run.cost.t, function(x) mean(unlist(x)))
+run.cost.c.avg   <- lapply(run.cost.c.t, function(x) mean(unlist(x)))
 
 # Use this mean
 thresh.mean.l       <- lapply(thresh.list, function(x) mean(x$threshold))
@@ -274,52 +302,6 @@ acc.se   <- lapply(pred.acc, function(x) sd(x)/length(x))
 acc.c.se <- lapply(pred.acc.c, function(x) sd(x)/length(x))
 
 ################################################################################
-# ENSEMBLE
-
-# TODO: CONSIDER MAKING THIS A FUNCTION!!!
-
-# # Build majority vote ensemble model, tie is broken by best model
-# 
-# # converts response to numeric
-# to.numeric <- function(pred.object) {
-#     
-#     response  <- pred.object$data$response
-#     predicted <- as.numeric(levels(response))[response]
-#     
-#     return(predicted)
-#     
-# }
-# 
-# ensembler <- function(modlist, costlist) {
-#     
-#     # which is best model?
-#     best.mod.cal <- which.max(costlist)
-#     
-# }
-# 
-# # which is best model?
-# best.mod     <- which.max(final.cost)
-# best.mod.cal <- which.max(final.cost.calib)
-# 
-# # in case of tie, use prediction of best
-# the.response <- data.frame(sapply(fin.new, to.numeric))
-# the.means    <- rowMeans(the.response)
-# m.idx        <- which(the.means == 0.5)
-# 
-# the.response.cal <- data.frame(sapply(fin.new.calib, to.numeric))
-# the.means.cal    <- rowMeans(the.response.cal)
-# m.idx.cal        <- which(the.means.cal == 0.5)
-# 
-# # GET FINAL PREDICTION RESULTS
-# final.results        <- the.means
-# final.results[m.idx] <- the.response[m.idx, best.mod]
-# final.results        <- round(final.results)
-# 
-# final.results.cal            <- the.means.cal
-# final.results.cal[m.idx.cal] <- the.response.cal[m.idx.cal, best.mod.cal]
-# final.results.cal            <- round(final.results.cal)
-
-################################################################################
 # BENCHMARK EXPERIMENTS
 
 # reorganize predictions for simplicity (used for benchmark experiment)
@@ -338,9 +320,10 @@ for (i in 1:length(mods)) {
                model = names(mods[i])),
         width  = 6,
         height = 4)
-    reliability.plot(act, pf1[[i]], pf1c[[i]], 10)
+    reliability.plot(act1, pf1[[i]], pf1c[[i]], 10)
     dev.off()
 }
+dev.new()
 
 # show average logLoss improvements from calibration
 ll <- data.frame(
@@ -356,7 +339,7 @@ ll.compare <- data.frame(cbind(ll.avg, ll.c.avg))
 colnames(ll.compare) <- c('Uncalibrated', 'Calibrated')
 ll.compare
 
-# show cost / accuracy changes due to calibration
+# show avg. cost / accuracy changes due to calibration
 cost.compare <- data.frame(cbind(unlist(avg.cost), unlist(avg.cost.c)))
 colnames(cost.compare) <- c('Uncalibrated', 'Calibrated')
 cost.compare
@@ -378,9 +361,9 @@ p <- ggplot(data = cost.df, aes(x = Model, y = Cost)) +
     labs(title = "Total Cost") + 
     labs(subtitle = infuse("{{num}}-Fold Cross-Validation", num=k)) + 
     theme(plot.title = element_text(size=16)) +
-    theme(plot.subtitle = element_text(size=10, color = "#7F7F7F")) + 
     theme_bw()
 p
+ggsave('Written/Images/CV-cost.pdf', width = 6, height = 4)
 
 # plot accuracy bands
 acc.df <- data.frame(cbind(unlist(avg.acc.c), unlist(acc.c.se)))
@@ -393,16 +376,26 @@ p2 <- ggplot(data = acc.df, aes(x = Model, y = Acc)) +
     labs(title = "Accuracy") + 
     labs(subtitle = infuse("{{num}}-Fold Cross-Validation", num=k)) + 
     theme(plot.title = element_text(size=16)) +
-    theme(plot.subtitle = element_text(size=10, color = "#7F7F7F")) + 
-    theme_minimal()
+    theme_bw()
 p2
-# TODO: how should these plots be arranged?
+ggsave('Written/Images/CV-accuracy.pdf', width = 6, height = 4)
     
 ####### RESULTS FROM THRESHOLD OPTIMIZATION (USING CALIBRATED RESULTS): 
 
 # plot threshold / cost plots for each model (for 1 fold)
-lapply(pf1c, function(x) plot.threshold(act1, x, cost1))
+for (i in 1:length(pf1c)) {
+    g <- plot.threshold(act1, pf1c[[i]], cost1)
+    ggsave(infuse('Written/Images/Threshold-{{mod}}.pdf', mod = names(pf1c[i])),
+           plot   = g,
+           height = 4,
+           width  = 8)
+}
     
 ####### RESULTS FROM ENSEMBLING (USING CALIBRATED RESULTS):
     
-# TODO: show improvement due to ensembling (average)
+fin.ens  <- map2(p.calib.thresh.t, run.cost.c.t, function(x, y) ensembler(x, y))
+fin.cost <- pmap(list(actual, fin.ens, ts.price.f), 
+                 function(x, y, z) cost.calc(0.5, x, y, z))
+ens.df <- data.frame(cbind(unlist(run.cost.c.avg), unlist(fin.cost)))
+colnames(ens.df) <- c('Average.Individual.Classifier', 'Ensembled.Classifier')
+ens.df$Percent.Improvement <-  -round((ens.df[, 2]-ens.df[, 1])/ens.df[, 1], 4)

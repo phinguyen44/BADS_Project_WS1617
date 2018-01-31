@@ -183,6 +183,9 @@ pred.c <- lapply(fin, function(x) x$pred.calib$data$prob.1)
 hp.all    <- lapply(fin[2:4], function(x) x$pars)
 
 ################################################################################
+# ENSEMBLE
+
+################################################################################
 # PREDICTION
 
 # TODO: how do we report? do we estimate what 'final cost' per cust would be?

@@ -14,8 +14,15 @@
 # random forest (randomForest)
 # gradient boosting (xgb)
 # neural net (nnet) - single hidden layer neural network
+# 
+# ensembler() - ensembles models together using majority vote approach
+# ensembler.final() - same as above, just used for final model
+# to.numeric() - helper function used to convert mlr output to numeric
 #
 ################################################################################
+
+################################################################################
+# Calibration
 
 calib.part <- function(tr) {
     tr.p <- tr
@@ -49,6 +56,9 @@ calib.mod <- function(mod, pred, cs, cs.label) {
 
     return(lr.pred.calib)
 }
+
+################################################################################
+# Classifiers
 
 # LOGISTIC
 lr.mod <- function(learner, tr, ts, calib = FALSE) {
@@ -350,4 +360,56 @@ nn.mod <- function(learner, tr, ts, calib = FALSE) {
     if (calib == TRUE) output[['pred.calib']] <- nn.pred.calib
 
     return(output)
+}
+
+################################################################################
+# Ensemblers
+
+# Build majority vote ensemble model, tie is broken by best model
+ensembler <- function(allpreds, costlist) {
+    
+    # which is best model?
+    best.mod <- which.max(costlist)
+    
+    # in case of tie, use prediction of best
+    the.response <- data.frame(allpreds)
+    the.means    <- rowMeans(the.response)
+    m.idx        <- which(the.means == 0.5)
+    
+    # get final predictions
+    final.results <- the.means
+    final.results[m.idx] <- the.response[m.idx, best.mod]
+    final.results <- round(final.results)
+    
+    return(final.results)
+    
+}
+
+ensembler.final <- function(allpreds, costlist) {
+    
+    # which is best model?
+    best.mod <- which.max(costlist)
+    
+    # in case of tie, use prediction of best
+    the.response <- data.frame(sapply(allpreds, to.numeric))
+    the.means    <- rowMeans(the.response)
+    m.idx        <- which(the.means == 0.5)
+    
+    # get final predictions
+    final.results <- the.means
+    final.results[m.idx] <- the.response[m.idx, best.mod]
+    final.results <- round(final.results)
+    
+    return(final.results)
+    
+}
+
+# converts response to numeric
+to.numeric <- function(pred.object) {
+    
+    response  <- pred.object$data$response
+    predicted <- as.numeric(levels(response))[response]
+    
+    return(predicted)
+    
 }
