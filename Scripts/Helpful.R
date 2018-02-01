@@ -1,8 +1,6 @@
 ################################################################################
 # Helpful.R
 #
-# Phi Nguyen: phi.nguyen@outlook.com
-#
 ################################################################################
 # Description:
 # Helpful functions designed to aid in BADS project
@@ -15,22 +13,16 @@
 # discrete.power() - organizes observations into bins (bins organized in size 
 # by power)
 # assign.bins() - creates bins based off bins created in discrete.bins()
-# samplefxn() - imputation fxn (misnomer)
 # WOE() - self-made WOE function. outputs a vector
 # 
 # MODEL BUILDING:
-# build.glm() - builds predictions and classification table for glm model
 # reliability.plot() - diagram to assess how 'calibrated' a classifier is
-# platt() - platt scaling (performing logistic regression on the classifier output to calibrate model output)
 # 
 # MODEL EVALUATION:
-# performance.met() - calculates basic classification table stuff
-# log.loss() - calculates log loss error
-# brier.score() - calculates brier score
-# cost.fxn() - calculates cost function as described in paper
-# rev.gain.fxn() - calculates revenue gain over case where no message is sent
-# 
-# TODO: ROCINFO: http://ethen8181.github.io/machine-learning/unbalanced/unbalanced.html#interpretation-and-reporting - for imbalanced cost functions
+# acc.calc() - calculates accuracy for a given threshold
+# cost.calc() - calculates costs (from cost matrix) for a given threshold
+# find.threshold() - finds optimal threshold that minimizes costs
+# plot.threshold() - plots cost and accuracy at different thresholds
 # 
 ################################################################################
 
@@ -170,19 +162,6 @@ assign.bins <- function(df, buckets, variable) {
     return(grouping)
 }
 
-# imputation
-samplefxn <- function(df, var, type) {
-    idx <- is.na(df[[var]])
-    len <- sum(idx)
-    
-    values <- switch(type,
-                   sample = sample(df[!idx, var], size = len, replace = TRUE),
-                   mean   = rep(round(mean(df[[var]], na.rm = TRUE)), 
-                                times = len))
-    
-    return(values)
-}
-
 # WOE
 WOE <- function(df, var) {
     
@@ -219,157 +198,142 @@ WOE <- function(df, var) {
 ################################################################################
 # MODEL BUILDING
 
-# build glm model (with new platt scale feature!)
-build.glm <- function(mod, trainset, testset, alpha, platt.scaling = FALSE) {
-    
-    if (platt.scaling) {
-        trainset.n  <- trainset
-        samplecalib <- sample(1:nrow(trainset.n), 10000, replace = FALSE)
-        trainset    <- trainset.n[-samplecalib, ]
-        calibset    <- trainset.n[samplecalib, ]
-    }
-    
-    matrix.x  <- model.matrix(mod, data = trainset)
-    mod1      <- cv.glmnet(x = matrix.x, y = trainset$return, alpha = alpha, 
-                         family = "binomial", standardize = TRUE)
-    # plot(mod1)
-    # mod1$lambda.1se
-    coefff = coef(mod1, s = "lambda.1se")
-    
-    # Make prediction
-    new.x <- model.matrix(mod, data = testset)
-    pred  <- predict(mod1, newx = new.x, s = "lambda.1se", type = "response")
-    
-    test  <- data.frame(pred, testset$return, round(pred))
-    names(test) <- c("prob", "actual", "result")
-    
-    # Perform platt scaling
-    if (platt.scaling) {
-        # Make prediction
-        new.xc  <- model.matrix(mod, data = calibset)
-        pred.c  <- predict(mod1, newx = new.xc, s="lambda.1se", type="response")
-        test.c  <- data.frame(pred.c, calibset$return, round(pred.c))
-        names(test.c) <- c("prob", "actual", "result")
-        
-        # Predictions after platt scaling
-        new.pred    <- platt(test.c$actual, test.c$prob)
-        test.c$prob <- new.pred
-    
-    }
-    
-    final <- list(mod = mod1, Coef = coefff, Results = test)
-    if (platt.scaling) final[["Results.Platt"]] <- test.c
-    
-    return(final)
-}
-
-reliability.plot <- function(act, pred, bins = 10) {
+reliability.plot <- function(act, pred, pred.c, bins = 10) {
     # act: vector of actual values. 0 or 1
     # pred: vector of predictions. real number between 0 and 1
     # bins: number of bins to use
     if(!require("Hmisc")) install.packages("Hmisc")
     library(Hmisc)
     
-    bin.pred <- cut(pred, bins)
-    df       <- data.frame(act = act, pred = pred, bin = bin.pred)
+    bin.pred   <- cut(pred, bins)
+    bin.pred.c <- cut(pred.c, bins)
+    df         <- data.frame(act    = act, 
+                             pred   = pred, 
+                             pred.c = pred.c, 
+                             bin    = bin.pred,
+                             bin.c  = bin.pred.c)
     grouped  <- df %>% 
         dplyr::group_by(bin) %>% 
-        dplyr::summarize(x = sum(act) / n(), 
-                         y = mean(pred))
+        dplyr::summarize(x   = sum(act) / n(), 
+                         y   = mean(pred))
+    
+    grouped.c <- df %>% 
+        dplyr::group_by(bin.c) %>% 
+        dplyr::summarize(x   = sum(act) / n(), 
+                         y   = mean(pred.c))
     
     plot(grouped$y, grouped$x, 
-         xlim = c(0,1), 
-         ylim = c(0,1), 
+         xlim = c(0,1), ylim = c(0,1), 
          xlab = "Mean Prediction", 
          ylab = "Observed Fraction", 
          col  = "red", type = "o", main = "Reliability Plot")
     lines(c(0,1), c(0,1), col = "grey")
-    subplot(hist(pred, xlab = "", ylab = "", main = "", xlim = c(0,1), 
-                 col="blue"), 
-            grconvertX(c(.8, 1), "npc"), grconvertY(c(0.08, .25), "npc"))
+    lines(grouped.c$y, grouped.c$x, 
+          xlim = c(0,1), ylim = c(0,1), 
+          col  = "blue", type = "o")
+    legend("topleft",
+           lty    = c(1,1),lwd = c(2.5,2.5),
+           col    = c("blue", "red"),
+           legend = c("calibrated", "without calibration"),
+           bty    = "n",
+           cex    = 0.6)
+    subplot(hist(pred, xlab = "", ylab = "", main = "", xlim = c(0,1),
+                 col="red"),
+            grconvertX(c(0.8, 1), "npc"), grconvertY(c(0.08, .25), "npc"))
+    subplot(hist(pred.c, xlab = "", ylab = "", main = "", xlim = c(0,1),
+                 col="blue"),
+            grconvertX(c(0.6, 0.8), "npc"), grconvertY(c(0.08, .25), "npc"))
     
-}
-
-platt <- function(act, pred) {
-    
-    ##### THESE STEPS IN MODEL BUILD
-    # splits training data again into model training and calibration (with platt == TRUE arg in function)
-    # train model on test set
-    # predict and score test set (logloss)
-    #####
-    
-    # train the calibration model on calibration set using logistic regression
-    # predict and score calibration set after platt scaling
-    
-    calib   <- data.frame(y = act, x = pred)
-    model   <- glm(y ~ x, calib, family = binomial)
-    
-    # predicting on the cross validation after platt scaling
-    results <- predict(model, calib, type = "response")
-    return(results)
 }
 
 ################################################################################
 # MODEL EVALUATION
 
-performance.met <- function(act, pred) {
-    # Check performance
-    logloss <- log.loss(act, pred)
+# accuracy
+acc.calc <- function(threshold, act, pred) {
+    decision  <- ifelse(pred > threshold, 1, 0)
+    confusion <- table(Prediction = decision, True = act)
+    accuracy  <- sum(diag(confusion)) / sum(confusion)
+    return(accuracy)
+}
+
+# costs
+cost.calc <- function(threshold, act, pred, cost) {
+    compare <- data.frame(act = act, pred = pred, cost = cost)
+    compare <- compare %>% 
+        dplyr::mutate(decision = case_when(pred > threshold  ~ 1,
+                                           pred <= threshold ~ 0),
+                      class    = case_when(act == decision & act == 1 ~ "TP",
+                                           act == decision & act == 0 ~ "TN",
+                                           act != decision & act == 1 ~ "FN",
+                                           act != decision & act == 0 ~ "FP"),
+                      penalty  = case_when(class == "FP" ~ -0.5*cost,
+                                           class == "FN" ~ -0.5*5*(3+0.1*cost),
+                                           class %in% c("TP", "TN") ~ 0))
     
-    # Convert predicted values to 1/0 for classification table
-    pred    <- round(pred)
-    check1  <- table(predicted = pred, actual = act)
-    mce1    <- 1 - sum(diag(check1)) / sum(check1)
+    sum.costs <- sum(compare$penalty)
+    return(sum.costs)
+}
+
+# find threshold for given predictions
+find.threshold <- function(act, pred, cost) {
     
-    # GET FPR / FNR
-    test <- data.frame(act = act, pred = pred)
-    test$Class <- with(data = test, ifelse(
-        act == pred & act == 1, "TP", ifelse(
-            act == pred & act == 0, "TN", ifelse(
-                act != pred & act == 1, "FN", "FP")
-            )
-        ) 
-    )
+    threshold <- seq(0, 1, by = 0.01)
     
-    FPR <- test %>% 
-        filter(act == 0) %>% 
-        dplyr::summarize(FPR = sum(pred) / n()) %>% 
-        as.numeric()
+    all.acc  <- sapply(threshold, function(x) acc.calc(x, act, pred))
+    all.cost <- sapply(threshold, 
+                       function(x) cost.calc(x, act, pred, cost))
+    combined <- data.frame(threshold = threshold, 
+                           accuracy  = all.acc, 
+                           cost      = all.cost)
+    best.cutoff <- combined$threshold[which.max(all.cost)]
+    min.cost    <- max(all.cost)
     
-    FNR <- test %>% 
-        filter(act == 1) %>% 
-        dplyr::summarize(FNR = (n() - sum(pred)) / n()) %>% 
-        as.numeric()
+    final <- data.frame(threshold = best.cutoff, cost = min.cost)
     
-    final <- list(ClassTable = check1, FPR = FPR, FNR = FNR, 
-                  MCE = mce1, LogLoss = logloss)
     return(final)
 }
 
-log.loss <- function(act, pred) {
-    eps  <- 1e-15
-    nr   <- length(pred)
-    pred <- matrix(sapply(pred, function(x) max(eps,x)), nrow = nr) 
-    pred <- matrix(sapply(pred, function(x) min(1-eps,x)), nrow = nr)
-    ll   <- sum(act*log(pred) + (1-act)*log(1-pred))
-    ll   <-  ll * -1/(length(act)) 
-    return(ll)
-}
-
-brier.score <- function(act, pred) {
-    nr    <- length(pred)
-    brier <- (1/nr) * sum((pred - act)^2)
-    return(brier)
-}
-
-rev.gain.fxn <- function(act, pred, cost) {
-    fp <- (1-act) * pred * (-0.5) * cost   # revenue lost from FP misclass
-    tp <- act * pred * 0.5 * (3+0.1*cost)  # revenue gain from TP class
-    return(sum(fp + tp))
-}
-
-cost.fxn <- function(act, pred, cost) {
-    fp <- (1-act) * pred * (-0.5) * cost           # rev lost from FP misclass
-    fn <- act * (1 - pred) * (-0.5) * (3+0.1*cost) # rev lost from FN misclass
-    return(sum(fp + fn))
+# plot 
+plot.threshold <- function(act, pred, cost) {
+    
+    threshold <- seq(0, 1, by = 0.01)
+    
+    all.acc  <- sapply(threshold, function(x) acc.calc(x, act, pred))
+    all.cost <- sapply(threshold, 
+                       function(x) cost.calc(x, act, pred, cost))
+    combined <- data.frame(threshold = threshold, 
+                           accuracy  = all.acc, 
+                           cost      = all.cost)
+    best.cutoff <- combined$threshold[which.max(all.cost)]
+    
+    require(gridExtra)
+    # plot
+    p1 <- ggplot(data = combined, aes(x = threshold, y = accuracy)) +
+        geom_line() + 
+        geom_vline(xintercept = best.cutoff, color = "red", alpha = 0.7) +
+        geom_label(aes(best.cutoff, min(accuracy), label = best.cutoff), 
+                   size = 3, color = "red") + 
+        
+        labs(title = "Accuracy") + 
+        labs(subtitle = "Red line threshold minimizes costs") + 
+        
+        theme(plot.title = element_text(size=16)) +
+        theme(plot.subtitle = element_text(size=8)) + 
+        theme_bw()
+    
+    p2 <- ggplot(data = combined, aes(x = threshold, y = cost)) +
+        geom_line() + 
+        geom_vline(xintercept = best.cutoff, color = "red", alpha = 0.7) +
+        geom_label(aes(best.cutoff, min(all.cost), label = best.cutoff), 
+                   size = 3, color = "red") + 
+        
+        labs(title = "Total Cost") + 
+        labs(subtitle = "Red line threshold minimizes costs") + 
+        
+        theme(plot.title = element_text(size=8)) +
+        theme(plot.subtitle = element_text(size=10)) + 
+        theme_bw()
+    
+    return(grid.arrange(p1, p2, ncol=2))
 }

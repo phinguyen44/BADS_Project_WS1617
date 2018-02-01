@@ -35,10 +35,10 @@ lapply(neededPackages, function(x) suppressPackageStartupMessages(
     library(x, character.only = TRUE)))
 
 # Load dataset
-load("Data/BADS_WS1718_known_imp1.RData")
+load("BADS_WS1718_known_imp1.RData")
 
 # source helper packages
-source("Scripts/Helpful.R")
+source("../Scripts/Helpful.R")
 
 ############################################################################
 ############################################################################
