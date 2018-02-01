@@ -57,12 +57,6 @@ Scores.fisher <- apply(Train[,sapply(Train, is.numeric)],
 
 Scores.fisher[order(Scores.fisher)]
 
-# Index for variables to be removed
-idx.remove.fisher =  which(colnames(Train) %in% 
-                     names(Scores.fisher[order(Scores.fisher)][1]))
-
-Train <- Train[,-idx.remove.fisher]
-
 # Todo: remove continous variables based on Fisher score (define rule)
 
 ################################################################################
@@ -96,7 +90,7 @@ logReg <- glm(return ~.,
 
 summary(logReg)
 
-# Wrapper: Step-wise backward 
+# Wrapper: Sequential floating backward selection (SFBS)
 
 task <- makeClassifTask(data = Train1, target = "return", positive = "1")
 lr <- makeLearner("classif.logreg", 
@@ -126,27 +120,22 @@ idx.keep.wrapper <- c(which(colnames(Train) %in% featureSelection$x),
 Train <- Train[,idx.keep.wrapper ]
 
 # Make final estimation and prediction
-logReg <- glm(return ~ age + item_price  + discount.abs + no.return +
-                  discount.pc + is.discount + user_title 
-                  + item.subcategory + basket.value + basket.size + deliver.time + 
-                  order.same.item + income.ind + income.age 
-              
-              , 
-              data = dat.input1, family = binomial(link = "logit"))
+logReg4 <- glm(return ~. , 
+              data = Train1, family = binomial(link = "logit"))
 
 estimates <- list()
 
-estimates[["logReg"]] <- predict(logReg, newdata = Test, type = "response", 
+estimates[["logReg4"]] <- predict(logReg4, newdata = Test1, type = "response", 
                                  replace = TRUE)
 
 
 # Check out model performance 
 estimates.df <- data.frame(estimates)  
-AUC <- HMeasure(as.numeric(Test$return)-1, estimates.df) 
-auc_logReg <- AUC$metrics['AUC']
-auc_logReg
+AUC <- HMeasure(as.numeric(Test1$return)-1, estimates.df) 
+auc_logReg4 <- AUC$metrics['AUC']
+auc_logReg4
 
-misClassError(Test$return, estimates$logReg, threshold = 0.5)
+misClassError(Test1$return, estimates$logReg4, threshold = 0.5)
 estimates$logReg = ifelse(Test$no.return == 1, 0, estimates$logReg)
 
 sensitivity(Test$return, estimates$logReg, threshold = 0.5)
