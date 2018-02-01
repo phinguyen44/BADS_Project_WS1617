@@ -5,7 +5,6 @@
 # Description:
 #
 # BADS project - build candidate models, do cross-validation, build ensemble
-# TODO: get final list of variables from claudia to standardize
 #
 ################################################################################
 
@@ -46,26 +45,24 @@ source("Scripts/Helpful-Models.R")
 ################################################################################
 # INITIAL SETUP
 
-# reorder and select variables
-df.train <- dat.input1 %>%
+# reorder and convert to numeric variables
+df.train <- dat.ready %>%
+    dplyr::mutate(return = as.integer(levels(return))[return]) %>% 
     dplyr::select(
         # DEMOGRAPHIC VARS
-        age, age.group,
-        user_state, user_title, WestGerm, income.ind,
-        first.order, account.age.order,
+        age, 
+        account.age.order,
         user_id, # WOE
+        user.total.items, user.total.expen,
         # BASKET VARS
-        deliver.time, order_year, order_month, weekday, no.return,
-        basket.big, basket.size, basket.value,
-        order.same.item, item.basket.size.diff, item.basket.same.category,
-        item.basket.category.size.diff,
-        order.same.itemD, item.basket.size.diffD, item.basket.same.categoryD,
-        item.basket.category.size.diffD,
+        deliver.time, 
+        basket.big, basket.size, 
+        item.basket.size.same, item.basket.size.diff, item.basket.same.category,
+        no.return,
         # ITEM VARS
-        item_id, item_color, item_size, brand_id, # WOE
-        brand.cluster, item.color.group, item.category, item.subcategory,
-        discount.abs, discount.pc, is.discount,
-        item_price, item_priceB, price.inc.ratio,
+        item_id, item_size, brand_id, # WOE
+        discount.pc, 
+        item_price, 
         return)
 
 # SAVE DATA FOR LATER
@@ -114,11 +111,14 @@ for (i in 1:k) {
     ts.label.f <- ts.f$return
 
     ts.price.f[[i]] <- ts.f$item_price
+    
+    # standardize
+    tr.f <- z.scale(tr.f)
+    ts.f <- z.scale(ts.f)
 
     # add in WOE variables
     tr.f$user_id_WOE <- WOE(tr.f, "user_id")
     tr.f$item_id_WOE <- WOE(tr.f, "item_id")
-    tr.f$item_color_WOE <- WOE(tr.f, "item_color")
     tr.f$item_size_WOE <- WOE(tr.f, "item_size")
     tr.f$brand_id_WOE <- WOE(tr.f, "brand_id")
 
@@ -126,8 +126,6 @@ for (i in 1:k) {
         dplyr::select(user_id, user_id_WOE) %>% distinct
     item_id_WOE <- tr.f %>%
         dplyr::select(item_id, item_id_WOE) %>% distinct
-    item_color_WOE <- tr.f %>%
-        dplyr::select(item_color, item_color_WOE) %>% distinct
     item_size_WOE <- tr.f %>%
         dplyr::select(item_size, item_size_WOE) %>% distinct
     brand_id_WOE <- tr.f %>%
@@ -137,7 +135,6 @@ for (i in 1:k) {
     ts.f <- ts.f %>%
         left_join(user_id_WOE, "user_id") %>%
         left_join(item_id_WOE, "item_id") %>%
-        left_join(item_color_WOE, "item_color") %>%
         left_join(item_size_WOE, "item_size") %>%
         left_join(brand_id_WOE, "brand_id")
 
@@ -148,40 +145,40 @@ for (i in 1:k) {
     tr.f <- tr.f %>%
         dplyr::select(
             # DEMOGRAPHIC VARS
-            age,
-            user_state, user_title,
-            user_id_WOE,
+            age, 
+            account.age.order,
+            user_id_WOE, # WOE
+            user.total.items, user.total.expen,
             # BASKET VARS
-            deliver.time, no.return,
-            basket.size,
-            order.same.itemD,item.basket.size.diffD,
+            deliver.time, 
+            basket.big, basket.size, 
+            item.basket.size.same, item.basket.size.diff, 
+            item.basket.same.category,
+            no.return,
             # ITEM VARS
-            item_id_WOE, brand_id_WOE,
-            item.category,
-            is.discount,
-            item_priceB, price.inc.ratio,
+            item_id_WOE, item_size_WOE, brand_id_WOE, # WOE
+            discount.pc, 
+            item_price, 
             return)
 
     ts.f <- ts.f %>%
         dplyr::select(
             # DEMOGRAPHIC VARS
-            age,
-            user_state, user_title,
-            user_id_WOE,
+            age, 
+            account.age.order,
+            user_id_WOE, # WOE
+            user.total.items, user.total.expen,
             # BASKET VARS
-            deliver.time, no.return,
-            basket.size,
-            order.same.itemD,item.basket.size.diffD,
+            deliver.time, 
+            basket.big, basket.size, 
+            item.basket.size.same, item.basket.size.diff, 
+            item.basket.same.category,
+            no.return,
             # ITEM VARS
-            item_id_WOE, brand_id_WOE,
-            item.category,
-            is.discount,
-            item_priceB, price.inc.ratio,
+            item_id_WOE, item_size_WOE, brand_id_WOE, # WOE
+            discount.pc, 
+            item_price, 
             return)
-
-    # make model task
-    traint.f <- makeClassifTask(data = tr.f, target = "return", positive = 1)
-    testt.f  <- makeClassifTask(data = ts.f, target = "return", positive = 1)
 
     # TRAIN MODEL
     yhat[[i]]   <- map2(mods, learners,
@@ -401,3 +398,6 @@ fin.cost <- pmap(list(actual, fin.ens, ts.price.f),
 ens.df <- data.frame(cbind(unlist(run.cost.c.avg), unlist(fin.cost)))
 colnames(ens.df) <- c('Average.Individual.Classifier', 'Ensembled.Classifier')
 ens.df$Percent.Improvement <-  -round((ens.df[, 2]-ens.df[, 1])/ens.df[, 1], 4)
+
+# SAVE ALL ENVIRONMENT VARIABLES
+save.image('Data/CV-results.RData')

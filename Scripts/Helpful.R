@@ -16,6 +16,7 @@
 # WOE() - self-made WOE function. outputs a vector
 # 
 # MODEL BUILDING:
+# z.scale() - standardize all numeric variables in df (except return!)
 # reliability.plot() - diagram to assess how 'calibrated' a classifier is
 # 
 # MODEL EVALUATION:
@@ -197,6 +198,17 @@ WOE <- function(df, var) {
 
 ################################################################################
 # MODEL BUILDING
+
+z.scale <- function(df) {
+    for (n in 1:ncol(df)) {
+        if (is.numeric(df[, n]) & names(df)[n] != 'return') {
+            middle  <- mean(df[, n])
+            stdv    <- sd(df[, n])
+            df[, n] <- (df[, n] - middle) / stdv
+        }
+    }
+    return(data.frame(df))
+}
 
 reliability.plot <- function(act, pred, pred.c, bins = 10) {
     # act: vector of actual values. 0 or 1
