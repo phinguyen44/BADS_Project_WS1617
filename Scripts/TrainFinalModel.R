@@ -1,0 +1,182 @@
+################################################################################
+# TrainFinalModel.R
+#
+################################################################################
+# Description:
+# 
+# BADS project - train final model
+# TODO: standardize
+#
+################################################################################
+
+################################################################################
+# LOAD DATA
+rm(list = ls())
+
+# Adjust your working directory
+wd = file.path(Sys.getenv("HOME"),"documents/projects/bads-ws1718-group21")
+setwd(wd)
+
+# List all packages needed for session
+neededPackages <- c("tidyverse", "magrittr", "purrr", "infuser",
+                    "caret", "mlr", 
+                    "xgboost", "gbm", "rpart", "e1071", "MASS", "nnet",
+                    "pROC", "parallel", "parallelMap")
+allPackages    <- c(neededPackages %in% installed.packages()[,"Package"])
+
+# Install packages (if not already installed)
+if (!all(allPackages)) {
+    missingIDX <- which(allPackages == FALSE)
+    needed     <- neededPackages[missingIDX]
+    lapply(needed, install.packages)  
+}
+
+# Load all defined packages
+lapply(neededPackages, function(x) suppressPackageStartupMessages(
+    library(x, character.only = TRUE)))
+
+# Load data
+load("Data/BADS_WS1718_known_ready.RData")
+load("Data/CalibratedThreshold.Rdata")
+df.known   <- read.csv("Data/BADS_WS1718_known.csv")
+df.unknown <- read.csv("Data/BADS_WS1718_class_20180115.csv")
+
+# Source performance metric calculations
+source("Scripts/Helpful.R")
+source("Scripts/Helpful-Models.R")
+
+################################################################################
+# INITIAL SETUP
+
+# reorder and select variables
+df.train <- dat.input1 %>%
+    dplyr::select(
+        # DEMOGRAPHIC VARS
+        age, age.group,
+        user_state, user_title, WestGerm, income.ind,
+        first.order, account.age.order,
+        user_id, # WOE
+        # BASKET VARS
+        deliver.time, order_year, order_month, weekday, no.return,
+        basket.big, basket.size, basket.value,
+        order.same.item, item.basket.size.diff, item.basket.same.category,
+        item.basket.category.size.diff,
+        order.same.itemD, item.basket.size.diffD, item.basket.same.categoryD,
+        item.basket.category.size.diffD,
+        # ITEM VARS
+        item_id, item_color, item_size, brand_id, # WOE
+        brand.cluster, item.color.group, item.category, item.subcategory,
+        discount.abs, discount.pc, is.discount,
+        item_price, item_priceB, price.inc.ratio,
+        return)
+
+# SAVE DATA FOR LATER
+df.label <- df.train$return
+df.price <- df.train$item_price
+
+## LIST OF FUNCTIONS
+learners <- list(lr = "classif.logreg",
+                 rf = "classif.randomForest",
+                 nn  = "classif.nnet",
+                 xgb = "classif.xgboost")
+mods <- list(lr = lr.mod,
+             rf = rf.mod,
+             nn  = nn.mod,
+             xgb = xgb.mod)
+
+################################################################################
+# TRAIN FINAL MODEL
+
+# add in WOE variables
+df.train$user_id_WOE    <- WOE(df.train, "user_id")
+df.train$item_id_WOE    <- WOE(df.train, "item_id")
+df.train$item_color_WOE <- WOE(df.train, "item_color")
+df.train$item_size_WOE  <- WOE(df.train, "item_size")
+df.train$brand_id_WOE   <- WOE(df.train, "brand_id")
+
+user_id_WOE    <- df.train %>% 
+    dplyr::select(user_id, user_id_WOE) %>% distinct
+item_id_WOE    <- df.train %>% 
+    dplyr::select(item_id, item_id_WOE) %>% distinct
+item_color_WOE <- df.train %>% 
+    dplyr::select(item_color, item_color_WOE) %>%distinct
+item_size_WOE  <- df.train %>% 
+    dplyr::select(item_size, item_size_WOE) %>%distinct
+brand_id_WOE   <- df.train %>% 
+    dplyr::select(brand_id, brand_id_WOE) %>% distinct
+
+# TODO: THIS ... NEEDS TO BE UPDATED FOR UNKNOWN SET
+# apply WOE labels to test set
+df.unknown <- df.unknown %>%
+    left_join(user_id_WOE, "user_id") %>%
+    left_join(item_id_WOE, "item_id") %>%
+    left_join(item_color_WOE, "item_color") %>%
+    left_join(item_size_WOE, "item_size") %>%
+    left_join(brand_id_WOE, "brand_id")
+
+# 0 out NA's
+df.unknown[is.na(df.unknown)] <- 0
+
+# TODO:
+# select right variables for dataset
+df.train <- df.train %>%
+    dplyr::select(
+        # DEMOGRAPHIC VARS
+        age,
+        user_state, user_title, 
+        first.order, account.age.order,
+        user_id_WOE,
+        # BASKET VARS
+        deliver.time, order_month, weekday, no.return,
+        basket.size,
+        order.same.itemD,item.basket.size.diffD, 
+        # ITEM VARS
+        item_id_WOE, brand_id_WOE,
+        item.category, item.subcategory,
+        is.discount,
+        item_priceB, price.inc.ratio,
+        return)
+
+# TODO: for final data set
+df.unknown <- df.unknown %>%
+    dplyr::select(
+        # DEMOGRAPHIC VARS
+        age,
+        user_state, user_title, 
+        first.order, account.age.order,
+        user_id_WOE,
+        # BASKET VARS
+        deliver.time, order_month, weekday, no.return,
+        basket.size,
+        order.same.itemD,item.basket.size.diffD, 
+        # ITEM VARS
+        item_id_WOE, brand_id_WOE,
+        item.category, item.subcategory,
+        is.discount,
+        item_priceB, price.inc.ratio,
+        return)
+
+# TRAIN MODEL
+fin   <- map2(mods, learners, function(f, x) f(x, tr, ts, calib = TRUE))
+
+# APPLY NEW THRESHOLD
+fin.new.calib <- map2(fin, thresh.mean.l.calib,
+                      function(x,y) setThreshold(x$pred.calib,y))
+
+# GET PREDICTIONS
+# pred   <- lapply(fin, function(x) x$pred$data$prob.1)
+# pred.c <- lapply(fin, function(x) x$pred.calib$data$prob.1)
+
+# GET HYPERPARAMETERS
+hp.all    <- lapply(fin[2:4], function(x) x$pars)
+
+################################################################################
+# ENSEMBLE
+
+
+
+################################################################################
+# PREDICTION
+
+# TODO: how do we report? do we estimate what 'final cost' per cust would be?
+# or maybe final cost per mistake?
