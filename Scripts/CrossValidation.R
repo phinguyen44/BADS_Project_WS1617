@@ -263,6 +263,7 @@ run.cost.t       <- transpose(run.cost)
 run.cost.c.t     <- transpose(run.cost.c)
 run.cost.avg     <- lapply(run.cost.t, function(x) mean(unlist(x)))
 run.cost.c.avg   <- lapply(run.cost.c.t, function(x) mean(unlist(x)))
+run.cost.c.avg # avg. run cost for each iteration
 
 # Use this mean and save
 thresh.mean.l       <- lapply(thresh.list, function(x) mean(x$threshold))
@@ -275,6 +276,9 @@ avg.cost.c <- lapply(thresh.list.calib, function(x) mean(x$cost))
 
 se.cost    <- lapply(thresh.list, function(x) sd(x$cost)/sqrt(k))
 se.cost.c  <- lapply(thresh.list.calib, function(x) sd(x$cost)/sqrt(k))
+
+avg.cost.c
+se.cost.c
 
 # hyperparameters (examine)
 hp    <- lapply(alldata2[2:4], function(x) lapply(x$pars, function(y) y))
@@ -336,7 +340,8 @@ ll.c.avg <- apply(ll.c, 2, mean)
 
 ll.compare <- data.frame(cbind(ll.avg, ll.c.avg))
 colnames(ll.compare) <- c('Uncalibrated', 'Calibrated')
-ll.compare
+ll.compare 
+# improves log loss for all except log reg (which is already well-calibrated)
 
 # show avg. cost / accuracy changes due to calibration
 cost.compare <- data.frame(cbind(unlist(avg.cost), unlist(avg.cost.c)))
@@ -398,6 +403,7 @@ fin.cost <- pmap(list(actual, fin.ens, ts.price.f),
 ens.df <- data.frame(cbind(unlist(run.cost.c.avg), unlist(fin.cost)))
 colnames(ens.df) <- c('Average.Individual.Classifier', 'Ensembled.Classifier')
 ens.df$Percent.Improvement <-  -round((ens.df[, 2]-ens.df[, 1])/ens.df[, 1], 4)
+ens.df
 
 # SAVE ALL ENVIRONMENT VARIABLES
 save.image('Data/CV-results.RData')
