@@ -47,7 +47,6 @@ source("Scripts/Helpful-Models.R")
 
 # reorder and convert to numeric variables
 df.train <- dat.ready %>%
-    dplyr::mutate(return = as.integer(levels(return))[return]) %>% 
     dplyr::select(
         # DEMOGRAPHIC VARS
         age, 
@@ -117,29 +116,29 @@ for (i in 1:k) {
     ts.f <- z.scale(ts.f)
 
     # add in WOE variables
-    tr.f$user_id_WOE     <- WOE(tr.f, "user_id")
-    tr.f$item_id_WOE     <- WOE(tr.f, "item_id")
-    tr.f$item_size_WOE   <- WOE(tr.f, "item_size")
-    tr.f$brand_id_WOE    <- WOE(tr.f, "brand_id")
+    tr.f$WOE.user_id     <- WOE(tr.f, "user_id")
+    tr.f$WOE.item_id     <- WOE(tr.f, "item_id")
+    tr.f$WOE.item_size   <- WOE(tr.f, "item_size")
+    tr.f$WOE.brand_id    <- WOE(tr.f, "brand_id")
     tr.f$WOE.basket.size <- WOE(tr.f, "basket.size")
 
-    user_id_WOE <- tr.f %>%
-        dplyr::select(user_id, user_id_WOE) %>% distinct
-    item_id_WOE <- tr.f %>%
-        dplyr::select(item_id, item_id_WOE) %>% distinct
-    item_size_WOE <- tr.f %>%
-        dplyr::select(item_size, item_size_WOE) %>% distinct
-    brand_id_WOE <- tr.f %>%
-        dplyr::select(brand_id, brand_id_WOE) %>% distinct
+    WOE.user_id <- tr.f %>%
+        dplyr::select(user_id, WOE.user_id) %>% distinct
+    WOE.item_id <- tr.f %>%
+        dplyr::select(item_id, WOE.item_id) %>% distinct
+    WOE.item_size <- tr.f %>%
+        dplyr::select(item_size, WOE.item_size) %>% distinct
+    WOE.brand_id <- tr.f %>%
+        dplyr::select(brand_id, WOE.brand_id) %>% distinct
     WOE.basket.size <- tr.f %>%
         dplyr::select(basket.size, WOE.basket.size) %>% distinct
 
     # apply WOE labels to test set
     ts.f <- ts.f %>%
-        left_join(user_id_WOE, "user_id") %>%
-        left_join(item_id_WOE, "item_id") %>%
-        left_join(item_size_WOE, "item_size") %>%
-        left_join(brand_id_WOE, "brand_id") %>% 
+        left_join(WOE.user_id, "user_id") %>%
+        left_join(WOE.item_id, "item_id") %>%
+        left_join(WOE.item_size, "item_size") %>%
+        left_join(WOE.brand_id, "brand_id") %>% 
         left_join(WOE.basket.size, "basket.size")
 
     # 0 out NA's

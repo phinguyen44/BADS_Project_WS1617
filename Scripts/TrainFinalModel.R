@@ -173,8 +173,7 @@ df.class <- df.class %>%
         # ITEM VARS
         WOE.item_id, WOE.item_size, WOE.brand_id, # WOE
         discount.pc, 
-        item_price,
-        return) # TODO: hide this later
+        item_price)
 
 # TRAIN MODEL
 fin   <- map2(mods, learners, function(f, x) f(x, df.train, df.class, calib = TRUE))
