@@ -121,21 +121,27 @@ Train <- Train[,idx.keep.wrapper ]
 
 # Make final estimation and prediction
 logReg4 <- glm(return ~. , 
-              data = Train1, family = binomial(link = "logit"))
+              data = Train.final, family = binomial(link = "logit"))
 
 estimates <- list()
 
-estimates[["logReg4"]] <- predict(logReg4, newdata = Test1, type = "response", 
+estimates <- predict(logReg4, newdata = Test2, type = "response", 
                                  replace = TRUE)
 
 
 # Check out model performance 
 estimates.df <- data.frame(estimates)  
-AUC <- HMeasure(as.numeric(Test1$return)-1, estimates.df) 
+AUC <- HMeasure(as.numeric(Test2$return)-1, estimates.df) 
 auc_logReg4 <- AUC$metrics['AUC']
 auc_logReg4
 
-misClassError(Test1$return, estimates$logReg4, threshold = 0.5)
+pred = data.frame(cbind(Test2$return, estimates.df$estimates))
+pred$X3 = ifelse(pred$X2>0.5, 2,1)
+pred$X4 = abs(pred$X1-pred$X3)
+pred$X5 = pred$X1-1
+pred$X6 = pred$X3-1
+
+misClassError(pred$X5, pred$X6)
 estimates$logReg = ifelse(Test$no.return == 1, 0, estimates$logReg)
 
 sensitivity(Test$return, estimates$logReg, threshold = 0.5)
