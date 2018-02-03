@@ -35,12 +35,6 @@
     - efficacy of a set of features depends on the learning algorithm itself (each learner may have different feature set) (Opitz)
 5. What is our approach to ensembling:
     - hill climb (with replacement) Caruana
-    - each output must be calibrated first
-5. Platt scaling to calibrate -> smooths out so they better match posterior probabilities - also has an effect of reducing false positives (only in this case, by shifting predictions downward slightly)
-    - Calibration should be done on a separately trained set, then the output of the training set should be passed through the calibrated model (Niculescu)
-    - Add reliability plots to show how each output changed
-    - See notes on [posterior probabilities](https://en.wikipedia.org/wiki/Posterior_probability) on wikipedia
-    - Show how improved the logloss metric is
 
 ## Model Evaluation
 

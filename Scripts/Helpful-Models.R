@@ -51,7 +51,7 @@ calib.mod <- function(mod, pred, cs, cs.label) {
     calib.m  <- train(clearner, ctask)
 
     # pass test set prediction through calibrated model
-    test.pred     <- data.frame(y = pred$data$truth, x = pred$data$prob.1)
+    test.pred     <- data.frame(x = pred$data$prob.1)
     lr.pred.calib <- predict(calib.m, newdata = test.pred)
 
     return(lr.pred.calib)
@@ -189,9 +189,9 @@ rf.mod <- function(learner, tr, ts, calib = FALSE) {
 
     # hyperparameters
     rf_param <- makeParamSet(
-        makeDiscreteParam("ntree", values = seq(100, 300, by=20)),
-        makeIntegerParam("nodesize", lower = 10, upper = 50),
-        makeIntegerParam("mtry", lower = 5, upper = 9)
+        makeDiscreteParam("ntree", values = seq(200, 800, by=100)),
+        makeDiscreteParam("nodesize", values = seq(1, 50, by = 4)),
+        makeIntegerParam("mtry", lower = 1, upper = 8)
     )
 
     # tune parameters (random rather than grid search faster)
@@ -261,8 +261,8 @@ xgb.mod <- function(learner, tr, ts, calib = FALSE) {
     xg_ps <- makeParamSet(
         makeDiscreteParam("booster", values = c("gbtree")),
         makeDiscreteParam("gamma", values = c(0, 0.1, 1, 10)),
-        makeDiscreteParam("eta", values = c(0.001, 0.01, 0.1, 0.4)),
-        makeDiscreteParam("nrounds", values = c(50, 100, 200, 400)),
+        makeDiscreteParam("eta", values = c(0.001, 0.01, 0.1, 0.3, 0.8)),
+        makeDiscreteParam("nrounds", values = c(1, 50, 100, 200, 400)),
         makeDiscreteParam("lambda", values = seq(0, 1, by=0.1)),
         makeIntegerParam("max_depth", lower = 2L, upper = 15L)
     )
@@ -382,34 +382,5 @@ ensembler <- function(allpreds, costlist) {
     final.results <- round(final.results)
     
     return(final.results)
-    
-}
-
-ensembler.final <- function(allpreds, costlist) {
-    
-    # which is best model?
-    best.mod <- which.max(costlist)
-    
-    # in case of tie, use prediction of best
-    the.response <- data.frame(sapply(allpreds, to.numeric))
-    the.means    <- rowMeans(the.response)
-    m.idx        <- which(the.means == 0.5)
-    
-    # get final predictions
-    final.results <- the.means
-    final.results[m.idx] <- the.response[m.idx, best.mod]
-    final.results <- round(final.results)
-    
-    return(final.results)
-    
-}
-
-# converts response to numeric
-to.numeric <- function(pred.object) {
-    
-    response  <- pred.object$data$response
-    predicted <- as.numeric(levels(response))[response]
-    
-    return(predicted)
     
 }
