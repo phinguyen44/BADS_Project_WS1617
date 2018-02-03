@@ -47,7 +47,6 @@ source("Scripts/Helpful-Models.R")
 
 # reorder and convert to numeric variables
 df.train <- dat.ready %>%
-    dplyr::mutate(return = as.integer(levels(return))[return]) %>% 
     dplyr::select(
         # DEMOGRAPHIC VARS
         age, 
@@ -88,7 +87,7 @@ mods <- list(lr = lr.mod,
 # final model is made by fitting model (including hyperparameter tuning) to whole data set
 
 set.seed(321)
-k     <- 5
+k     <- 4
 folds <- createFolds(df.train$return, k = k, list = TRUE)
 str(folds)
 
@@ -117,26 +116,30 @@ for (i in 1:k) {
     ts.f <- z.scale(ts.f)
 
     # add in WOE variables
-    tr.f$user_id_WOE <- WOE(tr.f, "user_id")
-    tr.f$item_id_WOE <- WOE(tr.f, "item_id")
-    tr.f$item_size_WOE <- WOE(tr.f, "item_size")
-    tr.f$brand_id_WOE <- WOE(tr.f, "brand_id")
+    tr.f$WOE.user_id     <- WOE(tr.f, "user_id")
+    tr.f$WOE.item_id     <- WOE(tr.f, "item_id")
+    tr.f$WOE.item_size   <- WOE(tr.f, "item_size")
+    tr.f$WOE.brand_id    <- WOE(tr.f, "brand_id")
+    tr.f$WOE.basket.size <- WOE(tr.f, "basket.size")
 
-    user_id_WOE <- tr.f %>%
-        dplyr::select(user_id, user_id_WOE) %>% distinct
-    item_id_WOE <- tr.f %>%
-        dplyr::select(item_id, item_id_WOE) %>% distinct
-    item_size_WOE <- tr.f %>%
-        dplyr::select(item_size, item_size_WOE) %>% distinct
-    brand_id_WOE <- tr.f %>%
-        dplyr::select(brand_id, brand_id_WOE) %>% distinct
+    WOE.user_id <- tr.f %>%
+        dplyr::select(user_id, WOE.user_id) %>% distinct
+    WOE.item_id <- tr.f %>%
+        dplyr::select(item_id, WOE.item_id) %>% distinct
+    WOE.item_size <- tr.f %>%
+        dplyr::select(item_size, WOE.item_size) %>% distinct
+    WOE.brand_id <- tr.f %>%
+        dplyr::select(brand_id, WOE.brand_id) %>% distinct
+    WOE.basket.size <- tr.f %>%
+        dplyr::select(basket.size, WOE.basket.size) %>% distinct
 
     # apply WOE labels to test set
     ts.f <- ts.f %>%
-        left_join(user_id_WOE, "user_id") %>%
-        left_join(item_id_WOE, "item_id") %>%
-        left_join(item_size_WOE, "item_size") %>%
-        left_join(brand_id_WOE, "brand_id")
+        left_join(WOE.user_id, "user_id") %>%
+        left_join(WOE.item_id, "item_id") %>%
+        left_join(WOE.item_size, "item_size") %>%
+        left_join(WOE.brand_id, "brand_id") %>% 
+        left_join(WOE.basket.size, "basket.size")
 
     # 0 out NA's
     ts.f[is.na(ts.f)] <- 0
@@ -147,16 +150,16 @@ for (i in 1:k) {
             # DEMOGRAPHIC VARS
             age, 
             account.age.order,
-            user_id_WOE, # WOE
+            WOE.user_id, # WOE
             user.total.items, user.total.expen,
             # BASKET VARS
             deliver.time, 
-            basket.big, basket.size, 
+            basket.big, WOE.basket.size, 
             item.basket.size.same, item.basket.size.diff, 
             item.basket.same.category,
             no.return,
             # ITEM VARS
-            item_id_WOE, item_size_WOE, brand_id_WOE, # WOE
+            WOE.item_id, WOE.item_size, WOE.brand_id, # WOE
             discount.pc, 
             item_price, 
             return)
@@ -166,16 +169,16 @@ for (i in 1:k) {
             # DEMOGRAPHIC VARS
             age, 
             account.age.order,
-            user_id_WOE, # WOE
+            WOE.user_id, # WOE
             user.total.items, user.total.expen,
             # BASKET VARS
             deliver.time, 
-            basket.big, basket.size, 
+            basket.big, WOE.basket.size, 
             item.basket.size.same, item.basket.size.diff, 
             item.basket.same.category,
             no.return,
             # ITEM VARS
-            item_id_WOE, item_size_WOE, brand_id_WOE, # WOE
+            WOE.item_id, WOE.item_size, WOE.brand_id, # WOE
             discount.pc, 
             item_price, 
             return)
@@ -213,11 +216,11 @@ p.calib.r <- lapply(p.calib,
 thresh.list       <- preds
 thresh.list.calib <- preds
 
-for (i in 1:length(learners)) { # 4
+for (i in 1:length(learners)) {
     d       <- data.frame()
     d.calib <- data.frame()
 
-    for (j in 1:k) {  # 5
+    for (j in 1:k) { 
 
         print(paste0("Get Threshold: ", i, ",", j))
 
@@ -229,9 +232,6 @@ for (i in 1:length(learners)) { # 4
                                   cost = ts.price.f[[j]])
         d       <- rbind(d, initial)
         d.calib <- rbind(d.calib, init.ca)
-
-        # TODO: get new prediction list after setting threshold
-        # should be five
 
     }
     thresh.list[[i]]       <- d
@@ -265,10 +265,10 @@ run.cost.avg     <- lapply(run.cost.t, function(x) mean(unlist(x)))
 run.cost.c.avg   <- lapply(run.cost.c.t, function(x) mean(unlist(x)))
 run.cost.c.avg # avg. run cost for each iteration
 
-# Use this mean and save
+# Use this mean
 thresh.mean.l       <- lapply(thresh.list, function(x) mean(x$threshold))
 thresh.mean.l.calib <- lapply(thresh.list.calib, function(x) mean(x$threshold))
-save(thresh.mean.l, file = 'Data/CalibratedThreshold.Rdata')
+save(thresh.mean.l.calib, file = 'Data/CalibratedThreshold.Rdata')
 
 # Get avg. cost and standard error
 avg.cost   <- lapply(thresh.list, function(x) mean(x$cost))
@@ -279,6 +279,9 @@ se.cost.c  <- lapply(thresh.list.calib, function(x) sd(x$cost)/sqrt(k))
 
 avg.cost.c
 se.cost.c
+
+# Save mean and avg. min cost
+save(thresh.mean.l.calib, avg.cost.c, file = 'Data/CalibratedThreshold.Rdata')
 
 # hyperparameters (examine)
 hp    <- lapply(alldata2[2:4], function(x) lapply(x$pars, function(y) y))
