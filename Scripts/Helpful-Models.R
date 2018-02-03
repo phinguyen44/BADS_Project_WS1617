@@ -189,9 +189,9 @@ rf.mod <- function(learner, tr, ts, calib = FALSE) {
 
     # hyperparameters
     rf_param <- makeParamSet(
-        makeDiscreteParam("ntree", values = seq(100, 200, by=20)),
-        makeDiscreteParam("nodesize", values = seq(10, 40, by=5)),
-        makeIntegerParam("mtry", lower = 4, upper = 10)
+        makeDiscreteParam("ntree", values = seq(100, 300, by=20)),
+        makeIntegerParam("nodesize", lower = 10, upper = 50),
+        makeIntegerParam("mtry", lower = 5, upper = 9)
     )
 
     # tune parameters (random rather than grid search faster)
@@ -260,11 +260,11 @@ xgb.mod <- function(learner, tr, ts, calib = FALSE) {
 
     xg_ps <- makeParamSet(
         makeDiscreteParam("booster", values = c("gbtree")),
-        makeDiscreteParam("gamma", values = c(0, 0.1, 0.2)),
-        makeDiscreteParam("eta", values = c(0.01, 0.05, 0.1, 0.15)),
+        makeDiscreteParam("gamma", values = c(0, 0.1, 1, 10)),
+        makeDiscreteParam("eta", values = c(0.001, 0.01, 0.1, 0.4)),
         makeDiscreteParam("nrounds", values = c(50, 100, 200, 400)),
-        makeDiscreteParam("lambda", values = seq(0.3, 0.6, by=0.05)),
-        makeIntegerParam("max_depth", lower = 3L, upper = 8L)
+        makeDiscreteParam("lambda", values = seq(0, 1, by=0.1)),
+        makeIntegerParam("max_depth", lower = 2L, upper = 15L)
     )
 
     start <- Sys.time()

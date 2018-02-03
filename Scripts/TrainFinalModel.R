@@ -5,7 +5,6 @@
 # Description:
 # 
 # BADS project - train final model
-# TODO: standardize
 #
 ################################################################################
 
@@ -37,9 +36,8 @@ lapply(neededPackages, function(x) suppressPackageStartupMessages(
 
 # Load data
 load("Data/BADS_WS1718_known_ready.RData")
+load("Data/BADS_WS1718_class_ready.RData")
 load("Data/CalibratedThreshold.Rdata")
-df.known   <- read.csv("Data/BADS_WS1718_known.csv")
-df.unknown <- read.csv("Data/BADS_WS1718_class_20180115.csv")
 
 # Source performance metric calculations
 source("Scripts/Helpful.R")
@@ -48,31 +46,53 @@ source("Scripts/Helpful-Models.R")
 ################################################################################
 # INITIAL SETUP
 
+# TODO: maybe discount.pc should not be factor, same with item.basket.size...
+
 # reorder and select variables
-df.train <- dat.input1 %>%
+df.train <- dat.ready %>%
+    dplyr::mutate(return    = as.integer(levels(return))[return],
+                  no.return = as.factor(no.return)) %>% 
     dplyr::select(
         # DEMOGRAPHIC VARS
-        age, age.group,
-        user_state, user_title, WestGerm, income.ind,
-        first.order, account.age.order,
+        age, 
+        account.age.order,
         user_id, # WOE
+        user.total.items, user.total.expen,
         # BASKET VARS
-        deliver.time, order_year, order_month, weekday, no.return,
-        basket.big, basket.size, basket.value,
-        order.same.item, item.basket.size.diff, item.basket.same.category,
-        item.basket.category.size.diff,
-        order.same.itemD, item.basket.size.diffD, item.basket.same.categoryD,
-        item.basket.category.size.diffD,
+        deliver.time, 
+        basket.big, basket.size, 
+        item.basket.size.same, item.basket.size.diff, item.basket.same.category,
+        no.return,
         # ITEM VARS
-        item_id, item_color, item_size, brand_id, # WOE
-        brand.cluster, item.color.group, item.category, item.subcategory,
-        discount.abs, discount.pc, is.discount,
-        item_price, item_priceB, price.inc.ratio,
+        item_id, item_size, brand_id, # WOE
+        discount.pc, 
+        item_price, 
+        return)
+
+df.class <- dat.test %>%
+    # dplyr::mutate(return = as.integer(levels(return))[return]) %>% 
+    dplyr::select(
+        # DEMOGRAPHIC VARS
+        age, 
+        account.age.order,
+        user_id, # WOE
+        user.total.items, user.total.expen,
+        # BASKET VARS
+        deliver.time, 
+        basket.big, basket.size, 
+        item.basket.size.same, item.basket.size.diff, item.basket.same.category,
+        no.return,
+        # ITEM VARS
+        item_id, item_size, brand_id, # WOE
+        discount.pc, 
+        item_price, 
         return)
 
 # SAVE DATA FOR LATER
 df.label <- df.train$return
 df.price <- df.train$item_price
+
+class.price <- df.class$item_price
 
 ## LIST OF FUNCTIONS
 learners <- list(lr = "classif.logreg",
@@ -87,77 +107,77 @@ mods <- list(lr = lr.mod,
 ################################################################################
 # TRAIN FINAL MODEL
 
-# add in WOE variables
-df.train$user_id_WOE    <- WOE(df.train, "user_id")
-df.train$item_id_WOE    <- WOE(df.train, "item_id")
-df.train$item_color_WOE <- WOE(df.train, "item_color")
-df.train$item_size_WOE  <- WOE(df.train, "item_size")
-df.train$brand_id_WOE   <- WOE(df.train, "brand_id")
+# standardize
+df.train <- z.scale(df.train)
+df.class <- z.scale(df.class)
 
-user_id_WOE    <- df.train %>% 
+# add in WOE variables
+df.train$user_id_WOE <- WOE(df.train, "user_id")
+df.train$item_id_WOE <- WOE(df.train, "item_id")
+df.train$item_size_WOE <- WOE(df.train, "item_size")
+df.train$brand_id_WOE <- WOE(df.train, "brand_id")
+
+user_id_WOE <- df.train %>%
     dplyr::select(user_id, user_id_WOE) %>% distinct
-item_id_WOE    <- df.train %>% 
+item_id_WOE <- df.train %>%
     dplyr::select(item_id, item_id_WOE) %>% distinct
-item_color_WOE <- df.train %>% 
-    dplyr::select(item_color, item_color_WOE) %>%distinct
-item_size_WOE  <- df.train %>% 
-    dplyr::select(item_size, item_size_WOE) %>%distinct
-brand_id_WOE   <- df.train %>% 
+item_size_WOE <- df.train %>%
+    dplyr::select(item_size, item_size_WOE) %>% distinct
+brand_id_WOE <- df.train %>%
     dplyr::select(brand_id, brand_id_WOE) %>% distinct
 
-# TODO: THIS ... NEEDS TO BE UPDATED FOR UNKNOWN SET
 # apply WOE labels to test set
-df.unknown <- df.unknown %>%
+df.class <- df.class %>%
     left_join(user_id_WOE, "user_id") %>%
     left_join(item_id_WOE, "item_id") %>%
-    left_join(item_color_WOE, "item_color") %>%
     left_join(item_size_WOE, "item_size") %>%
     left_join(brand_id_WOE, "brand_id")
 
 # 0 out NA's
-df.unknown[is.na(df.unknown)] <- 0
+df.class[is.na(df.class)] <- 0
 
-# TODO:
+# select right variables for dataset
 # select right variables for dataset
 df.train <- df.train %>%
     dplyr::select(
         # DEMOGRAPHIC VARS
-        age,
-        user_state, user_title, 
-        first.order, account.age.order,
-        user_id_WOE,
+        age, 
+        account.age.order,
+        user_id_WOE, # WOE
+        user.total.items, user.total.expen,
         # BASKET VARS
-        deliver.time, order_month, weekday, no.return,
-        basket.size,
-        order.same.itemD,item.basket.size.diffD, 
+        deliver.time, 
+        basket.big, basket.size, 
+        item.basket.size.same, item.basket.size.diff, 
+        item.basket.same.category,
+        no.return,
         # ITEM VARS
-        item_id_WOE, brand_id_WOE,
-        item.category, item.subcategory,
-        is.discount,
-        item_priceB, price.inc.ratio,
+        item_id_WOE, item_size_WOE, brand_id_WOE, # WOE
+        discount.pc, 
+        item_price, 
         return)
 
-# TODO: for final data set
-df.unknown <- df.unknown %>%
+df.class <- df.class %>%
     dplyr::select(
         # DEMOGRAPHIC VARS
-        age,
-        user_state, user_title, 
-        first.order, account.age.order,
-        user_id_WOE,
+        age, 
+        account.age.order,
+        user_id_WOE, # WOE
+        user.total.items, user.total.expen,
         # BASKET VARS
-        deliver.time, order_month, weekday, no.return,
-        basket.size,
-        order.same.itemD,item.basket.size.diffD, 
+        deliver.time, 
+        basket.big, basket.size, 
+        item.basket.size.same, item.basket.size.diff, 
+        item.basket.same.category,
+        no.return,
         # ITEM VARS
-        item_id_WOE, brand_id_WOE,
-        item.category, item.subcategory,
-        is.discount,
-        item_priceB, price.inc.ratio,
+        item_id_WOE, item_size_WOE, brand_id_WOE, # WOE
+        discount.pc, 
+        item_price, 
         return)
 
 # TRAIN MODEL
-fin   <- map2(mods, learners, function(f, x) f(x, tr, ts, calib = TRUE))
+fin   <- map2(mods, learners, function(f, x) f(x, df.train, df.class, calib = TRUE))
 
 # APPLY NEW THRESHOLD
 fin.new.calib <- map2(fin, thresh.mean.l.calib,

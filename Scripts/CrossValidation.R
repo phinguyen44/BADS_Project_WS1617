@@ -3,10 +3,9 @@
 #
 ################################################################################
 # Description:
-# 
+#
 # BADS project - build candidate models, do cross-validation, build ensemble
-# TODO: get final list of variables from claudia to standardize
-# 
+#
 ################################################################################
 
 ################################################################################
@@ -19,7 +18,7 @@ setwd(wd)
 
 # List all packages needed for session
 neededPackages <- c("tidyverse", "magrittr", "purrr", "infuser",
-                    "caret", "mlr", 
+                    "caret", "mlr",
                     "xgboost", "gbm", "rpart", "e1071", "MASS", "nnet",
                     "pROC", "parallel", "parallelMap")
 allPackages    <- c(neededPackages %in% installed.packages()[,"Package"])
@@ -28,7 +27,7 @@ allPackages    <- c(neededPackages %in% installed.packages()[,"Package"])
 if (!all(allPackages)) {
     missingIDX <- which(allPackages == FALSE)
     needed     <- neededPackages[missingIDX]
-    lapply(needed, install.packages)  
+    lapply(needed, install.packages)
 }
 
 # Load all defined packages
@@ -36,7 +35,7 @@ lapply(neededPackages, function(x) suppressPackageStartupMessages(
     library(x, character.only = TRUE)))
 
 # Load data
-load("Data/BADS_WS1718_known_var.RData")
+load("Data/BADS_WS1718_known_ready.RData")
 df.known   <- read.csv("Data/BADS_WS1718_known.csv")
 
 # Source performance metric calculations
@@ -46,26 +45,24 @@ source("Scripts/Helpful-Models.R")
 ################################################################################
 # INITIAL SETUP
 
-# reorder and select variables
-df.train <- dat.input1 %>%
+# reorder and convert to numeric variables
+df.train <- dat.ready %>%
+    dplyr::mutate(return = as.integer(levels(return))[return]) %>% 
     dplyr::select(
         # DEMOGRAPHIC VARS
-        age, age.group,
-        user_state, user_title, WestGerm, income.ind,
-        first.order, account.age.order,
+        age, 
+        account.age.order,
         user_id, # WOE
+        user.total.items, user.total.expen,
         # BASKET VARS
-        deliver.time, order_year, order_month, weekday, no.return,
-        basket.big, basket.size, basket.value,
-        order.same.item, item.basket.size.diff, item.basket.same.category,
-        item.basket.category.size.diff,
-        order.same.itemD, item.basket.size.diffD, item.basket.same.categoryD,
-        item.basket.category.size.diffD,
+        deliver.time, 
+        basket.big, basket.size, 
+        item.basket.size.same, item.basket.size.diff, item.basket.same.category,
+        no.return,
         # ITEM VARS
-        item_id, item_color, item_size, brand_id, # WOE
-        brand.cluster, item.color.group, item.category, item.subcategory,
-        discount.abs, discount.pc, is.discount,
-        item_price, item_priceB, price.inc.ratio,
+        item_id, item_size, brand_id, # WOE
+        discount.pc, 
+        item_price, 
         return)
 
 # SAVE DATA FOR LATER
@@ -102,7 +99,7 @@ actual      <- yhat
 ts.price.f  <- yhat
 
 for (i in 1:k) {
-    
+
     print(infuse("Starting Run #: {{iter}}", iter = i))
 
     start <- Sys.time()
@@ -112,32 +109,32 @@ for (i in 1:k) {
 
     tr.label.f <- tr.f$return
     ts.label.f <- ts.f$return
-    
+
     ts.price.f[[i]] <- ts.f$item_price
+    
+    # standardize
+    tr.f <- z.scale(tr.f)
+    ts.f <- z.scale(ts.f)
 
     # add in WOE variables
     tr.f$user_id_WOE <- WOE(tr.f, "user_id")
     tr.f$item_id_WOE <- WOE(tr.f, "item_id")
-    tr.f$item_color_WOE <- WOE(tr.f, "item_color")
     tr.f$item_size_WOE <- WOE(tr.f, "item_size")
     tr.f$brand_id_WOE <- WOE(tr.f, "brand_id")
 
-    user_id_WOE <- tr.f %>% 
+    user_id_WOE <- tr.f %>%
         dplyr::select(user_id, user_id_WOE) %>% distinct
-    item_id_WOE <- tr.f %>% 
+    item_id_WOE <- tr.f %>%
         dplyr::select(item_id, item_id_WOE) %>% distinct
-    item_color_WOE <- tr.f %>%
-        dplyr::select(item_color, item_color_WOE) %>% distinct
-    item_size_WOE <- tr.f %>% 
+    item_size_WOE <- tr.f %>%
         dplyr::select(item_size, item_size_WOE) %>% distinct
-    brand_id_WOE <- tr.f %>% 
+    brand_id_WOE <- tr.f %>%
         dplyr::select(brand_id, brand_id_WOE) %>% distinct
 
     # apply WOE labels to test set
     ts.f <- ts.f %>%
         left_join(user_id_WOE, "user_id") %>%
         left_join(item_id_WOE, "item_id") %>%
-        left_join(item_color_WOE, "item_color") %>%
         left_join(item_size_WOE, "item_size") %>%
         left_join(brand_id_WOE, "brand_id")
 
@@ -148,40 +145,40 @@ for (i in 1:k) {
     tr.f <- tr.f %>%
         dplyr::select(
             # DEMOGRAPHIC VARS
-            age,
-            user_state, user_title, 
-            user_id_WOE,
+            age, 
+            account.age.order,
+            user_id_WOE, # WOE
+            user.total.items, user.total.expen,
             # BASKET VARS
-            deliver.time, no.return,
-            basket.size,
-            order.same.itemD,item.basket.size.diffD, 
+            deliver.time, 
+            basket.big, basket.size, 
+            item.basket.size.same, item.basket.size.diff, 
+            item.basket.same.category,
+            no.return,
             # ITEM VARS
-            item_id_WOE, brand_id_WOE,
-            item.category, 
-            is.discount,
-            item_priceB, price.inc.ratio,
+            item_id_WOE, item_size_WOE, brand_id_WOE, # WOE
+            discount.pc, 
+            item_price, 
             return)
 
     ts.f <- ts.f %>%
         dplyr::select(
             # DEMOGRAPHIC VARS
-            age,
-            user_state, user_title, 
-            user_id_WOE,
+            age, 
+            account.age.order,
+            user_id_WOE, # WOE
+            user.total.items, user.total.expen,
             # BASKET VARS
-            deliver.time, no.return,
-            basket.size,
-            order.same.itemD,item.basket.size.diffD, 
+            deliver.time, 
+            basket.big, basket.size, 
+            item.basket.size.same, item.basket.size.diff, 
+            item.basket.same.category,
+            no.return,
             # ITEM VARS
-            item_id_WOE, brand_id_WOE,
-            item.category, 
-            is.discount,
-            item_priceB, price.inc.ratio,
+            item_id_WOE, item_size_WOE, brand_id_WOE, # WOE
+            discount.pc, 
+            item_price, 
             return)
-
-    # make model task
-    traint.f <- makeClassifTask(data = tr.f, target = "return", positive = 1)
-    testt.f  <- makeClassifTask(data = ts.f, target = "return", positive = 1)
 
     # TRAIN MODEL
     yhat[[i]]   <- map2(mods, learners,
@@ -203,13 +200,13 @@ alldata  <- transpose(yhat)
 alldata2 <- lapply(alldata, transpose)
 
 # predictions for each model
-preds     <- lapply(alldata2, 
+preds     <- lapply(alldata2,
                     function(x) lapply(x$pred, function(y) y$data$prob.1))
-preds.r   <- lapply(preds, 
+preds.r   <- lapply(preds,
                     function(x) lapply(x, function(y) round(y)))
-p.calib   <- lapply(alldata2, 
+p.calib   <- lapply(alldata2,
                     function(x) lapply(x$pred.calib, function(y) y$data$prob.1))
-p.calib.r <- lapply(p.calib, 
+p.calib.r <- lapply(p.calib,
                     function(x) lapply(x, function(y) round(y)))
 
 # Find appropriate threshold
@@ -219,23 +216,23 @@ thresh.list.calib <- preds
 for (i in 1:length(learners)) { # 4
     d       <- data.frame()
     d.calib <- data.frame()
-    
+
     for (j in 1:k) {  # 5
-        
+
         print(paste0("Get Threshold: ", i, ",", j))
-        
-        initial <- find.threshold(act  = actual[[j]], 
-                                  pred = preds[[i]][[j]], 
+
+        initial <- find.threshold(act  = actual[[j]],
+                                  pred = preds[[i]][[j]],
                                   cost = ts.price.f[[j]])
-        init.ca <- find.threshold(act  = actual[[j]], 
-                                  pred = p.calib[[i]][[j]], 
+        init.ca <- find.threshold(act  = actual[[j]],
+                                  pred = p.calib[[i]][[j]],
                                   cost = ts.price.f[[j]])
         d       <- rbind(d, initial)
         d.calib <- rbind(d.calib, init.ca)
-        
+
         # TODO: get new prediction list after setting threshold
         # should be five
-        
+
     }
     thresh.list[[i]]       <- d
     thresh.list.calib[[i]] <- d.calib
@@ -252,12 +249,12 @@ for (i in 1:length(learners)) {
         val <- ifelse(preds[[i]][[j]] <= thresh.list[[i]][j, ]$threshold, 0, 1)
         preds.thresh[[i]][[j]] <- val
         run.cost[[i]][[j]]     <- thresh.list[[i]][j, ]$cost
-        
-        val2 <- ifelse(p.calib[[i]][[j]] <= 
+
+        val2 <- ifelse(p.calib[[i]][[j]] <=
                            thresh.list.calib[[i]][j, ]$threshold, 0, 1)
         p.calib.thresh[[i]][[j]] <- val2
         run.cost.c[[i]][[j]]     <- thresh.list.calib[[i]][j, ]$cost
-        
+
     }
 }
 preds.thresh.t   <- transpose(preds.thresh)
@@ -266,6 +263,7 @@ run.cost.t       <- transpose(run.cost)
 run.cost.c.t     <- transpose(run.cost.c)
 run.cost.avg     <- lapply(run.cost.t, function(x) mean(unlist(x)))
 run.cost.c.avg   <- lapply(run.cost.c.t, function(x) mean(unlist(x)))
+run.cost.c.avg # avg. run cost for each iteration
 
 # Use this mean and save
 thresh.mean.l       <- lapply(thresh.list, function(x) mean(x$threshold))
@@ -278,6 +276,9 @@ avg.cost.c <- lapply(thresh.list.calib, function(x) mean(x$cost))
 
 se.cost    <- lapply(thresh.list, function(x) sd(x$cost)/sqrt(k))
 se.cost.c  <- lapply(thresh.list.calib, function(x) sd(x$cost)/sqrt(k))
+
+avg.cost.c
+se.cost.c
 
 # hyperparameters (examine)
 hp    <- lapply(alldata2[2:4], function(x) lapply(x$pars, function(y) y))
@@ -318,7 +319,7 @@ cost1   <- ts.price.f[[1]]
 
 # Reliability plots to compare original vs calibrated results (for 1 fold)
 for (i in 1:length(mods)) {
-    pdf(infuse("Written/Images/ReliabilityPlot-{{model}}.pdf", 
+    pdf(infuse("Written/Images/ReliabilityPlot-{{model}}.pdf",
                model = names(mods[i])),
         width  = 6,
         height = 4)
@@ -339,7 +340,8 @@ ll.c.avg <- apply(ll.c, 2, mean)
 
 ll.compare <- data.frame(cbind(ll.avg, ll.c.avg))
 colnames(ll.compare) <- c('Uncalibrated', 'Calibrated')
-ll.compare
+ll.compare 
+# improves log loss for all except log reg (which is already well-calibrated)
 
 # show avg. cost / accuracy changes due to calibration
 cost.compare <- data.frame(cbind(unlist(avg.cost), unlist(avg.cost.c)))
@@ -357,11 +359,11 @@ cost.df <- data.frame(cbind(unlist(avg.cost.c), unlist(se.cost.c)))
 colnames(cost.df) <- c('Cost', 'SE')
 cost.df$Model <- rownames(cost.df)
 
-p <- ggplot(data = cost.df, aes(x = Model, y = Cost)) + 
+p <- ggplot(data = cost.df, aes(x = Model, y = Cost)) +
     geom_point() +
-    geom_errorbar(aes(ymin = Cost - SE, ymax = Cost + SE)) + 
-    labs(title = "Total Cost") + 
-    labs(subtitle = infuse("{{num}}-Fold Cross-Validation", num=k)) + 
+    geom_errorbar(aes(ymin = Cost - SE, ymax = Cost + SE)) +
+    labs(title = "Total Cost") +
+    labs(subtitle = infuse("{{num}}-Fold Cross-Validation", num=k)) +
     theme(plot.title = element_text(size=16)) +
     theme_bw()
 p
@@ -372,17 +374,17 @@ acc.df <- data.frame(cbind(unlist(avg.acc.c), unlist(acc.c.se)))
 colnames(acc.df) <- c('Acc', 'SE')
 acc.df$Model <- rownames(acc.df)
 
-p2 <- ggplot(data = acc.df, aes(x = Model, y = Acc)) + 
+p2 <- ggplot(data = acc.df, aes(x = Model, y = Acc)) +
     geom_point() +
-    geom_errorbar(aes(ymin = Acc - SE, ymax = Acc + SE)) + 
-    labs(title = "Accuracy") + 
-    labs(subtitle = infuse("{{num}}-Fold Cross-Validation", num=k)) + 
+    geom_errorbar(aes(ymin = Acc - SE, ymax = Acc + SE)) +
+    labs(title = "Accuracy") +
+    labs(subtitle = infuse("{{num}}-Fold Cross-Validation", num=k)) +
     theme(plot.title = element_text(size=16)) +
     theme_bw()
 p2
 ggsave('Written/Images/CV-accuracy.pdf', width = 6, height = 4)
-    
-####### RESULTS FROM THRESHOLD OPTIMIZATION (USING CALIBRATED RESULTS): 
+
+####### RESULTS FROM THRESHOLD OPTIMIZATION (USING CALIBRATED RESULTS):
 
 # plot threshold / cost plots for each model (for 1 fold)
 for (i in 1:length(pf1c)) {
@@ -392,12 +394,16 @@ for (i in 1:length(pf1c)) {
            height = 4,
            width  = 8)
 }
-    
+
 ####### RESULTS FROM ENSEMBLING (USING CALIBRATED RESULTS):
-    
+
 fin.ens  <- map2(p.calib.thresh.t, run.cost.c.t, function(x, y) ensembler(x, y))
-fin.cost <- pmap(list(actual, fin.ens, ts.price.f), 
+fin.cost <- pmap(list(actual, fin.ens, ts.price.f),
                  function(x, y, z) cost.calc(0.5, x, y, z))
 ens.df <- data.frame(cbind(unlist(run.cost.c.avg), unlist(fin.cost)))
 colnames(ens.df) <- c('Average.Individual.Classifier', 'Ensembled.Classifier')
 ens.df$Percent.Improvement <-  -round((ens.df[, 2]-ens.df[, 1])/ens.df[, 1], 4)
+ens.df
+
+# SAVE ALL ENVIRONMENT VARIABLES
+save.image('Data/CV-results.RData')
