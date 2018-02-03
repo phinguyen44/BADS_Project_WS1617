@@ -46,9 +46,12 @@ source("Scripts/Helpful-Models.R")
 ################################################################################
 # INITIAL SETUP
 
+# TODO: maybe discount.pc should not be factor, same with item.basket.size...
+
 # reorder and select variables
 df.train <- dat.ready %>%
-    dplyr::mutate(return = as.integer(levels(return))[return]) %>% 
+    dplyr::mutate(return    = as.integer(levels(return))[return],
+                  no.return = as.factor(no.return)) %>% 
     dplyr::select(
         # DEMOGRAPHIC VARS
         age, 
