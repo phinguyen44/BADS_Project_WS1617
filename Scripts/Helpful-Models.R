@@ -15,8 +15,6 @@
 # neural net (nnet) - single hidden layer neural network
 # 
 # ensembler() - ensembles models together using majority vote approach
-# ensembler.final() - same as above, just used for final model
-# to.numeric() - helper function used to convert mlr output to numeric
 #
 ################################################################################
 
@@ -191,9 +189,9 @@ xgb.mod <- function(learner, tr, ts, calib = FALSE) {
     xg_ps <- makeParamSet(
         makeDiscreteParam("booster", values = c("gbtree", "dart")),
         makeDiscreteParam("gamma", values = c(0, 0.1, 0.2)),
-        makeDiscreteParam("eta", values = c(0.001, 0.01, 0.1, 0.3, 0.8)),
+        makeDiscreteParam("eta", values = c(0.001, 0.01, 0.1, 0.3, 0.5)),
         makeDiscreteParam("nrounds", values = c(50, 100, 200)),
-        makeDiscreteParam("lambda", values = seq(0.3, 0.6, by=0.05)),
+        makeDiscreteParam("lambda", values = seq(0, 0.6, by=0.1)),
         makeIntegerParam("max_depth", lower = 3L, upper = 8L)
     )
 

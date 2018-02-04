@@ -210,3 +210,8 @@ final.results        <- round(final.results)
 ################################################################################
 # POST-PROCESSING
 
+# predict return for all cases where item_price = 0 
+# (based of our internal research)
+
+zero.idx <- which(class.price == 0)
+final.results[zero.idx] <- 1
