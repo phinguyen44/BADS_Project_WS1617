@@ -115,12 +115,6 @@ for (i in 1:k) {
     yhat[[i]]   <- map2(mods, learners,
                         function(f, x) f(x, tr.f, ts.f, calib=TRUE))
     
-    # TODO: PREDICT
-    # transform for prediction
-    transformed <- woe.and.scale(tr.f, ts.f)
-    traindf     <- transformed$traindf
-    testdf      <- transformed$testdf
-
     # GET ACTUAL VALUES AND STORE THEM
     actual[[i]] <- ts.label.f
 

@@ -241,23 +241,14 @@ xgb.mod <- function(learner, tr, ts, calib = FALSE) {
 # NNET
 nn.mod <- function(learner, tr, ts, calib = FALSE) {
     
+    ##### START OF INNER LOOP
+    
     nn <- makeLearner(learner, predict.type = "prob")
     
     # resplit training data set manually
     part.ind <- createDataPartition(y = tr$return, p = 0.8, list = FALSE) 
     trdf     <- tr[part.ind, ]
     tsdf     <- tr[-part.ind, ] 
-    
-    # TODO: further split data for calibration
-    if (calib == TRUE) {
-        calib.data <- calib.part(trdf)
-        trdf       <- calib.data$tr
-        csdf       <- calib.data$cs
-        cs.label   <- calib.data$cs.label
-        
-        transformed.tf <- woe.and.scale(trdf, csdf)
-        cs             <- transformed.tf$testdf
-    }
     
     # transform
     transformed <- woe.and.scale(trdf, tsdf)
@@ -293,21 +284,34 @@ nn.mod <- function(learner, tr, ts, calib = FALSE) {
     final_nn <- setHyperPars(learner = nn, par.vals = tune_nn$x)
     hyperpars <- tune_nn$x
     
-    # transform original training and test set
+    ###### DONE WITH INNER LOOP, STARTING OUTER LOOP
+    
+    # calibration split data
+    if (calib == TRUE) {
+        calib.data <- calib.part(tr)
+        tr         <- calib.data$tr
+        csdf       <- calib.data$cs
+        cs.label   <- calib.data$cs.label
+        
+        transformed.tf <- woe.and.scale(tr, csdf)
+        cs             <- transformed.tf$testdf
+    }
+    
+    # transform outer loop test set
     transformed  <- woe.and.scale(tr, ts)
     tr.transform <- transformed$traindf
     ts.transform <- transformed$testdf
     
-    task.tf <- makeClassifTask(data     = traindf, 
+    task.tf <- makeClassifTask(data     = tr.transform, 
                                target   = "return", 
                                positive = 1)
     
-    # train over trainset set
+    # train model
     nn_mod  <- mlr::train(final_nn, task.tf)
 
     # predict
     nn_pred <- predict(nn_mod, newdata = ts.transform)
-
+    
     # pass prediction through calibrated model
     if (calib == TRUE) {
         nn.pred.calib <- calib.mod(nn_mod, nn_pred, cs, cs.label)
