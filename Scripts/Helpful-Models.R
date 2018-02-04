@@ -129,7 +129,7 @@ rf.mod <- function(learner, tr, ts, calib = FALSE, final = FALSE) {
     tsdf     <- tr[-part.ind, ] 
     
     # transform
-    transformed <- woe.and.scale(trdf, tsdf, final)
+    transformed <- woe.and.scale(trdf, tsdf)
     traindf     <- transformed$traindf
     testdf      <- transformed$testdf
     combdf      <- rbind(traindf, testdf)
@@ -224,7 +224,7 @@ xgb.mod <- function(learner, tr, ts, calib = FALSE, final = FALSE) {
     tsdf     <- tr[-part.ind, ] 
     
     # transform
-    transformed <- woe.and.scale(trdf, tsdf, final)
+    transformed <- woe.and.scale(trdf, tsdf)
     traindf     <- transformed$traindf
     testdf      <- transformed$testdf
     combdf      <- rbind(traindf, testdf)
@@ -323,7 +323,7 @@ nn.mod <- function(learner, tr, ts, calib = FALSE, final = FALSE) {
     tsdf     <- tr[-part.ind, ] 
     
     # transform
-    transformed <- woe.and.scale(trdf, tsdf, final)
+    transformed <- woe.and.scale(trdf, tsdf)
     traindf     <- transformed$traindf
     testdf      <- transformed$testdf
     combdf      <- rbind(traindf, testdf)
@@ -340,8 +340,8 @@ nn.mod <- function(learner, tr, ts, calib = FALSE, final = FALSE) {
     )
 
     nn_par <- makeParamSet(
-        makeDiscreteParam("size", values = seq(3, 8, by=1)),
-        makeDiscreteParam("decay", values = c(1, 0.5, 0.1, 0.05, 1e-2, 1e-3, 1e-4, 1e-5, 1e-6, 1e-7))
+        makeDiscreteParam("size", values = seq(4, 8, by=1)),
+        makeDiscreteParam("decay", values = c(0.5, 0.1, 0.05, 1e-2, 1e-3, 1e-4, 1e-5, 1e-6, 1e-7))
     )
 
     start <- Sys.time()

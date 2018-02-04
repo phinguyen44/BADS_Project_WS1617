@@ -228,9 +228,13 @@ hp.df$rf
 get.acc    <- function(x, act) confusionMatrix(x, act, positive="1")$overall[1]
 pred.acc   <- lapply(preds.r, function(x) map2_dbl(x, actual, get.acc))
 pred.acc.c <- lapply(p.calib.r, function(x) map2_dbl(x, actual, get.acc))
+pred.acc
+pred.acc.c
 
 avg.acc   <- sapply(pred.acc, mean)
 avg.acc.c <- sapply(pred.acc.c, mean)
+avg.acc
+avg.acc.c
 
 acc.se   <- lapply(pred.acc, function(x) sd(x)/length(x))
 acc.c.se <- lapply(pred.acc.c, function(x) sd(x)/length(x))
