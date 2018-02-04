@@ -18,7 +18,7 @@ getwd()
 # LOAD NECESSARY PACKAGES & DATA
 # List all packages needed for session
 neededPackages <- c("tidyverse", "dplyr", "InformationValue",
-                    "klaR", "Hmisc", "mlr", "xgboost")
+                    "klaR", "Hmisc", "mlr", "xgboost", "caret")
 allPackages    <- c(neededPackages %in% installed.packages()[,"Package"])
 
 # Install packages (if not already installed)

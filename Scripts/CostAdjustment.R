@@ -106,15 +106,23 @@ Costs.df$error1r <- (Costs.df$item_price*0.5)/Costs.df$item_price
 Costs.df$error2r <- (Costs.df$item_price*0.25 + 7.5)/Costs.df$item_price
 
 # Plot cost ratios
-pplot <- ggplot(data=Costs.df, aes(x=item_price))
-pplot + geom_line(aes(y=Costs.df$error1r)) + geom_line(aes(y=Costs.df$error2r))
+pplot <- ggplot(data=Costs.df, aes(x=item_price, y = Costs.df$error1r))
+pplot + geom_line(aes(y=Costs.df$error1r)) + 
+        geom_line(aes(y=Costs.df$error2r, color = "Type II error")) +
+        geom_line(aes(color="Type I error")) +
+        xlim(c(0,120))+ylim(c(0,2))        + 
+        labs(x="Item price", y="Error cost and price ratio") +
+        scale_color_discrete(name="Misclassification") +
+        theme(legend.position=c(.73,.8)) +
+        coord_fixed(ratio = 55)
+
 
 ###########################################################
 # Find optimal lower cut-off
 
 # price bins (discrete)
 price  <- num.check(Costs.df, "item_price")
-priceB <- discrete.bin(price, numbins = 40) #results in 53 bins due to multispan
+priceB <- discrete.bin(price, numbins = 140) #results in 45 bins due to multispan
 
 # assign bins (manually add 0)
 Costs.df$item_priceB  <- assign.bins(Costs.df, priceB, "item_price")
@@ -138,11 +146,14 @@ compare <- Costs.df %>%
         cutoff     =  spread.cost - ratio)
 
 
-pplot <- ggplot(data=compare, aes(x=av.price))
-# add two line layers
-pplot + geom_line(aes(y=ratio))
-
-
+pplot <- ggplot(data=compare, aes(x=av.price, y = compare$av.return))
+pplot + geom_point(aes(y=compare$ratio)) + 
+    geom_point(aes(y=compare$av.return, color = "Average return")) +
+    xlim(c(0,100))+ylim(c(0,12))        + 
+    labs(x="Item price", y="True Negatives / False Negatives") +
+    scale_color_discrete(name="Misclassification") +
+    theme(legend.position=c(.8,.72)) +
+    coord_fixed(ratio = 8)
 
 # Determine higher cut-off
 compare2 <- Costs.df %>% 
