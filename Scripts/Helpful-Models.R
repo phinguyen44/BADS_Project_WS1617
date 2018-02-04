@@ -14,6 +14,10 @@
 # gradient boosting (xgb)
 # neural net (nnet) - single hidden layer neural network
 # 
+# WOE() - self-made WOE function. outputs a vector
+# z.scale() - standardize all numeric variables in df (except return!)
+# woe.and.scale() - apply both previous functions to test and train sets
+# 
 # ensembler() - ensembles models together using majority vote approach
 #
 ################################################################################
@@ -23,9 +27,9 @@
 
 calib.part <- function(tr) {
     tr.p <- tr
-
+    
     #  SPLIT DATA FOR PLATT SCALING
-    idx.p <- createDataPartition(y = tr.p$return, p = 0.8, list = FALSE)
+    idx.p <- createDataPartition(y = tr.p$return, p = 0.9, list = FALSE)
 
     tr <- tr.p[idx.p, ]  # training set with platt
     cs <- tr.p[-idx.p, ] # calib set
@@ -33,11 +37,14 @@ calib.part <- function(tr) {
     tr.label <- tr$return
     cs.label <- cs$return
 
-    return(list(tr = tr, cs = cs, tr.label = tr.label, cs.label = cs.label))
+    return(list(tr       = tr,
+                cs       = cs, 
+                tr.label = tr.label, 
+                cs.label = cs.label))
 }
 
 calib.mod <- function(mod, pred, cs, cs.label) {
-
+    
     # predict on calib set
     calib.pred <- predict(mod, newdata = cs)
 
@@ -113,13 +120,13 @@ rf.mod <- function(learner, tr, ts, calib = FALSE) {
 
     # make Learner
     rf <- makeLearner(learner, predict.type = "prob",
-                      par.vals = list(ntree = 500, mtry = 3, importance = TRUE))
+                      par.vals = list(ntree = 400, mtry = 3, importance = TRUE))
 
     # hyperparameters
     rf_param <- makeParamSet(
-        makeDiscreteParam("ntree", seq(300, 500, by = 50)),
-        makeIntegerParam("mtry", lower = 3, upper = 10),
-        makeDiscreteParam("nodesize", seq(10, 50, by = 5))
+        makeDiscreteParam("ntree", seq(200, 400, by = 50)),
+        makeIntegerParam("mtry", lower = 3, upper = 8),
+        makeDiscreteParam("nodesize", seq(10, 40, by = 5))
     )
 
     # tune parameters (random rather than grid search faster)
@@ -233,21 +240,38 @@ xgb.mod <- function(learner, tr, ts, calib = FALSE) {
 
 # NNET
 nn.mod <- function(learner, tr, ts, calib = FALSE) {
-
-    # split data for calibration
-    if (calib == TRUE) {
-        calib.data <- calib.part(tr)
-        tr         <- calib.data$tr
-        cs         <- calib.data$cs
-        cs.label   <- calib.data$cs.label
-    }
-
-    traintask <- makeClassifTask(data = tr, target = "return", positive = 1)
-
+    
     nn <- makeLearner(learner, predict.type = "prob")
+    
+    # resplit training data set manually
+    part.ind <- createDataPartition(y = tr$return, p = 0.8, list = FALSE) 
+    trdf     <- tr[part.ind, ]
+    tsdf     <- tr[-part.ind, ] 
+    
+    # TODO: further split data for calibration
+    if (calib == TRUE) {
+        calib.data <- calib.part(trdf)
+        trdf       <- calib.data$tr
+        csdf       <- calib.data$cs
+        cs.label   <- calib.data$cs.label
+        
+        transformed.tf <- woe.and.scale(trdf, csdf)
+        cs             <- transformed.tf$testdf
+    }
+    
+    # transform
+    transformed <- woe.and.scale(trdf, tsdf)
+    traindf     <- transformed$traindf
+    testdf      <- transformed$testdf
+    combdf      <- rbind(traindf, testdf)
+    
+    # create task and set control parameters (fixed holdout instance)
+    traintask <- makeClassifTask(data = combdf, target = "return", positive = 1)
 
     rancontrol <- makeTuneControlRandom(maxit = 20L)
-    set_cv     <- makeResampleDesc("CV",iters = 3L)
+    set_cv     <- makeFixedHoldoutInstance(train.inds = 1:nrow(traindf),
+                                           test.inds  = 1:nrow(testdf),
+                                           size       = nrow(combdf))
 
     nn_par <- makeParamSet(
         makeDiscreteParam("size", values = seq(3, 8, by=1)),
@@ -268,11 +292,21 @@ nn.mod <- function(learner, tr, ts, calib = FALSE) {
 
     final_nn <- setHyperPars(learner = nn, par.vals = tune_nn$x)
     hyperpars <- tune_nn$x
-
-    nn_mod  <- mlr::train(final_nn, traintask)
+    
+    # transform original training and test set
+    transformed  <- woe.and.scale(tr, ts)
+    tr.transform <- transformed$traindf
+    ts.transform <- transformed$testdf
+    
+    task.tf <- makeClassifTask(data     = traindf, 
+                               target   = "return", 
+                               positive = 1)
+    
+    # train over trainset set
+    nn_mod  <- mlr::train(final_nn, task.tf)
 
     # predict
-    nn_pred <- predict(nn_mod, newdata = ts)
+    nn_pred <- predict(nn_mod, newdata = ts.transform)
 
     # pass prediction through calibrated model
     if (calib == TRUE) {
@@ -288,6 +322,129 @@ nn.mod <- function(learner, tr, ts, calib = FALSE) {
     if (calib == TRUE) output[['pred.calib']] <- nn.pred.calib
 
     return(output)
+}
+
+################################################################################
+# MODEL BUILDING
+
+# WOE
+WOE <- function(df, var) {
+    
+    require(dplyr)
+    require(magrittr)
+    
+    df.new <- df %>% 
+        group_by_(var) %>% 
+        dplyr::summarize(Keep   = n() - sum(return),
+                         Return = sum(return))
+    
+    ### Improve measure according to Zdravevski (2010)
+    tot.keep <- sum(df.new$Keep)
+    tot.ret  <- sum(df.new$Return)
+    
+    # Case 1: Keep = 0, Return = 0 -> WOE = 0
+    # Case 2: Keep = 0, Return > 0 -> Keep = Keep + 1, 
+    # Return = Return + tot.ret/tot.keep
+    # Case 3: Keep > 0, Return = 0 -> Return = Return + 1, 
+    # Keep = Keep + tot.keep/tot.ret
+    # Otherwise, normal case.
+    df.new$WOE <- with(df.new, 
+        ifelse(Keep == 0 & Return == 0, 0,
+        ifelse(Keep == 0 & Return > 0, log((Return*tot.keep + tot.ret)/tot.ret),
+        ifelse(Keep > 0 & Return == 0, log(tot.keep/(Keep*tot.ret + tot.keep)),
+                                       log((Return/tot.ret)/(Keep/tot.keep))))))
+    
+    # join data
+    out <- left_join(df, df.new, var) %>% use_series(WOE)
+    return(out)
+    
+}
+
+z.scale <- function(df) {
+    for (n in 1:ncol(df)) {
+        if (is.numeric(df[, n]) & names(df)[n] != 'return') {
+            middle  <- mean(df[, n])
+            stdv    <- sd(df[, n])
+            df[, n] <- (df[, n] - middle) / stdv
+        }
+    }
+    return(data.frame(df))
+}
+
+woe.and.scale <- function(traindf, testdf) {
+    # standardize
+    traindf <- z.scale(traindf)
+    testdf <- z.scale(testdf)
+    
+    # add in WOE variables
+    traindf$WOE.user_id     <- WOE(traindf, "user_id")
+    traindf$WOE.item_id     <- WOE(traindf, "item_id")
+    traindf$WOE.item_size   <- WOE(traindf, "item_size")
+    traindf$WOE.brand_id    <- WOE(traindf, "brand_id")
+    traindf$WOE.basket.size <- WOE(traindf, "basket.size")
+    
+    WOE.user_id <- traindf %>%
+        dplyr::select(user_id, WOE.user_id) %>% distinct
+    WOE.item_id <- traindf %>%
+        dplyr::select(item_id, WOE.item_id) %>% distinct
+    WOE.item_size <- traindf %>%
+        dplyr::select(item_size, WOE.item_size) %>% distinct
+    WOE.brand_id <- traindf %>%
+        dplyr::select(brand_id, WOE.brand_id) %>% distinct
+    WOE.basket.size <- traindf %>%
+        dplyr::select(basket.size, WOE.basket.size) %>% distinct
+    
+    # apply WOE labels to test set
+    testdf <- testdf %>%
+        left_join(WOE.user_id, "user_id") %>%
+        left_join(WOE.item_id, "item_id") %>%
+        left_join(WOE.item_size, "item_size") %>%
+        left_join(WOE.brand_id, "brand_id") %>% 
+        left_join(WOE.basket.size, "basket.size")
+    
+    # 0 out NA's
+    testdf[is.na(testdf)] <- 0
+    
+    # select right variables TO PREDICT
+    traindf <- traindf %>%
+        dplyr::select(
+            # DEMOGRAPHIC VARS
+            age, 
+            account.age.order,
+            WOE.user_id, # WOE
+            user.total.items, user.total.expen,
+            # BASKET VARS
+            deliver.time, 
+            basket.big, WOE.basket.size, 
+            item.basket.size.same, item.basket.size.diff, 
+            item.basket.same.category,
+            no.return,
+            # ITEM VARS
+            WOE.item_id, WOE.item_size, WOE.brand_id, # WOE
+            discount.pc, 
+            item_price, 
+            return)
+    
+    testdf <- testdf %>%
+        dplyr::select(
+            # DEMOGRAPHIC VARS
+            age, 
+            account.age.order,
+            WOE.user_id, # WOE
+            user.total.items, user.total.expen,
+            # BASKET VARS
+            deliver.time, 
+            basket.big, WOE.basket.size, 
+            item.basket.size.same, item.basket.size.diff, 
+            item.basket.same.category,
+            no.return,
+            # ITEM VARS
+            WOE.item_id, WOE.item_size, WOE.brand_id, # WOE
+            discount.pc, 
+            item_price, 
+            return)
+    
+    return(list(traindf = traindf, testdf = testdf))
 }
 
 ################################################################################

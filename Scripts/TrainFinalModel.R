@@ -5,6 +5,8 @@
 # Description:
 # 
 # BADS project - train final model
+
+# TODO: UPDATE THIS. scale / transform manually (since return isn't there)
 #
 ################################################################################
 
