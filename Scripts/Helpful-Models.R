@@ -65,7 +65,7 @@ calib.mod <- function(mod, pred, cs, cs.label) {
 # Classifiers
 
 # LOGISTIC
-lr.mod <- function(learner, tr, ts, calib = FALSE) {
+lr.mod <- function(learner, tr, ts, calib = FALSE, final = FALSE) {
 
     # make learner
     lr.model  <- makeLearner(learner, predict.type = "prob")
@@ -79,12 +79,12 @@ lr.mod <- function(learner, tr, ts, calib = FALSE) {
         csdf       <- calib.data$cs
         cs.label   <- calib.data$cs.label
         
-        transformed.tf <- woe.and.scale(tr, csdf)
+        transformed.tf <- woe.and.scale(tr, csdf, final)
         cs             <- transformed.tf$testdf
     }
     
     # transform outer loop test set
-    transformed  <- woe.and.scale(tr, ts)
+    transformed  <- woe.and.scale(tr, ts, final)
     tr.transform <- transformed$traindf
     ts.transform <- transformed$testdf
     
@@ -116,7 +116,7 @@ lr.mod <- function(learner, tr, ts, calib = FALSE) {
 }
 
 # RANDOM FOREST
-rf.mod <- function(learner, tr, ts, calib = FALSE) {
+rf.mod <- function(learner, tr, ts, calib = FALSE, final = FALSE) {
 
     ##### START OF INNER LOOP
     
@@ -129,7 +129,7 @@ rf.mod <- function(learner, tr, ts, calib = FALSE) {
     tsdf     <- tr[-part.ind, ] 
     
     # transform
-    transformed <- woe.and.scale(trdf, tsdf)
+    transformed <- woe.and.scale(trdf, tsdf, final)
     traindf     <- transformed$traindf
     testdf      <- transformed$testdf
     combdf      <- rbind(traindf, testdf)
@@ -176,12 +176,12 @@ rf.mod <- function(learner, tr, ts, calib = FALSE) {
         csdf       <- calib.data$cs
         cs.label   <- calib.data$cs.label
         
-        transformed.tf <- woe.and.scale(tr, csdf)
+        transformed.tf <- woe.and.scale(tr, csdf, final)
         cs             <- transformed.tf$testdf
     }
     
     # transform outer loop test set
-    transformed  <- woe.and.scale(tr, ts)
+    transformed  <- woe.and.scale(tr, ts, final)
     tr.transform <- transformed$traindf
     ts.transform <- transformed$testdf
     
@@ -193,7 +193,7 @@ rf.mod <- function(learner, tr, ts, calib = FALSE) {
     rforest  <- mlr::train(rf.tree, task.tf)
     
     # predict
-    rf.pred <- predict(nn_mod, newdata = ts.transform)
+    rf.pred <- predict(rforest, newdata = ts.transform)
     
     # pass prediction through calibrated model
     if (calib == TRUE) {
@@ -212,7 +212,7 @@ rf.mod <- function(learner, tr, ts, calib = FALSE) {
 }
 
 # XGB
-xgb.mod <- function(learner, tr, ts, calib = FALSE) {
+xgb.mod <- function(learner, tr, ts, calib = FALSE, final = FALSE) {
 
     ##### START OF INNER LOOP
     
@@ -224,7 +224,7 @@ xgb.mod <- function(learner, tr, ts, calib = FALSE) {
     tsdf     <- tr[-part.ind, ] 
     
     # transform
-    transformed <- woe.and.scale(trdf, tsdf)
+    transformed <- woe.and.scale(trdf, tsdf, final)
     traindf     <- transformed$traindf
     testdf      <- transformed$testdf
     combdf      <- rbind(traindf, testdf)
@@ -274,13 +274,13 @@ xgb.mod <- function(learner, tr, ts, calib = FALSE) {
         csdf       <- calib.data$cs
         cs.label   <- calib.data$cs.label
         
-        transformed.tf <- woe.and.scale(tr, csdf)
+        transformed.tf <- woe.and.scale(tr, csdf, final)
         cs             <- transformed.tf$testdf
         cs             <- createDummyFeatures(obj = cs)
     }
     
     # transform outer loop test set
-    transformed  <- woe.and.scale(tr, ts)
+    transformed  <- woe.and.scale(tr, ts, final)
     tr.transform <- transformed$traindf
     ts.transform <- createDummyFeatures(obj = transformed$testdf)
     
@@ -311,7 +311,7 @@ xgb.mod <- function(learner, tr, ts, calib = FALSE) {
 }
 
 # NNET
-nn.mod <- function(learner, tr, ts, calib = FALSE) {
+nn.mod <- function(learner, tr, ts, calib = FALSE, final = FALSE) {
     
     ##### START OF INNER LOOP
     
@@ -323,7 +323,7 @@ nn.mod <- function(learner, tr, ts, calib = FALSE) {
     tsdf     <- tr[-part.ind, ] 
     
     # transform
-    transformed <- woe.and.scale(trdf, tsdf)
+    transformed <- woe.and.scale(trdf, tsdf, final)
     traindf     <- transformed$traindf
     testdf      <- transformed$testdf
     combdf      <- rbind(traindf, testdf)
@@ -368,12 +368,12 @@ nn.mod <- function(learner, tr, ts, calib = FALSE) {
         csdf       <- calib.data$cs
         cs.label   <- calib.data$cs.label
         
-        transformed.tf <- woe.and.scale(tr, csdf)
+        transformed.tf <- woe.and.scale(tr, csdf, final)
         cs             <- transformed.tf$testdf
     }
     
     # transform outer loop test set
-    transformed  <- woe.and.scale(tr, ts)
+    transformed  <- woe.and.scale(tr, ts, final)
     tr.transform <- transformed$traindf
     ts.transform <- transformed$testdf
     
@@ -450,7 +450,7 @@ z.scale <- function(df) {
     return(data.frame(df))
 }
 
-woe.and.scale <- function(traindf, testdf) {
+woe.and.scale <- function(traindf, testdf, final = FALSE) {
     # standardize
     traindf <- z.scale(traindf)
     testdf <- z.scale(testdf)
@@ -504,24 +504,45 @@ woe.and.scale <- function(traindf, testdf) {
             item_price, 
             return)
     
-    testdf <- testdf %>%
-        dplyr::select(
-            # DEMOGRAPHIC VARS
-            age, 
-            account.age.order,
-            WOE.user_id, # WOE
-            user.total.items, user.total.expen,
-            # BASKET VARS
-            deliver.time, 
-            basket.big, WOE.basket.size, 
-            item.basket.size.same, item.basket.size.diff, 
-            item.basket.same.category,
-            no.return,
-            # ITEM VARS
-            WOE.item_id, WOE.item_size, WOE.brand_id, # WOE
-            discount.pc, 
-            item_price, 
-            return)
+    if (final == TRUE) { # no return variable for final
+        testdf <- testdf %>%
+            dplyr::select(
+                # DEMOGRAPHIC VARS
+                age, 
+                account.age.order,
+                WOE.user_id, # WOE
+                user.total.items, user.total.expen,
+                # BASKET VARS
+                deliver.time, 
+                basket.big, WOE.basket.size, 
+                item.basket.size.same, item.basket.size.diff, 
+                item.basket.same.category,
+                no.return,
+                # ITEM VARS
+                WOE.item_id, WOE.item_size, WOE.brand_id, # WOE
+                discount.pc, 
+                item_price)
+    } else {
+        testdf <- testdf %>%
+            dplyr::select(
+                # DEMOGRAPHIC VARS
+                age, 
+                account.age.order,
+                WOE.user_id, # WOE
+                user.total.items, user.total.expen,
+                # BASKET VARS
+                deliver.time, 
+                basket.big, WOE.basket.size, 
+                item.basket.size.same, item.basket.size.diff, 
+                item.basket.same.category,
+                no.return,
+                # ITEM VARS
+                WOE.item_id, WOE.item_size, WOE.brand_id, # WOE
+                discount.pc, 
+                item_price, 
+                return)
+    }
+    
     
     return(list(traindf = traindf, testdf = testdf))
 }

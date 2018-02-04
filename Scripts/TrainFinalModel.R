@@ -5,8 +5,7 @@
 # Description:
 # 
 # BADS project - train final model
-
-# TODO: UPDATE THIS. scale / transform manually (since return isn't there)
+#
 #
 ################################################################################
 
@@ -105,79 +104,12 @@ mods <- list(lr = lr.mod,
 ################################################################################
 # TRAIN FINAL MODEL
 
-# standardize
-df.train <- z.scale(df.train)
-df.class <- z.scale(df.class)
-
-# add in WOE variables
-df.train$WOE.user_id     <- WOE(df.train, "user_id")
-df.train$WOE.item_id     <- WOE(df.train, "item_id")
-df.train$WOE.item_size   <- WOE(df.train, "item_size")
-df.train$WOE.brand_id    <- WOE(df.train, "brand_id")
-df.train$WOE.basket.size <- WOE(df.train, "basket.size")
-
-WOE.user_id <- df.train %>%
-    dplyr::select(user_id, WOE.user_id) %>% distinct
-WOE.item_id <- df.train %>%
-    dplyr::select(item_id, WOE.item_id) %>% distinct
-WOE.item_size <- df.train %>%
-    dplyr::select(item_size, WOE.item_size) %>% distinct
-WOE.brand_id <- df.train %>%
-    dplyr::select(brand_id, WOE.brand_id) %>% distinct
-WOE.basket.size <- df.train %>%
-    dplyr::select(basket.size, WOE.basket.size) %>% distinct
-
-# apply WOE labels to test set
-df.class <- df.class %>%
-    left_join(WOE.user_id, "user_id") %>%
-    left_join(WOE.item_id, "item_id") %>%
-    left_join(WOE.item_size, "item_size") %>%
-    left_join(WOE.brand_id, "brand_id") %>% 
-    left_join(WOE.basket.size, "basket.size")
-
-# 0 out NA's
-df.class[is.na(df.class)] <- 0
-
-# select right variables for dataset
-df.train <- df.train %>%
-    dplyr::select(
-        # DEMOGRAPHIC VARS
-        age, 
-        account.age.order,
-        WOE.user_id, # WOE
-        user.total.items, user.total.expen,
-        # BASKET VARS
-        deliver.time, 
-        basket.big, WOE.basket.size, 
-        item.basket.size.same, item.basket.size.diff, 
-        item.basket.same.category,
-        no.return,
-        # ITEM VARS
-        WOE.item_id, WOE.item_size, WOE.brand_id, # WOE
-        discount.pc, 
-        item_price, 
-        return)
-
-df.class <- df.class %>%
-    dplyr::select(
-        # DEMOGRAPHIC VARS
-        age, 
-        account.age.order,
-        WOE.user_id, # WOE
-        user.total.items, user.total.expen,
-        # BASKET VARS
-        deliver.time, 
-        basket.big, WOE.basket.size, # WOE 
-        item.basket.size.same, item.basket.size.diff, 
-        item.basket.same.category,
-        no.return,
-        # ITEM VARS
-        WOE.item_id, WOE.item_size, WOE.brand_id, # WOE
-        discount.pc, 
-        item_price)
-
 # TRAIN MODEL
-fin   <- map2(mods, learners, function(f, x) f(x, df.train, df.class, calib = TRUE))
+fin   <- map2(mods, learners, function(f, x) f(x, 
+                                               df.train, 
+                                               df.class, 
+                                               calib = TRUE, 
+                                               final = TRUE))
 
 # APPLY NEW THRESHOLD
 fin.new.calib <- map2(fin, thresh.mean.l.calib,
