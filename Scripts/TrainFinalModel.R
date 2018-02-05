@@ -78,6 +78,7 @@ df.train <- dat.ready %>%
         return)
 
 df.class <- dat.test %>%
+    dplyr::mutate(no.return = as.factor(no.return)) %>% 
     dplyr::select(
         # DEMOGRAPHIC VARS
         age, 
