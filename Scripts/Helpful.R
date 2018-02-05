@@ -13,13 +13,9 @@
 # discrete.power() - organizes observations into bins (bins organized in size 
 # by power)
 # assign.bins() - creates bins based off bins created in discrete.bins()
-# WOE() - self-made WOE function. outputs a vector
-# 
-# MODEL BUILDING:
-# z.scale() - standardize all numeric variables in df (except return!)
-# reliability.plot() - diagram to assess how 'calibrated' a classifier is
 # 
 # MODEL EVALUATION:
+# reliability.plot() - diagram to assess how 'calibrated' a classifier is
 # acc.calc() - calculates accuracy for a given threshold
 # cost.calc() - calculates costs (from cost matrix) for a given threshold
 # find.threshold() - finds optimal threshold that minimizes costs
@@ -163,52 +159,8 @@ assign.bins <- function(df, buckets, variable) {
     return(grouping)
 }
 
-# WOE
-WOE <- function(df, var) {
-    
-    require(dplyr)
-    require(magrittr)
-    
-    df.new <- df %>% 
-        group_by_(var) %>% 
-        dplyr::summarize(Keep   = n() - sum(return),
-                  Return = sum(return))
-    
-    ### Improve measure according to Zdravevski (2010)
-    tot.keep <- sum(df.new$Keep)
-    tot.ret  <- sum(df.new$Return)
-    
-    # Case 1: Keep = 0, Return = 0 -> WOE = 0
-    # Case 2: Keep = 0, Return > 0 -> Keep = Keep + 1, 
-    # Return = Return + tot.ret/tot.keep
-    # Case 3: Keep > 0, Return = 0 -> Return = Return + 1, 
-    # Keep = Keep + tot.keep/tot.ret
-    # Otherwise, normal case.
-    df.new$WOE <- with(df.new, 
-        ifelse(Keep == 0 & Return == 0, 0,
-        ifelse(Keep == 0 & Return > 0, log((Return*tot.keep + tot.ret)/tot.ret),
-        ifelse(Keep > 0 & Return == 0, log(tot.keep/(Keep*tot.ret + tot.keep)),
-        log((Return/tot.ret)/(Keep/tot.keep))))))
-    
-    # join data
-    out <- left_join(df, df.new, var) %>% use_series(WOE)
-    return(out)
-    
-}
-
 ################################################################################
-# MODEL BUILDING
-
-z.scale <- function(df) {
-    for (n in 1:ncol(df)) {
-        if (is.numeric(df[, n]) & names(df)[n] != 'return') {
-            middle  <- mean(df[, n])
-            stdv    <- sd(df[, n])
-            df[, n] <- (df[, n] - middle) / stdv
-        }
-    }
-    return(data.frame(df))
-}
+# MODEL EVALUATION
 
 reliability.plot <- function(act, pred, pred.c, bins = 10) {
     # act: vector of actual values. 0 or 1
@@ -257,9 +209,6 @@ reliability.plot <- function(act, pred, pred.c, bins = 10) {
             grconvertX(c(0.6, 0.8), "npc"), grconvertY(c(0.08, .25), "npc"))
     
 }
-
-################################################################################
-# MODEL EVALUATION
 
 # accuracy
 acc.calc <- function(threshold, act, pred) {

@@ -10,14 +10,15 @@
 # calib.mod() - run prediction through a calibrator
 #
 # logistic regression (glm, no regularization)
-# decision trees (rpart)
 # random forest (randomForest)
 # gradient boosting (xgb)
 # neural net (nnet) - single hidden layer neural network
 # 
+# WOE() - self-made WOE function. outputs a vector
+# z.scale() - standardize all numeric variables in df (except return!)
+# woe.and.scale() - apply both previous functions to test and train sets
+# 
 # ensembler() - ensembles models together using majority vote approach
-# ensembler.final() - same as above, just used for final model
-# to.numeric() - helper function used to convert mlr output to numeric
 #
 ################################################################################
 
@@ -26,9 +27,9 @@
 
 calib.part <- function(tr) {
     tr.p <- tr
-
+    
     #  SPLIT DATA FOR PLATT SCALING
-    idx.p <- createDataPartition(y = tr.p$return, p = 0.8, list = FALSE)
+    idx.p <- createDataPartition(y = tr.p$return, p = 0.9, list = FALSE)
 
     tr <- tr.p[idx.p, ]  # training set with platt
     cs <- tr.p[-idx.p, ] # calib set
@@ -36,11 +37,14 @@ calib.part <- function(tr) {
     tr.label <- tr$return
     cs.label <- cs$return
 
-    return(list(tr = tr, cs = cs, tr.label = tr.label, cs.label = cs.label))
+    return(list(tr       = tr,
+                cs       = cs, 
+                tr.label = tr.label, 
+                cs.label = cs.label))
 }
 
 calib.mod <- function(mod, pred, cs, cs.label) {
-
+    
     # predict on calib set
     calib.pred <- predict(mod, newdata = cs)
 
@@ -61,28 +65,38 @@ calib.mod <- function(mod, pred, cs, cs.label) {
 # Classifiers
 
 # LOGISTIC
-lr.mod <- function(learner, tr, ts, calib = FALSE) {
+lr.mod <- function(learner, tr, ts, calib = FALSE, final = FALSE) {
 
-    # split data for calibration
-    if (calib == TRUE) {
-        calib.data <- calib.part(tr)
-        tr         <- calib.data$tr
-        cs         <- calib.data$cs
-        cs.label   <- calib.data$cs.label
-    }
-
-    traintask <- makeClassifTask(data = tr, target = "return", positive = 1)
+    # make learner
+    lr.model  <- makeLearner(learner, predict.type = "prob")
 
     start <- Sys.time()
 
-    # make learner
-    lr.model <- makeLearner(learner, predict.type = "prob")
-
+    # calibration split data
+    if (calib == TRUE) {
+        calib.data <- calib.part(tr)
+        tr         <- calib.data$tr
+        csdf       <- calib.data$cs
+        cs.label   <- calib.data$cs.label
+        
+        transformed.tf <- woe.and.scale(tr, csdf, final)
+        cs             <- transformed.tf$testdf
+    }
+    
+    # transform outer loop test set
+    transformed  <- woe.and.scale(tr, ts, final)
+    tr.transform <- transformed$traindf
+    ts.transform <- transformed$testdf
+    
+    task.tf <- makeClassifTask(data     = tr.transform, 
+                               target   = "return", 
+                               positive = 1)
+    
     # train model
-    lr      <- mlr::train(lr.model, traintask)
-
+    lr  <- mlr::train(lr.model, task.tf)
+    
     # predict
-    lr.pred <- predict(lr, newdata = ts)
+    lr.pred <- predict(lr, newdata = ts.transform)
     model   <- lr$learner.model
 
     # pass prediction through calibrated model
@@ -101,102 +115,42 @@ lr.mod <- function(learner, tr, ts, calib = FALSE) {
     return(output)
 }
 
-# DECISION TREE
-dt.mod <- function(learner, tr, ts, calib = FALSE) {
-
-    # split data for calibration
-    if (calib == TRUE) {
-        calib.data <- calib.part(tr)
-        tr         <- calib.data$tr
-        cs         <- calib.data$cs
-        cs.label   <- calib.data$cs.label
-    }
-
-    traintask <- makeClassifTask(data = tr, target = "return", positive = 1)
-
-    # make learner
-    makeatree <- makeLearner(learner, predict.type = "prob")
-
-    # cross-validation
-    set_cv <- makeResampleDesc("CV",iters = 4L)
-
-    # hyperparameters
-    gs <- makeParamSet(
-        makeIntegerParam("minsplit",lower = 10, upper = 30),
-        makeIntegerParam("minbucket", lower = 5, upper = 30),
-        makeNumericParam("cp", lower = 0.001, upper = 0.05)
-    )
-
-    # grid search
-    # gscontrol <- makeTuneControlGrid()
-    # random search
-    gscontrol <- makeTuneControlRandom(maxit = 20L)
-
-    start <- Sys.time()
-
-    parallelStartSocket(cpus = detectCores())
-    stune <- tuneParams(learner    = makeatree,
-                        resampling = set_cv,
-                        task       = traintask,
-                        par.set    = gs,
-                        control    = gscontrol,
-                        measures   = mlr::auc)
-    parallelStop()
-
-    # use hyperparameters
-    t.tree    <- setHyperPars(makeatree, par.vals = stune$x)
-    hyperpars <- stune$x
-
-    # train model
-    t.rpart <- mlr::train(t.tree, traintask)
-
-    # predict
-    t.pred  <- predict(t.rpart, newdata = ts)
-
-    # pass prediction through calibrated model
-    if (calib == TRUE) {
-        t.pred.calib <- calib.mod(t.rpart, t.pred, cs, cs.label)
-    }
-
-    end     <- Sys.time()
-    runtime <- end - start
-    cat(paste0(learner, " run time: "))
-    print(runtime)
-
-    output <- list(pred = t.pred, pars = hyperpars)
-    if (calib == TRUE) output[['pred.calib']] <- t.pred.calib
-
-    return(output)
-
-}
-
 # RANDOM FOREST
-rf.mod <- function(learner, tr, ts, calib = FALSE) {
+rf.mod <- function(learner, tr, ts, calib = FALSE, final = FALSE) {
 
-    # split data for calibration
-    if (calib == TRUE) {
-        calib.data <- calib.part(tr)
-        tr         <- calib.data$tr
-        cs         <- calib.data$cs
-        cs.label   <- calib.data$cs.label
-    }
-
-    traintask <- makeClassifTask(data = tr, target = "return", positive = 1)
-
-    # make Learner
+    ##### START OF INNER LOOP
+    
     rf <- makeLearner(learner, predict.type = "prob",
-                      par.vals = list(ntree = 200, mtry = 3, importance = TRUE))
+                      par.vals = list(ntree = 400, mtry = 3, importance = TRUE))
+    
+    # resplit training data set manually
+    part.ind <- createDataPartition(y = tr$return, p = 0.8, list = FALSE) 
+    trdf     <- tr[part.ind, ]
+    tsdf     <- tr[-part.ind, ] 
+    
+    # transform
+    transformed <- woe.and.scale(trdf, tsdf)
+    traindf     <- transformed$traindf
+    testdf      <- transformed$testdf
+    combdf      <- rbind(traindf, testdf)
+    
+    # create task and set control parameters (fixed holdout instance)
+    traintask <- makeClassifTask(data = combdf, target = "return", positive = 1)
+    
+    # set control
+    rancontrol <- makeTuneControlRandom(maxit = 20L)
+    set_cv     <- makeFixedHoldoutInstance(
+        train.inds = 1:nrow(traindf),
+        test.inds  = (nrow(traindf)+1):nrow(combdf),
+        size       = nrow(combdf)
+    )
 
     # hyperparameters
     rf_param <- makeParamSet(
-        makeDiscreteParam("ntree", values = seq(200, 800, by=100)),
-        makeDiscreteParam("nodesize", values = seq(1, 50, by = 4)),
-        makeIntegerParam("mtry", lower = 1, upper = 8)
+        makeDiscreteParam("ntree", seq(300, 500, by = 50)),
+        makeIntegerParam("mtry", lower = 3, upper = 6),
+        makeIntegerParam("nodesize", lower = 1, upper = 30)
     )
-
-    # tune parameters (random rather than grid search faster)
-    rancontrol <- makeTuneControlRandom(maxit = 30L)
-    set_cv     <- makeResampleDesc("CV",iters = 4L)
 
     start <- Sys.time()
 
@@ -212,13 +166,35 @@ rf.mod <- function(learner, tr, ts, calib = FALSE) {
     # set hyperparameters
     rf.tree <- setHyperPars(rf, par.vals = rf_tune$x)
     hyperpars <- rf_tune$x
-
+    
+    ###### DONE WITH INNER LOOP, STARTING OUTER LOOP
+    
+    # calibration split data
+    if (calib == TRUE) {
+        calib.data <- calib.part(tr)
+        tr         <- calib.data$tr
+        csdf       <- calib.data$cs
+        cs.label   <- calib.data$cs.label
+        
+        transformed.tf <- woe.and.scale(tr, csdf, final)
+        cs             <- transformed.tf$testdf
+    }
+    
+    # transform outer loop test set
+    transformed  <- woe.and.scale(tr, ts, final)
+    tr.transform <- transformed$traindf
+    ts.transform <- transformed$testdf
+    
+    task.tf <- makeClassifTask(data     = tr.transform, 
+                               target   = "return", 
+                               positive = 1)
+    
     # train model
-    rforest  <- mlr::train(rf.tree, traintask)
-
+    rforest  <- mlr::train(rf.tree, task.tf)
+    
     # predict
-    rf.pred  <- predict(rforest, newdata = ts)
-
+    rf.pred <- predict(rforest, newdata = ts.transform)
+    
     # pass prediction through calibrated model
     if (calib == TRUE) {
         rf.pred.calib <- calib.mod(rforest, rf.pred, cs, cs.label)
@@ -236,35 +212,42 @@ rf.mod <- function(learner, tr, ts, calib = FALSE) {
 }
 
 # XGB
-xgb.mod <- function(learner, tr, ts, calib = FALSE) {
+xgb.mod <- function(learner, tr, ts, calib = FALSE, final = FALSE) {
 
-    # split data for calibration
-    if (calib == TRUE) {
-        calib.data <- calib.part(tr)
-        tr         <- calib.data$tr
-        cs.label   <- calib.data$cs.label
-        cs         <- createDummyFeatures(obj = calib.data$cs)
-    }
-
-    traintask <- makeClassifTask(data = tr, target = "return", positive = 1)
-
-    # one hot encoding
-    traintask <- createDummyFeatures(obj = traintask)
-    ts        <- createDummyFeatures(obj = ts)
-
-    # make learner
+    ##### START OF INNER LOOP
+    
     xg_set <- makeLearner(learner, predict.type = "prob")
-
-    rancontrol <- makeTuneControlRandom(maxit = 30L)
-    set_cv     <- makeResampleDesc("CV",iters = 4L)
-
+    
+    # resplit training data set manually
+    part.ind <- createDataPartition(y = tr$return, p = 0.8, list = FALSE) 
+    trdf     <- tr[part.ind, ]
+    tsdf     <- tr[-part.ind, ] 
+    
+    # transform
+    transformed <- woe.and.scale(trdf, tsdf)
+    traindf     <- transformed$traindf
+    testdf      <- transformed$testdf
+    combdf      <- rbind(traindf, testdf)
+    
+    # create task and set control parameters (fixed holdout instance)
+    traintask <- makeClassifTask(data = combdf, target = "return", positive = 1)
+    traintask <- createDummyFeatures(obj = traintask)     # one hot encoding
+    
+    # set control
+    rancontrol <- makeTuneControlRandom(maxit = 20L)
+    set_cv     <- makeFixedHoldoutInstance(
+        train.inds = 1:nrow(traindf),
+        test.inds  = (nrow(traindf)+1):nrow(combdf),
+        size       = nrow(combdf)
+    )
+    
     xg_ps <- makeParamSet(
-        makeDiscreteParam("booster", values = c("gbtree")),
-        makeDiscreteParam("gamma", values = c(0, 0.1, 1, 10)),
-        makeDiscreteParam("eta", values = c(0.001, 0.01, 0.1, 0.3, 0.8)),
-        makeDiscreteParam("nrounds", values = c(1, 50, 100, 200, 400)),
-        makeDiscreteParam("lambda", values = seq(0, 1, by=0.1)),
-        makeIntegerParam("max_depth", lower = 2L, upper = 15L)
+        makeDiscreteParam("booster", values = c("dart")),
+        makeDiscreteParam("gamma", values = c(0, 0.1, 0.2)),
+        makeDiscreteParam("eta", values = c(0.001, 0.01, 0.1, 0.3)),
+        makeDiscreteParam("nrounds", values = c(50, 100, 200)),
+        makeDiscreteParam("lambda", values = seq(0, 0.7, by=0.1)),
+        makeIntegerParam("max_depth", lower = 3L, upper = 6L)
     )
 
     start <- Sys.time()
@@ -281,17 +264,41 @@ xgb.mod <- function(learner, tr, ts, calib = FALSE) {
 
     xg_new <- setHyperPars(learner = xg_set, par.vals = xg_tune$x)
     hyperpars <- xg_tune$x
+    
+    ###### DONE WITH INNER LOOP, STARTING OUTER LOOP
 
-    xg_model <- mlr::train(xg_new, traintask)
+    # calibration split data
+    if (calib == TRUE) {
+        calib.data <- calib.part(tr)
+        tr         <- calib.data$tr
+        csdf       <- calib.data$cs
+        cs.label   <- calib.data$cs.label
+        
+        transformed.tf <- woe.and.scale(tr, csdf, final)
+        cs             <- transformed.tf$testdf
+        cs             <- createDummyFeatures(obj = cs)
+    }
+    
+    # transform outer loop test set
+    transformed  <- woe.and.scale(tr, ts, final)
+    tr.transform <- transformed$traindf
+    ts.transform <- createDummyFeatures(obj = transformed$testdf)
+    
+    task.tf <- makeClassifTask(data     = tr.transform, 
+                               target   = "return", 
+                               positive = 1)
+    task.tf <- createDummyFeatures(obj = task.tf)
+    
+    xg_model <- mlr::train(xg_new, task.tf)
 
     # predict
-    xg_pred  <- predict(xg_model, newdata = ts)
+    xg_pred  <- predict(xg_model, newdata = ts.transform)
 
     # pass prediction through calibrated model
     if (calib == TRUE) {
         xg.pred.calib <- calib.mod(xg_model, xg_pred, cs, cs.label)
     }
-
+    
     end     <- Sys.time()
     runtime <- end - start
     cat(paste0(learner, " run time: "))
@@ -304,26 +311,37 @@ xgb.mod <- function(learner, tr, ts, calib = FALSE) {
 }
 
 # NNET
-nn.mod <- function(learner, tr, ts, calib = FALSE) {
-
-    # split data for calibration
-    if (calib == TRUE) {
-        calib.data <- calib.part(tr)
-        tr         <- calib.data$tr
-        cs         <- calib.data$cs
-        cs.label   <- calib.data$cs.label
-    }
-
-    traintask <- makeClassifTask(data = tr, target = "return", positive = 1)
-
+nn.mod <- function(learner, tr, ts, calib = FALSE, final = FALSE) {
+    
+    ##### START OF INNER LOOP
+    
     nn <- makeLearner(learner, predict.type = "prob")
+    
+    # resplit training data set manually
+    part.ind <- createDataPartition(y = tr$return, p = 0.8, list = FALSE) 
+    trdf     <- tr[part.ind, ]
+    tsdf     <- tr[-part.ind, ] 
+    
+    # transform
+    transformed <- woe.and.scale(trdf, tsdf)
+    traindf     <- transformed$traindf
+    testdf      <- transformed$testdf
+    combdf      <- rbind(traindf, testdf)
+    
+    # create task and set control parameters (fixed holdout instance)
+    traintask <- makeClassifTask(data = combdf, target = "return", positive = 1)
 
-    rancontrol <- makeTuneControlRandom(maxit = 30L)
-    set_cv     <- makeResampleDesc("CV",iters = 4L)
+    # set control
+    rancontrol <- makeTuneControlRandom(maxit = 20L)
+    set_cv     <- makeFixedHoldoutInstance(
+        train.inds = 1:nrow(traindf),
+        test.inds  = (nrow(traindf)+1):nrow(combdf),
+        size       = nrow(combdf)
+    )
 
     nn_par <- makeParamSet(
-        makeDiscreteParam("size", values = seq(3, 8, by=1)),
-        makeDiscreteParam("decay", values = c(1, 0.5, 0.1, 0.05, 1e-2, 1e-3, 1e-4, 1e-5, 1e-6, 1e-7))
+        makeDiscreteParam("size", values = seq(4, 8, by=1)),
+        makeDiscreteParam("decay", values = c(0.5, 0.1, 0.05, 1e-2, 1e-3, 1e-4, 1e-5, 1e-6, 1e-7))
     )
 
     start <- Sys.time()
@@ -340,12 +358,35 @@ nn.mod <- function(learner, tr, ts, calib = FALSE) {
 
     final_nn <- setHyperPars(learner = nn, par.vals = tune_nn$x)
     hyperpars <- tune_nn$x
-
-    nn_mod  <- mlr::train(final_nn, traintask)
+    
+    ###### DONE WITH INNER LOOP, STARTING OUTER LOOP
+    
+    # calibration split data
+    if (calib == TRUE) {
+        calib.data <- calib.part(tr)
+        tr         <- calib.data$tr
+        csdf       <- calib.data$cs
+        cs.label   <- calib.data$cs.label
+        
+        transformed.tf <- woe.and.scale(tr, csdf, final)
+        cs             <- transformed.tf$testdf
+    }
+    
+    # transform outer loop test set
+    transformed  <- woe.and.scale(tr, ts, final)
+    tr.transform <- transformed$traindf
+    ts.transform <- transformed$testdf
+    
+    task.tf <- makeClassifTask(data     = tr.transform, 
+                               target   = "return", 
+                               positive = 1)
+    
+    # train model
+    nn_mod  <- mlr::train(final_nn, task.tf)
 
     # predict
-    nn_pred <- predict(nn_mod, newdata = ts)
-
+    nn_pred <- predict(nn_mod, newdata = ts.transform)
+    
     # pass prediction through calibrated model
     if (calib == TRUE) {
         nn.pred.calib <- calib.mod(nn_mod, nn_pred, cs, cs.label)
@@ -360,6 +401,150 @@ nn.mod <- function(learner, tr, ts, calib = FALSE) {
     if (calib == TRUE) output[['pred.calib']] <- nn.pred.calib
 
     return(output)
+}
+
+################################################################################
+# MODEL BUILDING
+
+# WOE
+WOE <- function(df, var) {
+    
+    require(dplyr)
+    require(magrittr)
+    
+    df.new <- df %>% 
+        group_by_(var) %>% 
+        dplyr::summarize(Keep   = n() - sum(return),
+                         Return = sum(return))
+    
+    ### Improve measure according to Zdravevski (2010)
+    tot.keep <- sum(df.new$Keep)
+    tot.ret  <- sum(df.new$Return)
+    
+    # Case 1: Keep = 0, Return = 0 -> WOE = 0
+    # Case 2: Keep = 0, Return > 0 -> Keep = Keep + 1, 
+    # Return = Return + tot.ret/tot.keep
+    # Case 3: Keep > 0, Return = 0 -> Return = Return + 1, 
+    # Keep = Keep + tot.keep/tot.ret
+    # Otherwise, normal case.
+    df.new$WOE <- with(df.new, 
+        ifelse(Keep == 0 & Return == 0, 0,
+        ifelse(Keep == 0 & Return > 0, log((Return*tot.keep + tot.ret)/tot.ret),
+        ifelse(Keep > 0 & Return == 0, log(tot.keep/(Keep*tot.ret + tot.keep)),
+                                       log((Return/tot.ret)/(Keep/tot.keep))))))
+    
+    # join data
+    out <- left_join(df, df.new, var) %>% use_series(WOE)
+    return(out)
+    
+}
+
+z.scale <- function(df) {
+    for (n in 1:ncol(df)) {
+        if (is.numeric(df[, n]) & names(df)[n] != 'return') {
+            middle  <- mean(df[, n])
+            stdv    <- sd(df[, n])
+            df[, n] <- (df[, n] - middle) / stdv
+        }
+    }
+    return(data.frame(df))
+}
+
+woe.and.scale <- function(traindf, testdf, final = FALSE) {
+    # standardize
+    traindf <- z.scale(traindf)
+    testdf <- z.scale(testdf)
+    
+    # add in WOE variables
+    traindf$WOE.user_id     <- WOE(traindf, "user_id")
+    traindf$WOE.item_id     <- WOE(traindf, "item_id")
+    traindf$WOE.item_size   <- WOE(traindf, "item_size")
+    traindf$WOE.brand_id    <- WOE(traindf, "brand_id")
+    traindf$WOE.basket.size <- WOE(traindf, "basket.size")
+    
+    WOE.user_id <- traindf %>%
+        dplyr::select(user_id, WOE.user_id) %>% distinct
+    WOE.item_id <- traindf %>%
+        dplyr::select(item_id, WOE.item_id) %>% distinct
+    WOE.item_size <- traindf %>%
+        dplyr::select(item_size, WOE.item_size) %>% distinct
+    WOE.brand_id <- traindf %>%
+        dplyr::select(brand_id, WOE.brand_id) %>% distinct
+    WOE.basket.size <- traindf %>%
+        dplyr::select(basket.size, WOE.basket.size) %>% distinct
+    
+    # apply WOE labels to test set
+    testdf <- testdf %>%
+        left_join(WOE.user_id, "user_id") %>%
+        left_join(WOE.item_id, "item_id") %>%
+        left_join(WOE.item_size, "item_size") %>%
+        left_join(WOE.brand_id, "brand_id") %>% 
+        left_join(WOE.basket.size, "basket.size")
+    
+    # 0 out NA's
+    testdf[is.na(testdf)] <- 0
+    
+    # select right variables TO PREDICT
+    traindf <- traindf %>%
+        dplyr::select(
+            # DEMOGRAPHIC VARS
+            age, 
+            account.age.order,
+            WOE.user_id, # WOE
+            user.total.items, user.total.expen,
+            # BASKET VARS
+            deliver.time, 
+            basket.big, WOE.basket.size, 
+            item.basket.size.same, item.basket.size.diff, 
+            item.basket.same.category,
+            no.return,
+            # ITEM VARS
+            WOE.item_id, WOE.item_size, WOE.brand_id, # WOE
+            discount.pc, 
+            item_price, 
+            return)
+    
+    if (final == TRUE) { # no return variable for final
+        testdf <- testdf %>%
+            dplyr::select(
+                # DEMOGRAPHIC VARS
+                age, 
+                account.age.order,
+                WOE.user_id, # WOE
+                user.total.items, user.total.expen,
+                # BASKET VARS
+                deliver.time, 
+                basket.big, WOE.basket.size, 
+                item.basket.size.same, item.basket.size.diff, 
+                item.basket.same.category,
+                no.return,
+                # ITEM VARS
+                WOE.item_id, WOE.item_size, WOE.brand_id, # WOE
+                discount.pc, 
+                item_price)
+    } else {
+        testdf <- testdf %>%
+            dplyr::select(
+                # DEMOGRAPHIC VARS
+                age, 
+                account.age.order,
+                WOE.user_id, # WOE
+                user.total.items, user.total.expen,
+                # BASKET VARS
+                deliver.time, 
+                basket.big, WOE.basket.size, 
+                item.basket.size.same, item.basket.size.diff, 
+                item.basket.same.category,
+                no.return,
+                # ITEM VARS
+                WOE.item_id, WOE.item_size, WOE.brand_id, # WOE
+                discount.pc, 
+                item_price, 
+                return)
+    }
+    
+    
+    return(list(traindf = traindf, testdf = testdf))
 }
 
 ################################################################################

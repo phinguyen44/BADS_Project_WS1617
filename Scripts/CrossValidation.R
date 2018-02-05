@@ -55,7 +55,7 @@ df.train <- dat.ready %>%
         user.total.items, user.total.expen,
         # BASKET VARS
         deliver.time, 
-        basket.big, basket.size, 
+        basket.big, basket.size, # WOE
         item.basket.size.same, item.basket.size.diff, item.basket.same.category,
         no.return,
         # ITEM VARS
@@ -110,83 +110,11 @@ for (i in 1:k) {
     ts.label.f <- ts.f$return
 
     ts.price.f[[i]] <- ts.f$item_price
-    
-    # standardize
-    tr.f <- z.scale(tr.f)
-    ts.f <- z.scale(ts.f)
-
-    # add in WOE variables
-    tr.f$WOE.user_id     <- WOE(tr.f, "user_id")
-    tr.f$WOE.item_id     <- WOE(tr.f, "item_id")
-    tr.f$WOE.item_size   <- WOE(tr.f, "item_size")
-    tr.f$WOE.brand_id    <- WOE(tr.f, "brand_id")
-    tr.f$WOE.basket.size <- WOE(tr.f, "basket.size")
-
-    WOE.user_id <- tr.f %>%
-        dplyr::select(user_id, WOE.user_id) %>% distinct
-    WOE.item_id <- tr.f %>%
-        dplyr::select(item_id, WOE.item_id) %>% distinct
-    WOE.item_size <- tr.f %>%
-        dplyr::select(item_size, WOE.item_size) %>% distinct
-    WOE.brand_id <- tr.f %>%
-        dplyr::select(brand_id, WOE.brand_id) %>% distinct
-    WOE.basket.size <- tr.f %>%
-        dplyr::select(basket.size, WOE.basket.size) %>% distinct
-
-    # apply WOE labels to test set
-    ts.f <- ts.f %>%
-        left_join(WOE.user_id, "user_id") %>%
-        left_join(WOE.item_id, "item_id") %>%
-        left_join(WOE.item_size, "item_size") %>%
-        left_join(WOE.brand_id, "brand_id") %>% 
-        left_join(WOE.basket.size, "basket.size")
-
-    # 0 out NA's
-    ts.f[is.na(ts.f)] <- 0
-
-    # select right variables for dataset
-    tr.f <- tr.f %>%
-        dplyr::select(
-            # DEMOGRAPHIC VARS
-            age, 
-            account.age.order,
-            WOE.user_id, # WOE
-            user.total.items, user.total.expen,
-            # BASKET VARS
-            deliver.time, 
-            basket.big, WOE.basket.size, 
-            item.basket.size.same, item.basket.size.diff, 
-            item.basket.same.category,
-            no.return,
-            # ITEM VARS
-            WOE.item_id, WOE.item_size, WOE.brand_id, # WOE
-            discount.pc, 
-            item_price, 
-            return)
-
-    ts.f <- ts.f %>%
-        dplyr::select(
-            # DEMOGRAPHIC VARS
-            age, 
-            account.age.order,
-            WOE.user_id, # WOE
-            user.total.items, user.total.expen,
-            # BASKET VARS
-            deliver.time, 
-            basket.big, WOE.basket.size, 
-            item.basket.size.same, item.basket.size.diff, 
-            item.basket.same.category,
-            no.return,
-            # ITEM VARS
-            WOE.item_id, WOE.item_size, WOE.brand_id, # WOE
-            discount.pc, 
-            item_price, 
-            return)
 
     # TRAIN MODEL
     yhat[[i]]   <- map2(mods, learners,
                         function(f, x) f(x, tr.f, ts.f, calib=TRUE))
-
+    
     # GET ACTUAL VALUES AND STORE THEM
     actual[[i]] <- ts.label.f
 
@@ -300,9 +228,13 @@ hp.df$rf
 get.acc    <- function(x, act) confusionMatrix(x, act, positive="1")$overall[1]
 pred.acc   <- lapply(preds.r, function(x) map2_dbl(x, actual, get.acc))
 pred.acc.c <- lapply(p.calib.r, function(x) map2_dbl(x, actual, get.acc))
+pred.acc
+pred.acc.c
 
 avg.acc   <- sapply(pred.acc, mean)
 avg.acc.c <- sapply(pred.acc.c, mean)
+avg.acc
+avg.acc.c
 
 acc.se   <- lapply(pred.acc, function(x) sd(x)/length(x))
 acc.c.se <- lapply(pred.acc.c, function(x) sd(x)/length(x))
