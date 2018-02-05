@@ -155,6 +155,7 @@ zero.idx <- which(class.price == 0)
 final.results[zero.idx] <- 1
 
 # merge results with user id
-final.df <- data.frame(order_item_id = class.id, prediction = final.results)
+final.df <- data.frame(order_item_id = class.id, return = final.results)
 
 save(final.df, file = "Data/FINALPREDICTIONS.RData")
+write.csv(final.df, 'Data/21.csv', row.names = FALSE)
