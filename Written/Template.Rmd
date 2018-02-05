@@ -200,7 +200,7 @@ To evaluate predictive accuracy, we first consider two performance measures - cl
 
 [Should we add the math for log loss here?]
 
-Finally, we consider predictive accuracy within the framework of our specific prediction task, which is to minimize the cost associated with incorrect classifications. Specifically, our problem deals with example-dependent misclassification costs because each penalty for false classification depends on item cost. To solve this problem, we use a thresholding approach. The thresholding approach selects the probability cutoff point that minimizes the total misclassification cost from the training data set and uses it to predict the class label of the test instances. Test instances that have a predicted probability below or equal to this threshold are classified as a negative instance, whereas test instances with a probability higher than the threshold are classified as a positive (i.e. return) instance. Despite its simplicity, thresholding often empirically outperforms other cost-sensitive learning methods [@ShengL06].
+Finally, we consider predictive accuracy within the framework of our specific prediction task, which is to minimize the cost associated with incorrect classifications. Specifically, our problem deals with example-dependent misclassification costs because each penalty for false classification depends on item cost. To solve this problem, we use a post-hoc thresholding approach. The thresholding approach selects the probability cutoff point that minimizes the total misclassification cost from the training data set and uses it to predict the class label of the test instances. Test instances that have a predicted probability below or equal to this threshold are classified as a negative instance, whereas test instances with a probability higher than the threshold are classified as a positive (i.e. return) instance. Despite its simplicity, thresholding often empirically outperforms other cost-sensitive learning methods [@ShengL06].
 
 Our specific approach mirrors a similar approach as suggested by [@Fawcett2006], where he applies the ROC curve to instance-varying costs. In our approach, we loop through a sequence of possible threshold values between 0 and 1, plot the corresponding accuracy and cost, then select the threshold that minimizes the overall cost. Since costs are shown as negative, we seek to maximize the value. We plot these graphs showing the accuracy and costs side by side given different threshold points for each of the four classifiers in [figure xxxxx]. Notice how the threshold that optimizes costs is different from the one that maximizes accuracy.
 
@@ -241,6 +241,15 @@ Overall, we see benefits in calibration when comparing the accuracy, log-loss, a
 
 [SHOW LL, ACC, COST TABLES]
 
+\subsection{Post-hoc cost-sensitive prediction adjustment}
+The final class memberships of our model predictions are the results of our cost-minimizing threshold strategy. Despite the suitability of threshold tuning in general, the outcome might not be optimal due to the presence of cost assymetry. This holds especially true for the items with a low item price, where disparity between the distinct classification errors is the largest. This can be seen in figure 1 (left) where the error costs relative to the item price is displayed for both types of misclassification. We refer to those predictions as type error 1, if the predicted value ends up being a False Positive (FP), meaning that we erroneously predicted an item return to be returned by the customer. In contrast, the type 2 errors relate to the False Negatives which implies we predicted a non-return when the item has in fact been returned. For low item prices, the spread between both error cost ratios is very high because of the fixed return costs being relatively high to item price. We therefore suspected it may be cost-saving to manipulate our model predictions to reduce the costs of FN. 
+
+![Error cost and price ratios for both misclassification types (left); Ratio of total True Negatives and False Negatives per price bin (right).](/Users/claudiaguenther/Documents/bads-ws1718-group21/bads-ws1718-group21/Written/Images/CostError.png)
+
+Specifically, we tested whether it is more costly to use our predicted model classes or to always predict customers to return the low price item and thus save on shipment costs ('pure return strategy'). For a given item price, our pure return strategy saves costs if the savings in shipment costs outweigh the losses of items that would not have been returned by customers(TN). Thus, it must hold that 
+                $0< \frac{c1}{c2} - \frac{TN}{FN}$
+where c1 and c2 refer to the misclassifications errors of type 1 and 2 at a given item price. Since some item price levels have sparse class membership, we create equal frequency price bins and approximate c1 and c2 with mean erros costs. We test our strategy based on the baseline prediction of our logistic regression model on a stratified test set. In our sample, the pure return strategy only saves costs for a item price of zero. This is because the high spread between costs is outweighed by the high ratio between TN and FN. This can be seen in figure 1 (right), where this ratio os displayed for all price bins. As very few cheap items are returned by customers, the number of FN is small in low price bins, leading to a high ratio.
+
 \subsection{Empirical Results}
 
 The output of the nested resampling results in a total of five candidate models and sets of predictions for each of the four classifiers. We use the calibrated results of these classifiers for the following:
@@ -251,6 +260,7 @@ The output of the nested resampling results in a total of five candidate models 
 4. Use the model with the lowest average cost as a tiebreaker in our ensemble
 
 We can examine the stability of our hyperparameters in [TABLE xxx]. Since the hyperparameters do not vary wildly between iterations, we can make the assumption the inner loop optimization works as designed. The mean and spread of prediction accuracy and total cost respectively for each model is shown in [Figure xxx]. On average, the neural network consistently performs best both on prediction accuracy and total cost metrics. In comparison, gradient boosting tends to perform the worst in terms of prediction accuracy but random forests perform the worst in terms of total cost minimization. Logistic regression, as expected, shows the smallest variation between iterations. 
+
 - Note from Claudia : Cite paper by Prof Lessman @coussement2017comparative:  We explain good performance of log reg with existence of linear effects and our meticulous data preparation. As @coussement2017comparative have demonstrated, logistic regression can compete with more complex algorithms ifexposed to well prepared data set
 
 [Show hyperparameter stability]
@@ -258,9 +268,6 @@ We can examine the stability of our hyperparameters in [TABLE xxx]. Since the hy
 [Show accuracy plot]
 
 We note that nested resampling is a computationally intensive process. We limit the inner loop cross-validation process to 4 iterations for this reason. Additionally, we employ relatively small search spaces for hyperparameters (usually not exceeding 30 possible combinations) that are informed by theoretical considerations (citation???). In order to accelerate the overall model fitting process, we employ a parallelization wrapper around the tuning process.
-
-\subsection{Post-hoc cost-sensitive prediction adjustment}
-
 
 \clearpage
 \newpage
