@@ -196,19 +196,78 @@ Since the single baseline models from our ensemble model might perform best on d
 
 \newpage
 
-\section{Model building}
-\subsection{Experimental design}
-\subsubsection{Baseline models}
-\subsubsection{Candidate selection and combination}
+\section{Model Building}
+
 \subsection{Performance Measurement}
-- discuss AUC, accuracy, costs
-- post-processing
+
+To evaluate predictive accuracy, we first consider two performance measures - classification accuracy and logarithmic loss. Classification accuracy is the number of correctly classified observations divided by the total number of observations. We use this initial measure due to its ease of interpretability. However, this measure does not differentiate between types of error (which we is important due to asymmetric costs) nor does it penalize overconfidence in classification. Therefore we look additionally at the logarithmic loss, a form of cross-entropy that is used when the desired outcome is the probability that an example is positive. This measure is designed to penalize overly confident but misclassified observations and is often preferred for binary classification problems like ours [@Caruana04datamining].
+
+[Should we add the math for log loss here?]
+
+Finally, we consider predictive accuracy within the framework of our specific prediction task, which is to minimize the cost associated with incorrect classifications. Specifically, our problem deals with example-dependent misclassification costs because each penalty for false classification depends on item cost. To solve this problem, we use a thresholding approach. The thresholding approach selects the probability cutoff point that minimizes the total misclassification cost from the training data set and uses it to predict the class label of the test instances. Test instances that have a predicted probability below or equal to this threshold are classified as a negative instance, whereas test instances with a probability higher than the threshold are classified as a positive (i.e. return) instance. Despite its simplicity, thresholding often empirically outperforms other cost-sensitive learning methods [@ShengL06].
+
+Our specific approach mirrors a similar approach as suggested by [@Fawcett2006], where he applies the ROC curve to instance-varying costs. In our approach, we loop through a sequence of possible threshold values between 0 and 1, plot the corresponding accuracy and cost, then select the threshold that minimizes the overall cost. Since costs are shown as negative, we seek to maximize the value. We plot these graphs showing the accuracy and costs side by side given different threshold points for each of the four classifiers in [figure xxxxx]. Notice how the threshold that optimizes costs is different from the one that maximizes accuracy.
+
+[Threshold graphs for each model]
+
+\subsection{Experimental Design}
+
+\subsubsection{Nested Resampling}
+
+In order to obtain reliable out-of-sample performance estimates for each classifier and the overall ensemble model, we undertake a nested resampling approach. This approach employs two cross-validation loops. We use the inner loop to tune the hyperparameters, while we use the outer loop to estimate how the model will generalize to a new, unknown data set by averaging the test results [@hastie01statisticallearning, 241].
+
+In the outer loop, we use 4-fold cross-validation. In this approach, we partition the initial test set containing 100,000 observations into four equally sized groups. For each iteration of the loop, we set aside the i-th partition for testing, while we use the remaining 4 partitions to train the individual classifiers (logistic regression, neural network, gradient boosting, random forest).
+
+In the inner resampling loop, we train each classifier using a fixed holdout instance to find the optimal hyperparameters on each of the individual classifiers. We use a fixed holdout set to enable us to simply standardize numeric variables and create our Weight of Evidence features (by calculating off the training set and applying those values to the holdout set) within the inner loop. This preprocessing step is necessary for all variable transformations that are dependent on the data to prevent overfitting the model.
+
+The inner resampling loop assesses the quality of the model given the chosen hyperparameters. With the consideration that a grid search across the entire hyperparameter search space would be too costly, we choose to instead do a random search across the search space. The random search method will randomly choose from our specified values, with a maximum of 20 iterations. Additionally, we train each classifier to optimize for AUC (area under the ROC curve), since such classifiers tend to produce better accuracy relative to those that only optimize for accuracy [@Huang05usingauc]. The chosen hyperparameters are then passed to the outer loop where a new model is trained with the corresponding hyperparameters. We then predict the results on the outer loop holdout set and aggregate results.
+
+\subsubsection{Model Calibration}
+
+Finally in the outer loop, we calibrate the probability estimates generated from each classifier. We use calibration for two reasons: Firstly, it ensures that the probability estimates better reflect their true posterior probabilities [@Caruana2006]. For example, in a well-calibrated model, if the probability estimate is 70%, that means we can assume that it has a 70% chance of occurring. Secondly, calibration transforms predictions from all models to place on them equivalent scale. Combining calibrated models in ensembling not only provides improvement in probability measures like logarithmic loss, but failure to use calibrated models may hurt ensemble performance [@Niculescu-Mizil2005].
+
+We use a method known as Platt scaling to obtain calibrated predictions. In Platt scaling, we pass the output probabilities through a sigmoid (which in our case is a logistic regression) [@Platt99probabilisticoutputs]. We apply the specific method below as described in [@obtainingcalibrated] in order to prevent overfitting and unwanted bias:
+
+1. Split the data set into a training and a test set
+2. Split the training data set further into a calibration set
+3. Train the model on the training set
+4. Predict the model on the calibration set and the test set
+5. Use the predictions from calibration set to train a logistic regression model
+6. Pass the predictions from the test set through the logistic regression model in step 5 to obtain the final predictions
+
+We visualize the effect of calibration on each of our classifiers using reliability diagrams from the first fold of cross-validation. Reliability diagrams split the prediction space into 10 bins, then plot the mean prediction value for each bin against the true fraction of positive cases. The diagonal line indicates a perfectly calibrated model [@Niculescu-Mizil2005]. Additionally, in each diagram, we plot the histogram of predicted values before and after calibration. The results of calibration for each classifier can be seen in [FIGURE xxxx].
+
+[SHOW ALL 4 RELIABILITY DIAGRAMS]
+
+From the reliability plots, we can see a few major effects of calibration. Firstly the results after calibration (the line in blue) shift away from a sigmoidal shape (the line in red) to to line up closer to the diagonal line indicating a perfectly calibrated model. Secondly, calibration pushes the probabilities closer to the center and away from 0 and 1, to better align with the true fraction of positive cases and prevent overconfidence in classifications. One benefit that we can recognize from the reliability plots is that overall, each histogram post-calibration appear similar to one another because calibration reduces the differences between predicted probabilities for each model, which will provide usefulness in ensembling [@Niculescu-Mizil2005].
+
+Overall, we see benefits in calibration when comparing the accuracy, log-loss, and cost metrics. In [FIGURE xxx], we compare the average across all validation runs for the aforementioned metrics. We see that calibration yields significant improvements in log-loss error for all models besides without negatively impacting accuracy and cost measurements.
+
+[SHOW LL, ACC, COST TABLES]
+
+\subsection{Empirical Results}
+
+The output of the nested resampling results in a total of five candidate models and sets of predictions for each of the four classifiers. We use the calibrated results of these classifiers for the following:
+
+1. Assess the stability of the hyperparameters
+2. Estimate the prediction accuracy and total cost of the model
+3. Get the average optimal decision threshold to apply to our final classifiers
+4. Use the model with the lowest average cost as a tiebreaker in our ensemble
+
+We can examine the stability of our hyperparameters in [TABLE xxx]. Since the hyperparameters do not vary wildly between iterations, we can make the assumption the inner loop optimization works as designed. The mean and spread of prediction accuracy and total cost respectively for each model is shown in [Figure xxx]. On average, the neural network consistently performs best both on prediction accuracy and total cost metrics In comparison, gradient boosting tends to perform the worst in terms of prediction accuracy but random forests perform the worst in terms of total cost minimization. Logistic regression, as expected, shows the smallest variation between iterations.
+
+[Show hyperparameter stability]
+[Show cost error plot]
+[Show accuracy plot]
+
+We note that nested resampling is a computationally intensive process. We limit the inner loop cross-validation process to 4 iterations for this reason. Additionally, we employ relatively small search spaces for hyperparameters (usually not exceeding 30 possible combinations) that are informed by theoretical considerations (citation???). In order to accelerate the overall model fitting process, we employ a parallelization wrapper around the tuning process.
 
 \clearpage
 \newpage
 
 \section{Results}
 
+\
 
 \section{Conclusion}
 
