@@ -147,9 +147,9 @@ rf.mod <- function(learner, tr, ts, calib = FALSE, final = FALSE) {
 
     # hyperparameters
     rf_param <- makeParamSet(
-        makeDiscreteParam("ntree", seq(200, 400, by = 50)),
-        makeIntegerParam("mtry", lower = 3, upper = 8),
-        makeDiscreteParam("nodesize", seq(10, 40, by = 5))
+        makeDiscreteParam("ntree", seq(300, 500, by = 50)),
+        makeIntegerParam("mtry", lower = 3, upper = 6),
+        makeIntegerParam("nodesize", lower = 1, upper = 30)
     )
 
     start <- Sys.time()
@@ -242,12 +242,12 @@ xgb.mod <- function(learner, tr, ts, calib = FALSE, final = FALSE) {
     )
     
     xg_ps <- makeParamSet(
-        makeDiscreteParam("booster", values = c("gbtree", "dart")),
+        makeDiscreteParam("booster", values = c("dart")),
         makeDiscreteParam("gamma", values = c(0, 0.1, 0.2)),
-        makeDiscreteParam("eta", values = c(0.001, 0.01, 0.1, 0.3, 0.5)),
+        makeDiscreteParam("eta", values = c(0.001, 0.01, 0.1, 0.3)),
         makeDiscreteParam("nrounds", values = c(50, 100, 200)),
-        makeDiscreteParam("lambda", values = seq(0, 0.6, by=0.1)),
-        makeIntegerParam("max_depth", lower = 3L, upper = 8L)
+        makeDiscreteParam("lambda", values = seq(0, 0.7, by=0.1)),
+        makeIntegerParam("max_depth", lower = 3L, upper = 6L)
     )
 
     start <- Sys.time()
