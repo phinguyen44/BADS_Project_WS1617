@@ -150,4 +150,6 @@ final.results        <- round(final.results)
 zero.idx <- which(class.price == 0)
 final.results[zero.idx] <- 1
 
+# merge results with 
+
 save(final.results, file = "Data/FINALPREDICTIONS.RData")
