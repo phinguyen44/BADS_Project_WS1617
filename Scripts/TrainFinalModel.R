@@ -36,10 +36,12 @@ lapply(neededPackages, function(x) suppressPackageStartupMessages(
     library(x, character.only = TRUE)))
 
 # Load data
-load("Data/BADS_WS1718_class_ready.RData")
+# load("Data/BADS_WS1718_class_ready.RData")
+load("Data/step4.RData")
 dat.test <- dat.ready
 load("Data/BADS_WS1718_known_ready.RData")
-load("Data/CalibratedThreshold.Rdata")
+load("Data/CalibratedThreshold-Phi.Rdata")
+truedata <- read.csv("Data/BADS_WS1718_class_20180115.csv")
 
 # Source performance metric calculations
 source("Scripts/Helpful.R")
@@ -47,6 +49,13 @@ source("Scripts/Helpful-Models.R")
 
 ################################################################################
 # INITIAL SETUP
+
+# SAVE DATA FOR LATER
+df.label <- dat.ready$return
+df.price <- dat.ready$item_price
+
+class.price <- dat.test$item_price
+class.id    <- dat.test$order_item_id
 
 # reorder and select variables
 df.train <- dat.ready %>%
@@ -84,12 +93,6 @@ df.class <- dat.test %>%
         item_id, item_size, brand_id, # WOE
         discount.pc, 
         item_price)
-
-# SAVE DATA FOR LATER
-df.label <- df.train$return
-df.price <- df.train$item_price
-
-class.price <- df.class$item_price
 
 ## LIST OF FUNCTIONS
 learners <- list(lr = "classif.logreg",
@@ -150,6 +153,7 @@ final.results        <- round(final.results)
 zero.idx <- which(class.price == 0)
 final.results[zero.idx] <- 1
 
-# merge results with 
+# merge results with user id
+final.df <- data.frame(orderid = class.id, prediction = final.results)
 
-save(final.results, file = "Data/FINALPREDICTIONS.RData")
+save(final.df, file = "Data/FINALPREDICTIONS.RData")
