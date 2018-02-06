@@ -206,7 +206,7 @@ To solve this problem, we use a thresholding approach. The thresholding approach
 
 Our specific approach mirrors a similar approach as suggested by @Fawcett2006, in which he generates a ROC curve that is sensitive to instance-varying costs. In our approach, we loop through a sequence of possible threshold values between 0 and 1, plot the corresponding accuracy and cost, then select the threshold that minimizes the overall cost. Since costs are shown as negative, we seek to maximize the value. We plot these graphs showing the accuracy and costs side by side given different threshold points for each of the four classifiers in [FIGURE XXX]. Notice how the threshold that optimizes costs is different from the one that maximizes accuracy.
 
-![Threshold graphs for each classifier. Clockwise from top left: logistic regression, neural network, random forest, gradient boost](/Users/phinguyen/Documents/Projects/bads-ws1718-group21/Written/Images/Threshold-combined.png)
+![Threshold graphs for each classifier. Clockwise from top left: logistic regression, neural network, random forest, gradient boost](/Users/claudiaguenther/Documents/bads-ws1718-group21/bads-ws1718-group21/Written/Images/Threshold-combined.png)
 
 \subsection{Experimental Design}
 
@@ -235,7 +235,7 @@ We use a method known as Platt scaling to obtain calibrated predictions. In Plat
 
 We visualize the effect of calibration on each of our classifiers using reliability diagrams from the first fold of cross-validation. Reliability diagrams split the prediction space into 10 bins, then plot the mean prediction value for each bin against the true fraction of positive cases. The diagonal line indicates a perfectly calibrated model [@Niculescu-Mizil2005]. Additionally, in each diagram, we plot the histogram of predicted values before and after calibration. The results of calibration for each classifier can be seen in [FIGURE xxxx].
 
-![Reliability plots for each classifier. Clockwise from top left: logistic regression, neural network, random forest, gradient boost](/Users/phinguyen/Documents/Projects/bads-ws1718-group21/Written/Images/ReliabilityPlot-combined.png)
+![Reliability plots for each classifier. Clockwise from top left: logistic regression, neural network, random forest, gradient boost](/Users/claudiaguenther/Documents/bads-ws1718-group21/bads-ws1718-group21/Written/Images/ReliabilityPlot-combined.png)
 
 From the reliability plots, we can see a few major effects of calibration. Firstly the results after calibration (the line in blue) shift away from a sigmoidal shape (the line in red) to to line up closer to the diagonal line indicating a perfectly calibrated model. Secondly, calibration pushes the probabilities closer to the center and away from 0 and 1, to better align with the true fraction of positive cases and prevent overconfidence in classifications. One benefit that we can recognize from the reliability plots is that overall, each histogram post-calibration appear similar to one another because calibration reduces the differences between predicted probabilities for each model, which will provide usefulness in ensembling [@Niculescu-Mizil2005].
 
@@ -286,15 +286,47 @@ The output of the nested resampling results in a total of five candidate models 
 3. Get the average optimal decision threshold to apply to our final classifiers
 4. Use the model with the lowest average cost as a tiebreaker in our ensemble
 
-We can examine the stability of our hyperparameters in [TABLE xxx]. Since the hyperparameters do not vary wildly between iterations, we can make the assumption the inner loop optimization works as designed. The mean and spread of prediction accuracy and total cost respectively for each model is shown in [Figure xxx]. On average, the neural network consistently performs best both on prediction accuracy and total cost metrics. In comparison, gradient boosting tends to perform the worst in terms of prediction accuracy but random forests perform the worst in terms of total cost minimization. Logistic regression, as expected, shows the smallest variation between iterations. 
+We can examine the stability of our hyperparameters in [TABLES x,y,z]. Since the hyperparameters do not vary wildly between iterations, we can make the assumption the inner loop optimization works as designed. The distribution of performance values (in terms of accuracy and total cost, respectively) across resampling iterations and for all classifiers is shown in [FIGURES x,y]. The dot in the center represents the average value, whereas the spread is indicated by 1 standard error above and below the mean. On average, the neural network consistently performs best both on prediction accuracy and total cost metrics. In comparison, gradient boosting tends to perform the worst in terms of prediction accuracy but random forests perform the worst in terms of total cost minimization. Logistic regression, as expected, shows the smallest variation between iterations.
+
+Table: Neural Network Hyperparameter Tuning
+
+| Iteration | size | decay |
+|-----------|:----:|:-----:|
+| 1         |   4  | 1e-03 |
+| 2         |   5  | 1e-05 |
+| 3         |   8  | 1e-02 |
+| 4         |   6  | 1e-03 |
+
+Table: Random Forest Hyperparameter Tuning
+
+| Iteration | ntree | mtry | nodesize |
+|-----------|:-----:|:----:|:--------:|
+| 1         |  300  |   3  |    15    |
+| 2         |  350  |   3  |    30    |
+| 3         |  250  |   3  |    25    |
+| 4         |  400  |   3  |    15    |
+
+Table: Gradient Boost Hyperparameter Tuning
+
+| Iteration | gamma |  eta  | nrounds | lambda | max_depth |
+|-----------|:-----:|:-----:|:-------:|:------:|:---------:|
+| 1         |   4   | 1e-03 |   100   |   0.3  |     3     |
+| 2         |   5   | 1e-05 |   200   |   0.1  |     3     |
+| 3         |   8   | 1e-02 |   100   |   0.4  |     3     |
+| 4         |   6   | 1e-03 |   100   |    0   |     4     | 
 
 - Note from Claudia : Cite paper by Prof Lessman @coussement2017comparative:  We explain good performance of log reg with existence of linear effects and our meticulous data preparation. As @coussement2017comparative have demonstrated, logistic regression can compete with more complex algorithms ifexposed to well prepared data set
 
-[Show hyperparameter stability]
-[Show cost error plot]
-[Show accuracy plot]
+![Cross-Validation Accuracy](/Users/claudiaguenther/Documents/bads-ws1718-group21/bads-ws1718-group21/Written/Images/CV-accuracy.png)
+
+![Cross-Validation Total Cost](/Users/claudiaguenther/Documents/bads-ws1718-group21/bads-ws1718-group21/Written/Images/CV-cost.png)
 
 We note that nested resampling is a computationally intensive process. We limit the inner loop cross-validation process to 4 iterations for this reason. Additionally, we employ relatively small search spaces for hyperparameters (usually not exceeding 30 possible combinations) that are informed by theoretical considerations (citation???). In order to accelerate the overall model fitting process, we employ a parallelization wrapper around the tuning process.
+
+\subsection{Ensembling}
+
+Finally, we ensemble models from each of the k runs and compare the final combined result to the average of the individual candidate classifiers. Our ensemble approach uses majority voting as described in the Methodology section of the paper. Given that we are ensembling four models, we use the best model in terms of cost minimization as a tie breaker. In our case, our best performing model is the neural network.
+
 
 \clearpage
 \newpage
