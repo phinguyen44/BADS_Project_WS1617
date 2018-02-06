@@ -33,15 +33,8 @@
     - research shows that an effective ensemble includes models that are highly correct and make errors on different parts of input space (what are drawbacks of each model?) (Opitz)
     - varying feature subsets used by each member of ensemble should promote this necessary diversity (Opitz) - features should promote _disagreement_ between models
     - efficacy of a set of features depends on the learning algorithm itself (each learner may have different feature set) (Opitz)
-5. What is our approach to ensembling:
-    - hill climb (with replacement) Caruana
 
 ## Model Evaluation
-
-1. [Cost-sensitive classification](https://mlr-org.github.io/mlr-tutorial/release/html/cost_sensitive_classif/index.html#class-dependent-misclassification-costs)
-    - In our cost matrix, a false positive is an opportunity cost, but a False Negative is actual cost (show table)
-    - Our problem is one of example-dependent misclassification costs - that is, costs are associated at the individual case-level, on the price of the item in question.
-    - Our approach is an extension of the ROCIV approach (as described by Fawcett 2006) but used to find optimal cutoff point
 
 ## Prediction
 

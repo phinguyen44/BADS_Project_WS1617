@@ -224,6 +224,9 @@ hp.df$nn
 hp.df$xgb
 hp.df$rf
 
+# Save hyperparameters
+save(hp.df, file = 'Data/Hyperparameters.Rdata')
+
 # prediction accuracy (just for good measure)
 get.acc    <- function(x, act) confusionMatrix(x, act, positive="1")$overall[1]
 pred.acc   <- lapply(preds.r, function(x) map2_dbl(x, actual, get.acc))
