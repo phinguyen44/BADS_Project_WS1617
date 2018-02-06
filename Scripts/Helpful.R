@@ -191,6 +191,7 @@ reliability.plot <- function(act, pred, pred.c, bins = 10) {
          xlab = "Mean Prediction", 
          ylab = "Observed Fraction", 
          col  = "red", type = "o", main = "Reliability Plot")
+    box("outer")
     lines(c(0,1), c(0,1), col = "grey")
     lines(grouped.c$y, grouped.c$x, 
           xlim = c(0,1), ylim = c(0,1), 
@@ -269,6 +270,7 @@ plot.threshold <- function(act, pred, cost) {
     best.cutoff <- combined$threshold[which.max(all.cost)]
     
     require(gridExtra)
+    require(grid)
     # plot
     p1 <- ggplot(data = combined, aes(x = threshold, y = accuracy)) +
         geom_line() + 
@@ -296,5 +298,17 @@ plot.threshold <- function(act, pred, cost) {
         theme(plot.subtitle = element_text(size=10)) + 
         theme_bw()
     
-    return(grid.arrange(p1, p2, ncol=2))
+    grid.rect(width  = .99, 
+              height = .99, 
+              gp     = gpar(lwd = 1, col = "black", fill = NA)
+    )
+    
+    grid.newpage()
+    ga <- arrangeGrob(p1, p2, ncol = 2)
+    gb <- rectGrob(width  = .99, 
+                   height = .99, 
+                   gp     = gpar(lwd = 1, col = "black", fill = NA)
+    )
+    gt <- gTree(children = gList(ga, gb))
+    return(grid.draw(gt, recording = TRUE))
 }

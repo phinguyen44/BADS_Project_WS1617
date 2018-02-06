@@ -277,7 +277,6 @@ ll.c.avg <- apply(ll.c, 2, mean)
 ll.compare <- data.frame(cbind(ll.avg, ll.c.avg))
 colnames(ll.compare) <- c('Uncalibrated', 'Calibrated')
 ll.compare 
-# improves log loss for all except log reg (which is already well-calibrated)
 
 # show avg. cost / accuracy changes due to calibration
 cost.compare <- data.frame(cbind(unlist(avg.cost), unlist(avg.cost.c)))
@@ -304,7 +303,6 @@ p <- ggplot(data = cost.df, aes(x = Model, y = Cost)) +
     theme_bw()
 p
 ggsave('Written/Images/CV-cost.png', width = 6, height = 4)
-Sys.sleep(1)
 
 # plot accuracy bands
 acc.df <- data.frame(cbind(unlist(avg.acc.c), unlist(acc.c.se)))
@@ -320,19 +318,19 @@ p2 <- ggplot(data = acc.df, aes(x = Model, y = Acc)) +
     theme_bw()
 p2
 ggsave('Written/Images/CV-accuracy.png', width = 6, height = 4)
-Sys.sleep(1)
 
 ####### RESULTS FROM THRESHOLD OPTIMIZATION (USING CALIBRATED RESULTS):
 
 # plot threshold / cost plots for each model (for 1 fold)
 for (i in 1:length(pf1c)) {
-    g <- plot.threshold(act1, pf1c[[i]], cost1)
-    ggsave(infuse('Written/Images/Threshold-{{mod}}.png', mod = names(pf1c[i])),
-           plot   = g,
-           height = 4,
-           width  = 8)
-    Sys.sleep(1)
+    png(infuse('Written/Images/Threshold-{{mod}}.png', mod = names(pf1c[i])),
+        width  = 720,
+        height = 360,
+        units = "px")
+    plot.threshold(act1, pf1c[[i]], cost1)
+    dev.off()
 }
+dev.new()
 
 ####### RESULTS FROM ENSEMBLING (USING CALIBRATED RESULTS):
 
