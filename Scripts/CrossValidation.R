@@ -254,10 +254,11 @@ cost1   <- ts.price.f[[1]]
 
 # Reliability plots to compare original vs calibrated results (for 1 fold)
 for (i in 1:length(mods)) {
-    pdf(infuse("Written/Images/ReliabilityPlot-{{model}}.pdf",
+    png(infuse("Written/Images/ReliabilityPlot-{{model}}.png",
                model = names(mods[i])),
-        width  = 6,
-        height = 4)
+        width  = 540,
+        height = 360,
+        units = "px")
     reliability.plot(act1, pf1[[i]], pf1c[[i]], 10)
     dev.off()
 }
@@ -302,7 +303,8 @@ p <- ggplot(data = cost.df, aes(x = Model, y = Cost)) +
     theme(plot.title = element_text(size=16)) +
     theme_bw()
 p
-ggsave('Written/Images/CV-cost.pdf', width = 6, height = 4)
+ggsave('Written/Images/CV-cost.png', width = 6, height = 4)
+Sys.sleep(1)
 
 # plot accuracy bands
 acc.df <- data.frame(cbind(unlist(avg.acc.c), unlist(acc.c.se)))
@@ -317,17 +319,19 @@ p2 <- ggplot(data = acc.df, aes(x = Model, y = Acc)) +
     theme(plot.title = element_text(size=16)) +
     theme_bw()
 p2
-ggsave('Written/Images/CV-accuracy.pdf', width = 6, height = 4)
+ggsave('Written/Images/CV-accuracy.png', width = 6, height = 4)
+Sys.sleep(1)
 
 ####### RESULTS FROM THRESHOLD OPTIMIZATION (USING CALIBRATED RESULTS):
 
 # plot threshold / cost plots for each model (for 1 fold)
 for (i in 1:length(pf1c)) {
     g <- plot.threshold(act1, pf1c[[i]], cost1)
-    ggsave(infuse('Written/Images/Threshold-{{mod}}.pdf', mod = names(pf1c[i])),
+    ggsave(infuse('Written/Images/Threshold-{{mod}}.png', mod = names(pf1c[i])),
            plot   = g,
            height = 4,
            width  = 8)
+    Sys.sleep(1)
 }
 
 ####### RESULTS FROM ENSEMBLING (USING CALIBRATED RESULTS):
