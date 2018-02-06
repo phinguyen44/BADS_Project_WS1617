@@ -302,10 +302,11 @@ p <- ggplot(data = cost.df, aes(x = Model, y = Cost)) +
     geom_errorbar(aes(ymin = Cost - SE, ymax = Cost + SE)) +
     labs(title = "Total Cost") +
     labs(subtitle = infuse("{{num}}-Fold Cross-Validation", num=k)) +
-    theme(plot.title = element_text(size=16)) +
+    theme(plot.title = element_text(size=10)) +
+    theme(plot.subtitle = element_text(size=6)) +
     theme_bw()
 p
-ggsave('Written/Images/CV-cost.png', width = 6, height = 4)
+ggsave('Written/Images/CV-cost.png', width = 5, height = 3)
 
 # plot accuracy bands
 acc.df <- data.frame(cbind(unlist(avg.acc.c), unlist(acc.c.se)))
@@ -317,10 +318,11 @@ p2 <- ggplot(data = acc.df, aes(x = Model, y = Acc)) +
     geom_errorbar(aes(ymin = Acc - SE, ymax = Acc + SE)) +
     labs(title = "Accuracy") +
     labs(subtitle = infuse("{{num}}-Fold Cross-Validation", num=k)) +
-    theme(plot.title = element_text(size=16)) +
+    theme(plot.title = element_text(size=10)) +
+    theme(plot.subtitle = element_text(size=6)) + 
     theme_bw()
 p2
-ggsave('Written/Images/CV-accuracy.png', width = 6, height = 4)
+ggsave('Written/Images/CV-accuracy.png', width = 5, height = 3)
 
 ####### RESULTS FROM THRESHOLD OPTIMIZATION (USING CALIBRATED RESULTS):
 
