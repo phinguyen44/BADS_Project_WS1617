@@ -108,13 +108,14 @@ Costs.df$error2r <- (Costs.df$item_price*0.25 + 7.5)/Costs.df$item_price
 # Plot cost ratios
 pplot <- ggplot(data=Costs.df, aes(x=item_price, y = Costs.df$error1r))
 pplot + geom_line(aes(y=Costs.df$error1r)) + 
-        geom_line(aes(y=Costs.df$error2r, color = "Type II error")) +
+        geom_line(aes(y=Costs.df$error2r, color = "Type II error"), linetype = "dashed") +
         geom_line(aes(color="Type I error")) +
         xlim(c(0,120))+ylim(c(0,2))        + 
+        theme_bw() +
         labs(x="Item price", y="Error cost and price ratio") +
-        scale_color_discrete(name="Misclassification") +
+        scale_colour_grey(start = 0.1, end = 0.5, name="Misclassification")    + 
         theme(legend.position=c(.73,.8)) +
-        coord_fixed(ratio = 55)
+        coord_fixed(ratio = 55) 
 
 
 ###########################################################
@@ -148,12 +149,12 @@ compare <- Costs.df %>%
 
 pplot <- ggplot(data=compare, aes(x=av.price, y = compare$av.return))
 pplot + geom_point(aes(y=compare$ratio)) + 
-    geom_point(aes(y=compare$av.return, color = "Average return")) +
-    xlim(c(0,100))+ylim(c(0,12))        + 
+    geom_point(aes(y=compare$av.return)) +
+    xlim(c(0,100))+ylim(c(0,12))        +         
+    theme_bw() +
     labs(x="Item price", y="True Negatives / False Negatives") +
-    scale_color_discrete(name="Misclassification") +
     theme(legend.position=c(.8,.72)) +
-    coord_fixed(ratio = 8)
+    coord_fixed(ratio = 8) 
 
 # Determine higher cut-off
 compare2 <- Costs.df %>% 
@@ -168,10 +169,5 @@ compare2 <- Costs.df %>%
         TP.numb    = sum(TP),
         ratio      = (FP.numb+ 0.0001)/(TP.numb + 0.0001),
         cutoff     =  spread.cost - ratio)
-
-pplot <- ggplot(data=compare2, aes(x=av.price))
-# add two line layers
-pplot + geom_line(aes(y=ratio))
-
 
 ###########################################################
