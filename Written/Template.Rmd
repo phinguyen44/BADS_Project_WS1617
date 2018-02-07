@@ -349,7 +349,7 @@ The final class memberships of our model predictions are the results of our cost
 ![Error cost and price ratios for both misclassification types (left); Ratio of total True Negatives and False Negatives per price bin (right).](/Users/claudiaguenther/Documents/bads-ws1718-group21/bads-ws1718-group21/Written/Images/CostError.png)
 
 Specifically, we tested whether it is more costly to use our predicted model classes or to always predict customers to return the low price item and thus save on shipment costs ('pure return strategy'). For a given item price, our pure return strategy saves costs if the savings in shipment costs outweigh the losses of items that would not have been returned by customers(TN). Thus, it must hold that 
-                $0< \frac{C1}{C2} - \frac{TN}{FN}$
+                $0< \frac{C2}{C1} - \frac{TN}{FN}$
 where C1 and C2 refer to the misclassifications errors of type 1 and 2 at a given item price. Since some item price levels have sparse class membership, we create equal frequency price bins and approximate C1 and C2 with mean erros costs. We test our strategy based on the baseline prediction of our logistic regression model on a stratified test set. In our sample, the pure return strategy only saves costs for a item price of zero. This is because the high spread between costs is outweighed by the high ratio between TN and FN. This can be seen in figure 1 (right), where this ratio os displayed for all price bins. As very few cheap items are returned by customers, the number of FN is small in low price bins, leading to a high ratio.
 
 
