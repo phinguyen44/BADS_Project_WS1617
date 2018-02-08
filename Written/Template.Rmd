@@ -133,6 +133,31 @@ Insert abstract here
 \section{Introduction}
 
 
+A major obstacle for companies participating in the rapidly rising E-Commerce sector are excessive product returns. Up to ... % of the total sales are affected by this phenomenon (http://www.prism.gatech.edu/~bt71/articles/forecasting.pdf). 
+
+Historically, rising product returns have been often regarded as a necessary evil (quote same named paper) that is a byproduct of equivalently rising sales. Nowadays, having customer- and product specific data en masse in combination with easily available computational power and sophisticated machine learning algorithms, 
+there is no more need for companies to remain blind towards unnecessarily high rates of product returns and the associated risk. 
+
+The possibility of free returns may be regarded as a result of fierce online competition, to enhance customer satisfaction and loyalty or to decrease risk on the buyer side and consequently pushing revenues. Another common argument in favor of the matter is to reduce uncertainty of a potential customer concerning products (Lessmann), which is generally higher in comparison to the haptic product experience in a brick-and-mortar store (Haptics Paper). 
+
+On the other hand abnormally high product return rates are reported to have substantial impact on a company's profitability. 
+Therefore it would be desirable to create a tradeoff between the mentioned advantages on the customer side and the losses on the corporate side. In order to do so, the drivers of product returns must be laid out in advance. These are often reported to be uncertainty over a product, recurrently expressed as a missfit, fraudulent behavior in terms of using the delivered item for a certain occasion and returning it afterwards as well as damage inflicted by the customer. The last two points are regarded as an abuse of customer protection rights (Urbanke ...). 
+
+Several measures intended to encounter such behavior have been proposed by Urbanke, Kranz and Kolbe. They suggest the restriction of payment options, which is in line with Pur et al., who find that Vorkasse, Sofortueberweisung and Lastschrift present a higher restriction to product returns and therefore decrease the likelihood of such.
+
+In order to encounter the problem Urbanke, Kranz and Kolbe suggest the following points:
+- Restrict payment options 
+- Increase delivery time
+- Moral suasion
+- Deny transaction
+
+Some of these options are already in practice for multiple large online retailers (http://www.retailwire.com/discussion/should-chronic-returners-be-banned/, https://www.nbcchicago.com/news/local/Amazon-Bans-Woman-For-Life-Over-Too-Many-Returns-388199532.html)
+
+However, the measures to be taken are out of scope of this paper. Instead a underlying prediction system will be developped to analyze the drivers of product returns and predict them accurately. 
+Such a forecast may supply companies with information on the reverse product flow and increase their inventory control (https://www.sciencedirect.com/science/article/pii/S0377221707011575).
+
+
+
 \newpage
 
 
