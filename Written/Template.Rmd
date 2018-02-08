@@ -141,15 +141,9 @@ there is no more need for companies to remain blind towards unnecessarily high r
 The possibility of free returns may be regarded as a result of fierce online competition, to enhance customer satisfaction and loyalty or to decrease risk on the buyer side and consequently pushing revenues. Another common argument in favor of the matter is to reduce uncertainty of a potential customer concerning products (Lessmann), which is generally higher in comparison to the haptic product experience in a brick-and-mortar store (Haptics Paper). 
 
 On the other hand abnormally high product return rates are reported to have substantial impact on a company's profitability. 
-Therefore it would be desirable to create a tradeoff between the mentioned advantages on the customer side and the losses on the corporate side. In order to do so, the drivers of product returns must be laid out in advance. These are often reported to be uncertainty over a product, recurrently expressed as a missfit, fraudulent behavior in terms of using the delivered item for a certain occasion and returning it afterwards as well as damage inflicted by the customer. The last two points are regarded as an abuse of customer protection rights (Urbanke ...). 
+Therefore it would be desirable to create a tradeoff between the mentioned advantages on the customer side and the losses on the corporate side. In order to do so, the drivers of product returns must be laid out in advance. These are often reported to be uncertainty over a product, recurrently expressed as a missfit, fraudulent behavior in terms of using the delivered item for a certain occasion and returning it afterwards as well as damage inflicted by the customer or defects (Potdar). 
 
-Several measures intended to encounter such behavior have been proposed by Urbanke, Kranz and Kolbe. They suggest the restriction of payment options, which is in line with Pur et al., who find that Vorkasse, Sofortueberweisung and Lastschrift present a higher restriction to product returns and therefore decrease the likelihood of such.
-
-In order to encounter the problem Urbanke, Kranz and Kolbe suggest the following points:
-- Restrict payment options 
-- Increase delivery time
-- Moral suasion
-- Deny transaction
+Several measures intended to encounter such behavior have been proposed by Urbanke, Kranz and Kolbe. Suggested counter-measures include increased delivery time, moral suasion or transaction denial. Proposing limited payment options is in line with Pur et al., who find that Vorkasse, Sofortueberweisung and Lastschrift present a higher restriction to product returns and therefore decrease the likelihood of such (todo: accurately translate these terms).
 
 Some of these options are already in practice for multiple large online retailers (http://www.retailwire.com/discussion/should-chronic-returners-be-banned/, https://www.nbcchicago.com/news/local/Amazon-Bans-Woman-For-Life-Over-Too-Many-Returns-388199532.html)
 
@@ -172,23 +166,27 @@ Hence almost 40% of the E-Retailers are not aware of the according cost. They id
 
 \subsection{Model Infrastructure}
 
-Urbanke, Kolbe and Kranz present a new framework to large-scale feature extraction. They mitigate common problems caused by sparse matrices by dimensionality reduction using 'Mahalanobis Feature Extraction'. They report an outperformance compared to standard machine learning techniques.
+Lessmann et al. enrich the literature with applied ensemble models in churn and customer return prediction tasks. They show that the overall performance is generally superior to each of the constituent's contribution. The accuracy increases with higher diversity among the underlying models (slack paper). Additional insight in the construction of data-driven prediction systems are provided, as linear data growth may cause exponentially increased computation time.
 
-Badea uses ANN to predict consumer behavior in Romania. Using a publically available dataset on household as well as individual level, it is investigated whether the individuals would save data through bank deposits. The resulting predictions of the ANN are found to substantially increase accuracy compared to the ones of classical discriminant analysis. 
-
-Lessmann et al. enrich the literature with applied ensemble models in churn and customer return prediction tasks. They show that the performance is generally superior to the constituents. The accuracy increases with higher diversity among the underlying models (slack paper). Additionally insight in the construction of data-driven prediction systems are provided.
+Urbanke, Kolbe and Kranz present a new framework to large-scale feature extraction. They mitigate common problems caused by sparse data matrices using dimensionality reduction in terms of Mahalanobis Feature Extraction. They report an outperformance compared to standard machine learning techniques.
 
 
-\subsection{Analyzing Product Returns}
+\subsection{Analyzing Customer Behavior}
 
-http://www.prism.gatech.edu/~bt71/articles/forecasting.pdf
+http://www.prism.gatech.edu/~bt71/articles/forecasting.pdf First - Toktay
+https://uta-ir.tdl.org/uta-ir/bitstream/handle/10106/2001/Potdar_uta_2502D_10410.pdf?sequence=1 Second - Potdar
 
 Toktay concludes that, despite the economic impact, literature on predicting product returns is generally sparse. Existing models are criticized to disregard relevant influential variables as product price, rebates, environmental conciousness and return price. 
 He emphasizes the possibilities of accurate product return predictions on supply chain management and inventory control.  
+The latter is picked up by Potdar, who classifies product returns in the Consumer Electronics Industry according to the reason for which they have been returned. Especially Data Envelopment Analysis and Linear Regression are used for reason-specific analysis. 
 
+Badea uses ANN to predict consumer behavior in Romania. Using a publically available dataset on household as well as individual level, it is investigated whether the individuals would save money using bank deposits under certain conditions. The resulting predictions of the ANN are found to substantially increase accuracy compared to the ones of classical discriminant analysis. 
 
-
-
+Todo:   
+Random Forest  
+Gradient Boosting  
+Lessmann Paper  
+  
 
 \clearpage
 \newpage
