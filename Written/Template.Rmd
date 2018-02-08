@@ -162,13 +162,32 @@ Such a forecast may supply companies with information on the reverse product flo
 
 
 \section{Previous Literature}
-1 Page
 
-Divide previous research in subsections that will be presented in the following.
+\subsection{Quantifying the Problem}
 
-This is how we cite @Badea_2014. The reference is automatically pasted in the according section.
-You can also cite indirectly at the end of a sentence [@Badea_2014].
-In this format, it is possible to insert pages, too [@Badea_2014, 10-14].
+http://www.ibi.de/files/Studie_Retourenmanagement-im-Online-Handel_-_Das-Beste-daraus-machen_Summary.pdf
+
+Pur et al. report a lack of consciousness of many companies towards the risk and profit options caused by product returns.
+Hence almost 40% of the E-Retailers are not aware of the according cost. They identify the main reason for product returns to be lack of fit. A third of the surveyed companies expect their profit to rise by 5% in case of 10% less returns.
+
+\subsection{Model Infrastructure}
+
+Urbanke, Kolbe and Kranz present a new framework to large-scale feature extraction. They mitigate common problems caused by sparse matrices by dimensionality reduction using 'Mahalanobis Feature Extraction'. They report an outperformance compared to standard machine learning techniques.
+
+Badea uses ANN to predict consumer behavior in Romania. Using a publically available dataset on household as well as individual level, it is investigated whether the individuals would save data through bank deposits. The resulting predictions of the ANN are found to substantially increase accuracy compared to the ones of classical discriminant analysis. 
+
+Lessmann et al. enrich the literature with applied ensemble models in churn and customer return prediction tasks. They show that the performance is generally superior to the constituents. The accuracy increases with higher diversity among the underlying models (slack paper). Additionally insight in the construction of data-driven prediction systems are provided.
+
+
+\subsection{Analyzing Product Returns}
+
+http://www.prism.gatech.edu/~bt71/articles/forecasting.pdf
+
+Toktay concludes that, despite the economic impact, literature on predicting product returns is generally sparse. Existing models are criticized to disregard relevant influential variables as product price, rebates, environmental conciousness and return price. 
+He emphasizes the possibilities of accurate product return predictions on supply chain management and inventory control.  
+
+
+
 
 
 \clearpage
