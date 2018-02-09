@@ -134,7 +134,7 @@ Insert abstract here
 \section{Introduction}
 
 
-A major obstacle for companies participating in the rapidly rising E-Commerce sector are excessive product returns. Up to ... % of the total sales are affected by this phenomenon (http://www.prism.gatech.edu/~bt71/articles/forecasting.pdf). 
+A major obstacle for companies participating in the rapidly rising E-Commerce sector are excessive product returns. Up to 35 % of the total sales in high fashion apparel are affected by this phenomenon [@toktay_2004] (http://www.prism.gatech.edu/~bt71/articles/forecasting.pdf). 
 
 Historically, rising product returns have been often regarded as a necessary evil (quote same named paper) that is a byproduct of equivalently rising sales. Nowadays, having customer- and product specific data en masse in combination with easily available computational power and sophisticated machine learning algorithms, 
 there is no more need for companies to remain blind towards unnecessarily high rates of product returns and the associated risk. 
@@ -144,7 +144,7 @@ The possibility of free returns may be regarded as a result of fierce online com
 On the other hand abnormally high product return rates are reported to have substantial impact on a company's profitability. 
 Therefore it would be desirable to create a tradeoff between the mentioned advantages on the customer side and the losses on the corporate side. In order to do so, the drivers of product returns must be laid out in advance. These are often reported to be uncertainty over a product, recurrently expressed as a missfit, fraudulent behavior in terms of using the delivered item for a certain occasion and returning it afterwards as well as damage inflicted by the customer or defects (Potdar). 
 
-Several measures intended to encounter such behavior have been proposed by Urbanke, Kranz and Kolbe. Suggested counter-measures include increased delivery time, moral suasion or transaction denial. Proposing limited payment options is in line with Pur et al., who find that Vorkasse, Sofortueberweisung and Lastschrift present a higher restriction to product returns and therefore decrease the likelihood of such (todo: accurately translate these terms).
+Several measures intended to encounter such behavior have been proposed by @urbanke_2015. Suggested counter-measures include increased delivery time, moral suasion or transaction denial. Proposing limited payment options is in line with Pur et al., who find that Vorkasse, Sofortueberweisung and Lastschrift present a higher restriction to product returns and therefore decrease the likelihood of such (todo: accurately translate these terms).
 
 Some of these options are already in practice for multiple large online retailers (http://www.retailwire.com/discussion/should-chronic-returners-be-banned/, https://www.nbcchicago.com/news/local/Amazon-Bans-Woman-For-Life-Over-Too-Many-Returns-388199532.html)
 
@@ -169,7 +169,7 @@ Hence almost 40% of the E-Retailers are not aware of the according cost. They id
 
 Lessmann et al. enrich the literature with applied ensemble models in churn and customer return prediction tasks. They show that the overall performance is generally superior to each of the constituent's contribution. The accuracy increases with higher diversity among the underlying models (slack paper). Additional insight in the construction of data-driven prediction systems are provided, as linear data growth may cause exponentially increased computation time.
 
-Urbanke, Kolbe and Kranz present a new framework to large-scale feature extraction. They mitigate common problems caused by sparse data matrices using dimensionality reduction in terms of Mahalanobis Feature Extraction. They report an outperformance compared to standard machine learning techniques.
+@urbanke_2015 present a new framework to large-scale feature extraction. They mitigate common problems caused by sparse data matrices using dimensionality reduction in terms of Mahalanobis Feature Extraction. They report an outperformance compared to standard machine learning techniques.
 
 
 \subsection{Analyzing Customer Behavior}
@@ -199,14 +199,11 @@ The idea behind ensemble models (EM) is to combine multiple learning algorithms 
 MCS have been shown to be useful in predicting customer e-commerce behavior, outperforming single classifiers in prediction accuracy (@tsoumakas2008taxonomy, @kim2003combination). Specifically, @heilig2016data demonstrate the suitability of an ensemble selection approach (ES) for predicting product returns in online retailing. This three-step ensemble technique builds upon the creation of a library of heterogeneous candidate base models. Each classifier method can be used to build up multiple models with different meta-parameter settings. The ensemble model is created by combining base model from the library through an extensive search strategy. Though this approach has been demonstrated to be very effective for accurate predictions, it nevertheless requires extensive computational time. We therefore adopt a standard two-step ensemble approach. First, we develop and train four base classifiers models. Second, we combine these individual models with a simple non-linear combination method, namely majority voting. In case of a voting tie, the base model with the highest single accuracy will act as a tiebreaker.
 
 \subsection{Base classifier models}
-- baseline models can be seen in table 1
-- in how far are they diverse? why did we select those?
-- which one can capture linear, non-linear effects?
 
 The ensemble model consists of four seperately trained constituents as summarized below. They have been selected due to their outstanding performance as classification models. Since the relationship between product returns and the independent variables is suspected to be of non-linear nature, the majority of the base models captures effects of such nature. Nevertheless, as information heterogeneity substantially influences the performance of an ensemble model, a logistic regression is used to capture linear relationships among the variables. 
 An ANN is a statistical model inspired by the functionality of the human brain. It consists of an input layer, possibly multiple hidden layers and an output layer, in which an activation function sends a signal dependent upon the processed input. According to the model structure, ANN can produce varying results [@singapore_2013]. @pacelli_2011 figure ANN successful in unveiling complex relationships, especially in combination with linear models, but emphasize the need to train them extensively for the risk of remaining in local minima during minimization of the error function. 
-
-
+Following @singapore_2013, the inclusion of a random forest model enriches the information drawn from ANN and logistic regression as it does not rely on estimated predictors and is not prone to overfitting. With respect to the large amount of data and the computational intensity of ANN, random forests are an efficient model improvement. 
+TODO: Gradient Boost Stuff
 
 ```{r, echo = FALSE, eval = TRUE, warning = FALSE, message = FALSE, results = 'asis'}
 
