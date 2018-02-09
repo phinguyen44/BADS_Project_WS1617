@@ -22,6 +22,7 @@ knitr::opts_knit$set(root.dir = wd)
 
 ```{r global_options, include=FALSE}
 knitr::opts_chunk$set(fig.pos = 'H')
+
 ```
 \pagenumbering{gobble}
 
@@ -202,8 +203,29 @@ MCS have been shown to be useful in predicting customer e-commerce behavior, out
 - in how far are they diverse? why did we select those?
 - which one can capture linear, non-linear effects?
 
+```{r, echo = FALSE, eval = TRUE, warning = FALSE, message = FALSE, results = 'asis'}
+
+
+library(xtable, quietly = TRUE)
+options(xtable.comment = FALSE,
+        xtable.table.placement="H")
+knitr::opts_chunk$set(message = FALSE) 
+
+modelvec = c("Logistic Regression", "Neural Network", "Random Forest", "Gradient Boost") 
+effects  = c("linear", rep("nonlinear", 3))
+
+modeldf  = data.frame("Models" = modelvec, "Effects" = effects)
+
+modeldf.tit = "Baseline Models"
+modeldf.tab = xtable(modeldf, caption = modeldf.tit)
+
+print.xtable(modeldf.tab)
+
+
+```
 
 \newpage
+
 
 
 \clearpage
