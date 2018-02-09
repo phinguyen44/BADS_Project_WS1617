@@ -203,6 +203,11 @@ MCS have been shown to be useful in predicting customer e-commerce behavior, out
 - in how far are they diverse? why did we select those?
 - which one can capture linear, non-linear effects?
 
+The ensemble model consists of four seperately trained constituents as summarized below. They have been selected due to their outstanding performance as classification models. Since the relationship between product returns and the independent variables is suspected to be of non-linear nature, the majority of the base models captures effects of such nature. Nevertheless, as information heterogeneity substantially influences the performance of an ensemble model, a logistic regression is used to capture linear relationships among the variables. 
+An ANN is a statistical model inspired by the functionality of the human brain. It consists of an input layer, possibly multiple hidden layers and an output layer, in which an activation function sends a signal dependent upon the processed input. According to the model structure, ANN can produce varying results [@singapore_2013]. @pacelli_2011 figure ANN successful in unveiling complex relationships, especially in combination with linear models, but emphasize the need to train them extensively for the risk of remaining in local minima during minimization of the error function. 
+
+
+
 ```{r, echo = FALSE, eval = TRUE, warning = FALSE, message = FALSE, results = 'asis'}
 
 
@@ -214,7 +219,7 @@ knitr::opts_chunk$set(message = FALSE)
 modelvec = c("Logistic Regression", "Neural Network", "Random Forest", "Gradient Boost") 
 effects  = c("linear", rep("nonlinear", 3))
 
-modeldf  = data.frame("Models" = modelvec, "Effects" = effects)
+modeldf  = data.frame("Models" = modelvec, "Relationship" = effects)
 
 modeldf.tit = "Baseline Models"
 modeldf.tab = xtable(modeldf, caption = modeldf.tit)
@@ -223,6 +228,9 @@ print.xtable(modeldf.tab)
 
 
 ```
+
+
+
 
 \newpage
 
