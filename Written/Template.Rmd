@@ -56,7 +56,7 @@ submitted to
 
 
 \medskip
-Humboldt-Universität zu Berlin \linebreak     
+Humboldt-Universit?t zu Berlin \linebreak     
 School of Business and Economics  \linebreak
 \medskip
 
@@ -202,31 +202,32 @@ MCS have been shown to be useful in predicting customer e-commerce behavior, out
 
 \subsection{Base classifier models}
 
-The ensemble model consists of four seperately trained constituents as summarized below. They have been selected due to their outstanding performance as classification models. Since the relationship between product returns and the independent variables is suspected to be of non-linear nature, the majority of the base models captures effects of such nature. Nevertheless, as information heterogeneity substantially influences the performance of an ensemble model, a logistic regression is used to capture linear relationships among the variables. 
-An ANN is a statistical model inspired by the functionality of the human brain. It consists of an input layer, possibly multiple hidden layers and an output layer, in which an activation function sends a signal dependent upon the processed input. According to the model structure, ANN can produce varying results [@singapore_2013]. @pacelli_2011 figure ANN successful in unveiling complex relationships, especially in combination with linear models, but emphasize the need to train them extensively for the risk of remaining in local minima during minimization of the error function. 
-Following @singapore_2013, the inclusion of a random forest model enriches the information drawn from ANN and logistic regression as it does not rely on estimated predictors and is not prone to overfitting. With respect to the large amount of data and the computational intensity of ANN, random forests are an efficient model improvement. 
-TODO: Gradient Boost Stuff
+The ensemble model consists of four separately trained constituents as summarized below. They have been selected due to their outstanding performance as classification models. Since the relationship between product returns and the independent variables is suspected to be of non-linear nature, the majority of the base models captures effects of such nature. Nevertheless, as information heterogeneity substantially influences the performance of an ensemble model, we use a simple logistic regression to capture linear relationships among the variables.
 
-```{r, echo = FALSE, eval = TRUE, warning = FALSE, message = FALSE, results = 'asis'}
+We then employ an artificial neural network (ANN), which is a statistical model inspired by the functionality of the human brain. It consists of an input layer, possibly multiple hidden layers and an output layer, in which an activation function sends a signal dependent upon the processed input. @pacelli_2011 figure ANN successful in unveiling complex relationships, especially in combination with linear models, but emphasize the need to train them extensively for the risk of remaining in local minima during minimization of the error function.
 
+Following @singapore_2013, the inclusion of a random forest model enriches the information drawn from ANN and logistic regression as it does not rely on estimated predictors and is not prone to overfitting. Random forests are additionally useful for their ability to natively handle feature selection.
 
-library(xtable, quietly = TRUE)
-options(xtable.comment = FALSE,
-        xtable.table.placement="H")
-knitr::opts_chunk$set(message = FALSE) 
+Finally, we consider a gradient boosting model, which starts with a simple classifier then iteratively adds additional models that corrects the error of the prior model. We specifically employ the DART (Dropouts meet Multiple Additive Regression Trees) algorithm as proposed by @Rashmi over the more traditional as described by @Friedman00, as it solves the problem of over-specialization, where trees added at later iterations impact the prediction of only a few instances. It does so by randomly muting trees, which often results in a more balanced contribution from all of the trees and occasionally outperforms even random forests [@Rashmi].
 
-modelvec = c("Logistic Regression", "Neural Network", "Random Forest", "Gradient Boost") 
-effects  = c("linear", rep("nonlinear", 3))
+We include a summary of the base classifiers and the hyperparameter space below.
 
-modeldf  = data.frame("Models" = modelvec, "Relationship" = effects)
+|      Classifier     |    Relationship   | Hyperparameter | Possible Values |
+|---------------------|:-----------------:|----------------|-----------------|
+| Logistic Regression |     linear        |    NA          |  NA             |
+| Neural Network      |     non-linear    |    size        | {4,5,6,7,8}     |
+|                     |                   |    decay       | {1e-7,1e-6,1e-5,1e-4,1e-3,1e0-2,0.05,0.1,0.5} |
+| Random Forest       |     non-linear    |    ntree       | {300,350,400,450,500} |
+|                     |                   |    mtry       | {3,4,5,6} |
+|                     |                   |    nodesize       | {5,10,15,20,25,30} |
+| Gradient Boost      |     non-linear    |    booster     | dart |
+|                     |                   |    gamma       | {0,0.1,0.2} |
+|                     |                   |    eta       | {0.001,0.01,0.1,0.3} |
+|                     |                   |    nrounds       | {50,100,200} |
+|                     |                   |    lambda       | {0,0.1,0.2,0.3,0.4,0.5,0.6,0.7}  |
+|                     |                   |    max_depth       | {3,4,5,6}  |
 
-modeldf.tit = "Baseline Models"
-modeldf.tab = xtable(modeldf, caption = modeldf.tit)
-
-print.xtable(modeldf.tab)
-
-
-```
+Table: Base classifier description
 
 
 \section{Data}
