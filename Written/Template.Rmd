@@ -6,6 +6,7 @@ header-includes:
   - \usepackage{float}
   - \usepackage{hyperref}
   - \usepackage{setspace}
+  - \usepackage{booktabs}
   - \onehalfspacing
 output: pdf_document
 latex_engine: lualatex
@@ -55,7 +56,7 @@ submitted to
 
 
 \medskip
-Humboldt-Universit√§t zu Berlin \linebreak     
+Humboldt-Universit‰t zu Berlin \linebreak     
 School of Business and Economics  \linebreak
 \medskip
 
@@ -140,26 +141,30 @@ A major obstacle for companies participating in the rapidly rising E-Commerce se
 Historically, rising product returns have been often regarded as a necessary evil that is a byproduct of equivalently rising sales [@petersen2009product]. Nowadays, having customer- and product specific data en masse in combination with easily available computational power and sophisticated machine learning algorithms, 
 there is no more need for companies to remain blind towards unnecessarily high rates of product returns and the associated risk. 
 
-The possibility of free returns may be regarded as a result of fierce online competition, to enhance customer satisfaction and loyalty or to decrease risk on the buyer side and consequently pushing revenues. Another common argument in favor of the matter is to reduce uncertainty of a potential customer concerning product [@lessmann_2016], which is generally higher in comparison to the haptic product experience in a brick-and-mortar store (Haptics Paper). 
+The possibility of free returns may be regarded as a result of fierce online competition, to enhance customer satisfaction and loyalty or to decrease risk on the buyer side and consequently pushing revenues. Another common argument in favor of the matter is to reduce uncertainty of a potential customer concerning product, which is generally higher in comparison to the haptic product experience in a brick-and-mortar store [@lessmann_2016]. 
 
-On the other hand abnormally high product return rates are reported to have substantial impact on a company's profitability. 
-Therefore it would be desirable to create a tradeoff between the mentioned advantages on the customer side and the losses on the corporate side. In order to do so, the drivers of product returns must be laid out in advance. These are often reported to be uncertainty over a product, recurrently expressed as a missfit, fraudulent behavior in terms of using the delivered item for a certain occasion and returning it afterwards as well as damage inflicted by the customer or defects [@potdar_2009]. 
+On the other hand, abnormally high product return rates are reported to have substantial impact on a company's profitability. 
+Therefore it would be desirable to create a tradeoff between the mentioned advantages on the customer side and the losses on the corporate side. In order to do so, the drivers of product returns must be laid out in advance. 
+Examples of such causes are uncertainty over a product, including, but not limited to incorrect fit, fraudulent behavior in terms of using the delivered item for a certain occasion and returning it afterwards as well as damage inflicted by the customer or item defects [@potdar_2009]. 
 
-Several measures intended to encounter such behavior have been proposed by @urbanke_2015. Suggested counter-measures include increased delivery time, moral suasion or transaction denial. Proposing limited payment options is in line with Pur et al., who find that Vorkasse, Sofortueberweisung and Lastschrift present a higher restriction to product returns and therefore decrease the likelihood of such (todo: accurately translate these terms).
+Several measures intended to counter such behavior have been proposed by @urbanke_2015. Suggested counter-measures include increased delivery time, moral suasion or transaction denial. Proposing limited payment options is in line with @pur_2013, who find that Vorkasse, Sofortueberweisung and Lastschrift present a higher restriction to product returns and therefore decrease the likelihood of such (todo: accurately translate these terms).
 
 Some of these options are already in practice for multiple large online retailers (http://www.retailwire.com/discussion/should-chronic-returners-be-banned/, https://www.nbcchicago.com/news/local/Amazon-Bans-Woman-For-Life-Over-Too-Many-Returns-388199532.html)
 
-However, the measures to be taken are out of scope of this paper. Instead a underlying prediction system will be developped to analyze the drivers of product returns and predict them accurately. 
-Such a forecast may supply companies with information on the reverse product flow and increase their inventory control [@brito_2009].
+@lessmann_2016 propose the development of a machine learning system that tracks customer's shopping carts. In case of a high likelihood of product returns, a warning may be displayed. They furthermore discuss to charge a price premium that compensates the risk. 
 
+In this paper, machine learning will be used to analyze the drivers of product returns and predict them accurately. 
+
+----
+Such a forecast may supply companies with information on the reverse product flow and increase their inventory control [@brito_2009].
+----
 
 \section{Previous Literature}
 
 \subsection{Quantifying the Problem}
 
-http://www.ibi.de/files/Studie_Retourenmanagement-im-Online-Handel_-_Das-Beste-daraus-machen_Summary.pdf
 
-Pur et al. report a lack of consciousness of many companies towards the risk and profit options caused by product returns.
+@pur_2013 report a lack of consciousness of many companies towards the risk and profit options caused by product returns.
 Hence almost 40% of the E-Retailers are not aware of the according cost. They identify the main reason for product returns to be lack of fit. A third of the surveyed companies expect their profit to rise by 5% in case of 10% less returns.
 
 \subsection{Model Infrastructure}
@@ -171,17 +176,21 @@ Hence almost 40% of the E-Retailers are not aware of the according cost. They id
 
 \subsection{Analyzing Customer Behavior}
 
-http://www.prism.gatech.edu/~bt71/articles/forecasting.pdf First - Toktay
-https://uta-ir.tdl.org/uta-ir/bitstream/handle/10106/2001/Potdar_uta_2502D_10410.pdf?sequence=1 Second - Potdar
-
-Toktay concludes that, despite the economic impact, literature on predicting product returns is generally sparse. Existing models are criticized to disregard relevant influential variables as product price, rebates, environmental conciousness and return price. 
+@toktay_2004 conclude that, despite the economic impact, literature on predicting product returns is generally sparse. Existing models are criticized to disregard relevant influential variables as product price, rebates, environmental conciousness and return price. 
 He emphasizes the possibilities of accurate product return predictions on supply chain management and inventory control.  
-The latter is picked up by @potdar_2009, who classifies product returns in the Consumer Electronics Industry according to the reason for which they have been returned. Especially Data Envelopment Analysis and Linear Regression are used for reason-specific analysis. 
+
+Implications for reverse inventory flow are laid out by @potdar_2009, who classifies product returns in the Consumer Electronics Industry according to the reason for which they have been returned. Especially Data Envelopment Analysis and Linear Regression are used for reason-specific analysis. 
+
+In line with @toktay_2004, @urbanke_2015 report a lack of academic literature on the regarded issue. They recommend future research to rely on the usage of machine learning to predict product
+returns in advance of the actual transaction. 
 
 @Badea_2014 uses ANN to predict consumer behavior in Romania. Using a publically available dataset on household as well as individual level, it is investigated whether the individuals would save money using bank deposits under certain conditions. The resulting predictions of the ANN are found to substantially increase accuracy compared to the ones of classical discriminant analysis. 
 
-Todo:   
-Lessmann Paper  
+
+
+
+
+
    
 \section{Methodoloy}
 \subsection{Heterogeneous ensemble models}
@@ -342,6 +351,49 @@ The output of the nested resampling results in a total of five candidate models 
 4. Use the model with the lowest average cost as a tiebreaker in our ensemble
 
 We can examine the stability of our hyperparameters in [TABLES x,y,z]. Since the hyperparameters do not vary wildly between iterations, we can make the assumption the inner loop optimization works as designed. The distribution of performance values (in terms of accuracy and total cost, respectively) across resampling iterations and for all classifiers is shown in [FIGURES x,y]. The dot in the center represents the average value, whereas the spread is indicated by 1 standard error above and below the mean. On average, the neural network consistently performs best both on prediction accuracy and total cost metrics. In comparison, gradient boosting tends to perform the worst in terms of prediction accuracy but random forests perform the worst in terms of total cost minimization. Logistic regression, as expected, shows the smallest variation between iterations. However, although neural networks and logistic regression tends to vary little between iterations, gradient boosting and random forest approaches have far larger variations between iterations in terms of total cost minimization. The best performance of any one run came from a gradient boost iteration.
+
+
+```{r, echo = FALSE, eval = TRUE, warning = FALSE, message = FALSE, results = 'asis'}
+
+library("knitr", quietly = TRUE)
+library("xtable", quietly = TRUE)
+
+knitr::opts_chunk$set(message = FALSE) 
+
+nn.iteration = 1:4
+nn.size = c(4, 5, 8, 6)
+nn.decay = c(1e-03, 1e-05, 1e-02, 1e-03)
+
+rf.iteration = 1:4
+rf.ntree = c(300, 350, 250, 400)
+rf.mtry = rep(3, 4)
+rf.nodesize = c(15, 30, 25, 15)
+
+nn.model = data.frame(nn.iteration, nn.size, nn.decay)
+rf.model = data.frame(rf.iteration, rf.ntree, rf.mtry, rf.nodesize)
+
+t1 = knitr::kable(nn.model, format = "latex", booktabs = TRUE)
+t2 = knitr::kable(rf.model, format = "latex", booktabs = TRUE)
+
+cat(c("\\begin{table}[!htb]
+    \\begin{minipage}{.5\\linewidth}
+      \\caption{Neural Network Hyperparameter Tuning}
+      \\bigskip
+      \\centering",
+        t1,
+    "\\end{minipage}%
+    \\begin{minipage}{.5\\linewidth}
+        \\caption{Random Forest Hyperparameter Tuning}
+        \\bigskip
+        \\centering",
+        t2,
+    "\\end{minipage} 
+\\end{table}"
+))  
+
+
+
+```
 
 Table: Neural Network Hyperparameter Tuning
 
