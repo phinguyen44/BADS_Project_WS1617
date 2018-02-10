@@ -293,7 +293,7 @@ We note that nested resampling is a computationally intensive process. We limit 
 
 \subsubsection{Ensembling}
 
-Finally, we ensemble models from each of the k runs and compare the final combined result to the average of the individual candidate classifiers. Our ensemble approach uses majority voting. Given that we are ensembling four models, we use the best model in terms of cost minimization as a tie breaker, which is the the neural network.
+As our last model building step, we ensemble models from each of the k runs and compare the final combined result to the average of the individual candidate classifiers. Our ensemble approach uses majority voting. Given that we are ensembling four models, we use the best model in terms of cost minimization as a tie breaker, which is the the neural network.
 
 For each of the 4 iterations of the cross-validation process, we use our ensembling method to assign final predictions for each instance. We then calculate the total cost of misclassification and compare that to the average cost for each individual classifier.
 
@@ -355,8 +355,8 @@ Specifically, we tested whether it is more costly to use our predicted model cla
                 $0< \frac{C2}{C1} - \frac{TN}{FN}$
 where C1 and C2 refer to the misclassifications errors of type 1 and 2 at a given item price. Since some item price levels have sparse class membership, we create equal frequency price bins and approximate C1 and C2 with mean erros costs. We test our strategy based on the baseline prediction of our logistic regression model on a stratified test set. In our sample, the pure return strategy only saves costs for a item price of zero. This is because the high spread between costs is outweighed by the high ratio between TN and FN. This can be seen in figure 1 (right), where this ratio os displayed for all price bins. As very few cheap items are returned by customers, the number of FN is small in low price bins, leading to a high ratio.
 
-\subsection{Empirical Results}
-\subsubsection{Model performance}
+\section{Empirical Results}
+\subsection{Model performance}
 The output of the nested resampling results in a total of four candidate models and sets of predictions for each of the classifiers. We use the calibrated results of these classifiers for the following:
 
 1. Assess the stability of the hyperparameters
@@ -385,10 +385,7 @@ Table: Cost Improvement from Ensembling
 
 The results of ensembling show an average improvement of 1.5% compared to the average base classifier. Although this figure may seem small, it can result in significant cost savings for the retailer over the long run. Additionally, we note that in some cases the ensemble performs slightly worse than the best individual classifier. However, we believe this approach remains valid because of how high the variation is between individual runs, depending on the observations in the data set. The ensembling process helps reduce this variation by averaging the performance of each model.
 
-
-\subsection{Results}
-
-
+\subsection{Return management implications}
 
 \section{Conclusion}
 
