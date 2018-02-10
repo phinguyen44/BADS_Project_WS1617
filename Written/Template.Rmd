@@ -147,7 +147,7 @@ On the other hand, abnormally high product return rates are reported to have sub
 Therefore it would be desirable to create a tradeoff between the mentioned advantages on the customer side and the losses on the corporate side. In order to do so, the drivers of product returns must be laid out in advance.
 Examples of such causes are uncertainty over a product, including, but not limited to incorrect fit, fraudulent behavior as well as damage inflicted by the customer or item defects [@potdar_2009].
 
-Several measures intended to counter such behavior have been proposed by @urbanke_2015. Suggested counter-measures include increased delivery time, moral suasion or transaction denial. Proposing limited payment options is in line with @pur_2013, who find that Vorkasse, Sofortueberweisung and Lastschrift present a higher restriction to product returns and therefore decrease the likelihood of such (todo: accurately translate these terms).
+Several measures intended to counter such behavior have been proposed by @urbanke_2015. Suggested counter-measures include increased delivery time, moral suasion or transaction denial. Proposing limited payment options is in line with @pur_2013, who find that Vorkasse, Sofortueberweisung and Lastschrift present a higher restriction to product returns and therefore decrease the likelihood of such
 
 <!-- Some of these options are already in practice for multiple large online retailers (http://www.retailwire.com/discussion/should-chronic-returners-be-banned/, https://www.nbcchicago.com/news/local/Amazon-Bans-Woman-For-Life-Over-Too-Many-Returns-388199532.html) -->
 
@@ -184,9 +184,6 @@ In line with @toktay_2004, @urbanke_2015 report a lack of academic literature on
 returns in advance of the actual transaction.
 
 @Badea_2014 uses ANN to predict consumer behavior in Romania. Using a publicly available dataset on household as well as individual level, it is investigated whether the individuals would save money using bank deposits under certain conditions. The resulting predictions of the ANN are found to substantially increase accuracy compared to the ones of classical discriminant analysis.
-
-Todo:   
-Lessmann Paper  
 
 \section{Methodology}
 \subsection{Heterogeneous ensemble models}
@@ -356,13 +353,13 @@ t2 = knitr::kable(loss.df, format = "latex", booktabs = TRUE)
 
 cat(c("\\begin{table}[!htb]
     \\begin{minipage}{.5\\linewidth}
-      \\caption{Accuracy Comparison}
+      \\caption{Accuracy comparison}
       \\bigskip
       \\centering",
         t1,
     "\\end{minipage}%
     \\begin{minipage}{.5\\linewidth}
-        \\caption{Log-Loss Error Comparison}
+        \\caption{Log-Loss error comparison}
         \\bigskip
         \\centering",
         t2,
@@ -399,7 +396,7 @@ cat(c("\\begin{table}[!htb]
 | Random Forest       |   -262464.2  |  -257532.9 |
 | Gradient Boost      |   -258767.0  |  -258816.6 |
 
-Table: Total Cost Comparison
+Table: Total cost comparison
 
 \subsubsection{Post-Processing}
 
@@ -422,15 +419,15 @@ The output of the nested resampling results in a total of four candidate models 
 
 We can examine the stability of our hyperparameters in [TABLES x,y,z]. Since the hyperparameters do not vary wildly between iterations, we can make the assumption the inner loop optimization works as designed. The distribution of performance values (in terms of accuracy and total cost, respectively) across resampling iterations and for all classifiers is shown in [FIGURES x,y]. The dot in the center represents the average value, whereas the spread is indicated by one standard error above and below the mean. On average, the neural network consistently performs best both on prediction accuracy and total cost metrics. In comparison, gradient boosting tends to perform the worst in terms of prediction accuracy but random forests perform the worst in terms of total cost minimization. Logistic regression, as expected, shows the smallest variation between iterations. However, although neural networks and logistic regression tends to vary little between iterations, gradient boosting and random forest approaches have far larger variations between iterations in terms of total cost minimization. The best performance of any one run came from a gradient boost iteration. We explain the suprisingly good performance of logistic regression compared to random forests with existence of linear effects and our meticulous data preparation. As @coussement2017comparative have demonstrated, logistic regression can compete with more complex algorithms if exposed to well prepared data sets.
 
-![Cross-Validation Accuracy](Images/CV-accuracy.png)
+![Cross-validation accuracy](Images/CV-accuracy.png)
 
-![Cross-Validation Total Cost](Images/CV-cost.png)
+![Cross-validation total cost](Images/CV-cost.png)
 
 -> NOW talk about ensembling!!!
 
  The results can be seen in [TABLE XXXX].
 
-Table: Cost Improvement from Ensembling
+Table: Cost improvement from ensembling
 
 |Iteration|Average Classifier|Ensembled|% Improvement|
 |:-----:|:-----:|:-----:|:-----:|
