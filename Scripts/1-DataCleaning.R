@@ -12,7 +12,7 @@
 rm(list = ls())
 
 # Adjust your working directory
-wd = file.path(Sys.getenv("HOME"),"/Documents/Projects/bads-ws1718-group21/Data")
+wd = file.path(Sys.getenv("HOME"),"/Documents/Projects/bads-ws1718-group21")
 setwd(wd)
 
 # LOAD NECESSARY PACKAGES & DATA
@@ -33,7 +33,7 @@ lapply(neededPackages, function(x) suppressPackageStartupMessages(
     library(x, character.only = TRUE)))
 
 # Load dataset
-dat.input <- read.csv("BADS_WS1718_known.csv", sep = ",", header = TRUE)
+dat.input <- read.csv("Data/BADS_WS1718_known.csv", sep = ",", header = TRUE)
 
 # source helper packages
 source("Scripts/Helpful.R")

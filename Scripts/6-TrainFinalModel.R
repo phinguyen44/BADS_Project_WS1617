@@ -36,12 +36,11 @@ lapply(neededPackages, function(x) suppressPackageStartupMessages(
     library(x, character.only = TRUE)))
 
 # Load data
-# load("Data/BADS_WS1718_class_ready.RData")
-load("Data/step4.RData")
+truedata <- read.csv("Data/BADS_WS1718_class_20180115.csv")
+load("Data/step4.RData") # cleaned up version of truedata
 dat.test <- dat.ready
 load("Data/BADS_WS1718_known_ready.RData")
 load("Data/CalibratedThreshold-Phi.Rdata")
-truedata <- read.csv("Data/BADS_WS1718_class_20180115.csv")
 
 # Source performance metric calculations
 source("Scripts/Helpful.R")

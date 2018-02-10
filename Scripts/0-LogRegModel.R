@@ -1,4 +1,3 @@
-
 ################################################################################
 # 
 #   Logistic Regression
@@ -10,9 +9,15 @@
 #  - variable selection via mix of filtering & wrappers
 ################################################################################
 
-load("BADS_WS1718_known_var.RData")
+rm(list = ls())
 
-library("caret") 
+# Adjust your working directory
+wd = file.path(Sys.getenv("HOME"),"/Documents/Projects/bads-ws1718-group21")
+setwd(wd)
+
+load("Data/BADS_WS1718_known_var.RData")
+
+library(caret)
 library(hmeasure)
 library(InformationValue)
 library(mlr)
