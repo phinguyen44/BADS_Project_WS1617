@@ -261,7 +261,7 @@ The second step in our feature selection is a wrapper approach as described in @
 
 Since the single baseline models from our ensemble model might perform best on distinct feature subsets, the optimal approach would be to conduct an individual wrapper for each model. Due to computational constraints we are nevertheless limited to conducting a single wrapper for all models. As feature subsetting is especially important for tree-based models and neural networks, we design a wrapper based on a simple random forest. The experimental setup is similar to our inner resampling approach during baseline model training (section 6.2.1) The SFBS leaves us with a final subset of 17 features.
 
-\section{Model Building}
+\section{Experimental Design}
 
 \subsection{Performance Measurement}
 
@@ -277,7 +277,7 @@ Our specific approach mirrors a similar approach as suggested by @Fawcett2006, i
 
 ![Threshold graphs for each classifier. Clockwise from top left: logistic regression, neural network, random forest, gradient boost](Images/Threshold-combined.png)
 
-\subsection{Experimental Design}
+\subsection{Model building}
 
 \subsubsection{Nested Resampling}
 
@@ -288,6 +288,8 @@ In the outer loop, we use 4-fold cross-validation. In this approach, we partitio
 In the inner resampling loop, we train each classifier using a fixed holdout instance to find the optimal hyperparameters on each of the individual classifiers. We use a fixed holdout set to enable us to simply standardize numeric variables and create our Weight of Evidence features (by calculating off the training set and applying those values to the holdout set) within the inner loop. This preprocessing step is necessary for all variable transformations that are dependent on the data to prevent overfitting the model.
 
 The inner resampling loop assesses the quality of the model given the chosen hyperparameters. With the consideration that a grid search across the entire hyperparameter search space would be too costly, we choose to instead do a random search across the search space. The random search method will randomly choose parameters from our specified values, with a maximum of 20 iterations. Additionally, we train each classifier to optimize for AUC (area under the ROC curve), since such classifiers tend to produce better accuracy relative to those that only optimize for accuracy [@Huang05usingauc]. The chosen hyperparameters are then passed on to the outer loop where a new model is trained with the corresponding hyperparameters. Finally, we predict the results on the outer loop holdout set and aggregate results.
+
+We note that nested resampling is a computationally intensive process. We limit the inner loop cross-validation process to 4 iterations for this reason. Additionally, we employ relatively small search spaces for hyperparameters (usually not exceeding 30 possible combinations) that are informed by theoretical considerations (citation???). In order to accelerate the overall model fitting process, we employ a parallelization wrapper around the tuning process.
 
 \subsubsection{Model Calibration}
 
@@ -337,8 +339,18 @@ Table: Log-loss error comparison
 
 Table: Total cost comparison
 
-\subsection{Empirical Results}
+\subsubsection{Postprocessing}
 
+The final class memberships of our model predictions are the results of our cost-minimizing threshold strategy. Despite the suitability of threshold tuning in general, the outcome might not be optimal due to the presence of cost assymetry. This holds especially true for the items with a low item price, where disparity between the distinct classification errors is the largest. This can be seen in figure 1 (left) where the error costs relative to the item price is displayed for both types of misclassification. We refer to those predictions as type error 1, if the predicted value ends up being a False Positive (FP), meaning that we erroneously predicted an item return to be returned by the customer. In contrast, the type 2 errors relate to the False Negatives which implies we predicted a non-return when the item has in fact been returned. For low item prices, the spread between both error cost ratios is very high because of the fixed return costs being relatively high to item price. We therefore suspected it may be cost-saving to manipulate our model predictions to reduce the costs of FN. 
+
+![Error cost and price ratios for both misclassification types (left); Ratio of total True Negatives and False Negatives per price bin (right).](Images/CostError.png)
+
+Specifically, we tested whether it is more costly to use our predicted model classes or to always predict customers to return the low price item and thus save on shipment costs ('pure return strategy'). For a given item price, our pure return strategy saves costs if the savings in shipment costs outweigh the losses of items that would not have been returned by customers(TN). Thus, it must hold that 
+                $0< \frac{C2}{C1} - \frac{TN}{FN}$
+where C1 and C2 refer to the misclassifications errors of type 1 and 2 at a given item price. Since some item price levels have sparse class membership, we create equal frequency price bins and approximate C1 and C2 with mean erros costs. We test our strategy based on the baseline prediction of our logistic regression model on a stratified test set. In our sample, the pure return strategy only saves costs for a item price of zero. This is because the high spread between costs is outweighed by the high ratio between TN and FN. This can be seen in figure 1 (right), where this ratio os displayed for all price bins. As very few cheap items are returned by customers, the number of FN is small in low price bins, leading to a high ratio.
+
+\subsection{Empirical Results}
+\subsubsection{Individual model performance}
 The output of the nested resampling results in a total of four candidate models and sets of predictions for each of the classifiers. We use the calibrated results of these classifiers for the following:
 
 1. Assess the stability of the hyperparameters
@@ -348,38 +360,9 @@ The output of the nested resampling results in a total of four candidate models 
 
 We can examine the stability of our hyperparameters in [TABLES x,y,z]. Since the hyperparameters do not vary wildly between iterations, we can make the assumption the inner loop optimization works as designed. The distribution of performance values (in terms of accuracy and total cost, respectively) across resampling iterations and for all classifiers is shown in [FIGURES x,y]. The dot in the center represents the average value, whereas the spread is indicated by one standard error above and below the mean. On average, the neural network consistently performs best both on prediction accuracy and total cost metrics. In comparison, gradient boosting tends to perform the worst in terms of prediction accuracy but random forests perform the worst in terms of total cost minimization. Logistic regression, as expected, shows the smallest variation between iterations. However, although neural networks and logistic regression tends to vary little between iterations, gradient boosting and random forest approaches have far larger variations between iterations in terms of total cost minimization. The best performance of any one run came from a gradient boost iteration. We explain the suprisingly good performance of logistic regression compared to random forests with existence of linear effects and our meticulous data preparation. As @coussement2017comparative have demonstrated, logistic regression can compete with more complex algorithms if exposed to well prepared data sets.
 
-Table: Neural Network Hyperparameter Tuning
-
-| Iteration | size | decay |
-|-----------|:----:|:-----:|
-| 1         |   4  | 1e-03 |
-| 2         |   5  | 1e-05 |
-| 3         |   8  | 1e-02 |
-| 4         |   6  | 1e-03 |
-
-Table: Random Forest Hyperparameter Tuning
-
-| Iteration | ntree | mtry | nodesize |
-|-----------|:-----:|:----:|:--------:|
-| 1         |  300  |   3  |    15    |
-| 2         |  350  |   3  |    30    |
-| 3         |  250  |   3  |    25    |
-| 4         |  400  |   3  |    15    |
-
-Table: Gradient Boost Hyperparameter Tuning
-
-| Iteration | gamma |  eta  | nrounds | lambda | max_depth |
-|-----------|:-----:|:-----:|:-------:|:------:|:---------:|
-| 1         |   4   | 1e-03 |   100   |   0.3  |     3     |
-| 2         |   5   | 1e-05 |   200   |   0.1  |     3     |
-| 3         |   8   | 1e-02 |   100   |   0.4  |     3     |
-| 4         |   6   | 1e-03 |   100   |    0   |     4     | 
-
 ![Cross-Validation Accuracy](Images/CV-accuracy.png)
 
 ![Cross-Validation Total Cost](Images/CV-cost.png)
-
-We note that nested resampling is a computationally intensive process. We limit the inner loop cross-validation process to 4 iterations for this reason. Additionally, we employ relatively small search spaces for hyperparameters (usually not exceeding 30 possible combinations) that are informed by theoretical considerations (citation???). In order to accelerate the overall model fitting process, we employ a parallelization wrapper around the tuning process.
 
 \subsubsection{Ensembling}
 
@@ -397,15 +380,7 @@ Table: Cost Improvement from Ensembling
 |4|-259175.97|-257744.25|0.0055|
 
 The results of ensembling show an average improvement of 1.5% compared to the average base classifier. Although this figure may seem small, it can result in significant cost savings for the retailer over the long run. Additionally, we note that in some cases the ensemble performs slightly worse than the best individual classifier. However, we believe this approach remains valid because of how high the variation is between individual runs, depending on the observations in the data set. The ensembling process helps reduce this variation by averaging the performance of each model.
-\subsubsection{Post-hoc Cost-Sensitive Prediction Adjustment}
 
-The final class memberships of our model predictions are the results of our cost-minimizing threshold strategy. Despite the suitability of threshold tuning in general, the outcome might not be optimal due to the presence of cost assymetry. This holds especially true for the items with a low item price, where disparity between the distinct classification errors is the largest. This can be seen in figure 1 (left) where the error costs relative to the item price is displayed for both types of misclassification. We refer to those predictions as type error 1, if the predicted value ends up being a False Positive (FP), meaning that we erroneously predicted an item return to be returned by the customer. In contrast, the type 2 errors relate to the False Negatives which implies we predicted a non-return when the item has in fact been returned. For low item prices, the spread between both error cost ratios is very high because of the fixed return costs being relatively high to item price. We therefore suspected it may be cost-saving to manipulate our model predictions to reduce the costs of FN. 
-
-![Error cost and price ratios for both misclassification types (left); Ratio of total True Negatives and False Negatives per price bin (right).](Images/CostError.png)
-
-Specifically, we tested whether it is more costly to use our predicted model classes or to always predict customers to return the low price item and thus save on shipment costs ('pure return strategy'). For a given item price, our pure return strategy saves costs if the savings in shipment costs outweigh the losses of items that would not have been returned by customers(TN). Thus, it must hold that 
-                $0< \frac{C2}{C1} - \frac{TN}{FN}$
-where C1 and C2 refer to the misclassifications errors of type 1 and 2 at a given item price. Since some item price levels have sparse class membership, we create equal frequency price bins and approximate C1 and C2 with mean erros costs. We test our strategy based on the baseline prediction of our logistic regression model on a stratified test set. In our sample, the pure return strategy only saves costs for a item price of zero. This is because the high spread between costs is outweighed by the high ratio between TN and FN. This can be seen in figure 1 (right), where this ratio os displayed for all price bins. As very few cheap items are returned by customers, the number of FN is small in low price bins, leading to a high ratio.
 
 \section{Results}
 
