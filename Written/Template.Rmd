@@ -186,12 +186,12 @@ returns in advance of the actual transaction.
 @Badea_2014 uses ANN to predict consumer behavior in Romania. Using a publicly available dataset on household as well as individual level, it is investigated whether the individuals would save money using bank deposits under certain conditions. The resulting predictions of the ANN are found to substantially increase accuracy compared to the ones of classical discriminant analysis.
 
 \section{Methodology}
-\subsection{Heterogeneous ensemble models}
+\subsection{Heterogeneous Ensemble Models}
 The idea behind ensemble models (EM) is to combine multiple learning algorithms that taken together improve prediction accuracy over the performance of the individual models. The success of EM in predictive analytics is due to their ability of reducing both bias and variance by combining multiple model forecasts [@dietterich2002ensemble]. EM can be divided into homogeneous and heterogeneous approaches. Homogeneous EM use a single base-learning algorithm (e.g. decision tree) on distinct training sets. In contrast, heterogeneous EM train and combine learning algorithms of different types. In the context of classification problems, heterogeneous EM are also referred to as multi-classifier systems (MCS) and have gained increasing popularity [@ranawana2006multi]. Two key design features for the success of MCS is the diversity among the selected classifiers as well as the good individual performances (strength) of the baseline classifiers [@shahid2015ensemble]. However, is has been shown that neither diversity nor individual performance of baseline models can directly predict the ensemble success [@ranawana2006multi].
 
 MCS have been shown to be useful in predicting customer e-commerce behavior, outperforming single classifiers in prediction accuracy (@tsoumakas2008taxonomy, @kim2003combination). Specifically, @heilig2016data demonstrate the suitability of an ensemble selection approach (ES) for predicting product returns in online retailing. This three-step ensemble technique builds upon the creation of a library of heterogeneous candidate base models. Each classifier method can be used to build up multiple models with different meta-parameter settings. The ensemble model is created by combining base model from the library through an extensive search strategy. Though this approach has been demonstrated to be very effective for accurate predictions, it nevertheless requires extensive computational time. We therefore adopt a standard two-step ensemble approach. First, we develop and train four base classifiers models. Second, we combine these individual models with a simple non-linear combination method, namely unweighted majority voting. We opt for this majority voting technique since because it is computationally inexpensive and is likely to improve model accuracy in cases when individual baseline models are well trained [@kuncheva2004combining]. In case of a voting tie, the base model with the highest single accuracy will act as a tiebreaker.  
 
-\subsection{Base classifier models}
+\subsection{Base Classifier Models}
 
 The ensemble model consists of four separately trained constituents as summarized below. They have been selected due to their outstanding performance as classification models. Since the relationship between product returns and the independent variables is suspected to be of non-linear nature, the majority of the base models captures effects of such nature. Nevertheless, as information heterogeneity substantially influences the performance of an ensemble model, we use a simple logistic regression to capture linear relationships among the variables.
 
@@ -225,9 +225,10 @@ Table: Base classifier description
 The two data sets available to us contain a total of 150,000 order records from an online apparel retailer from a yearlong selling period. For 50,000 of these records, it is unknown whether an ordered item has been sent back by the customer or not. This second data set is the target of our binary predictions on customer returning behavior (return/not return). Both data sets include a total of 13 continuous/discrete and categorical variables. These covariates give information on customer demographics (e.g. user state, date of birth, title), order details (e.g. order date, delivery date), and item characteristics (e.g. item size, price, color). The majority of customers are middle-aged female shoppers, with a mean order volume of 70 Euro over the entire record period and a mean product return rate of 48%.
 
 To prepare the data sets for our analysis, we apply a set of standard pre-processing actions. Following the careful inspection of each variable, we remove all implausible values (e.g. extreme outliers). Approximately 20% of all records have missing values in the variables *delivery date* and/or *date of birth*. For bettter comprehensibility, we transform these covariates to *delivery time* and *age* respectively. Before imputing missing values, we flag them using dummy variables to extract their predictive power [@de2016advanced, 18]. Since *age* seems to be missing completely at random according to our data inspection, imputing it using mean substitution gives us an unbiased estimates [@schafer2002missing]. Missing values in delivery time, caused by missing delivery dates, are clearly not missing not at random as they have a zero mean return rate and therefore are a perfect predictor. Possible reasons for these missing values are manifold. Without knowing the process generating these missings, we cannot find unbiased substitutes from them [@schafer2002missing, 171]. We adopt three single substitution methods, namely case dropping, mean and median imputation, and chose the latter one based on model performance. We standardize the continuous variables only after the feature creation step to maintain their interpretability. Likewise, we do not directly drop zero (almost) zero variance predictors (e.g. date of birth) since we use them for feature extraction.
-\section{Feature engineering}
 
-\subsection{Feature construction}
+\section{Feature Engineering}
+
+\subsection{Feature Construction}
 Comprehensive feature engineering, i.e. creating and selecting useful and informative features, is the key to successful e-commerce prediction models  [@liu2016repeat]. Based on the data structure available we separate our indicators into three e-commerce-related categories, namely product, customer, and basket related features, as can be seen in table 2. Features in the product category are all item-specific indicators (e.g. item price). Likewise, customer-related features contain variables with relational or demographic information on each customer (e.g. customer age). We define the basket-related features as those that are common within one order basket (e.g. number of items within a basket). We consider all items belonging to one basket that were ordered by the same user on the same day.
 
 Table: Constructed features ordered by category (excerpt)
@@ -254,7 +255,7 @@ Another useful approach we take is the transformation and combination of variabl
 
 Furthermore, we augment and enrich the data sets by including external sources to construct new features. For example, we use statistics on the mean income for different age groups and different regions within Germany. By combining these indicators with each customer's demographical data (age and user state) we are able construct a proxy for each customer's income. Moreover, we tackle the lack of information on item categories (e.g. pants, shoes, clothing, accessories). Based on size tables for different apparel categories we gathered we are able to categorize over 90% of items by finding sizes unique to each category. As expected, the mean return rate of shoes (52%) is almost twice as high as mean returns in accessories (28%).
 
-\subsection{Feature selection}
+\subsection{Feature Selection}
 
 Finding an optimal feature subset is important for various reasons: First, learning algorithms like neural networks or tree-based models have been shown to degrade in performance when confronted with datasets containing redundant or irrelevant variables [@zdravevski2014feature]. Second, feature selection reduces data dimensionality, reducing the needed computational power for model building process and improving model comprehensibility. We adopt a hybrid feature selection strategy by combining filters and wrappers.
 
@@ -280,7 +281,7 @@ Our specific approach mirrors a similar approach as suggested by @Fawcett2006, i
 
 ![Threshold graphs for each classifier. Clockwise from top left: logistic regression, neural network, random forest, gradient boost](Images/Threshold-combined.png)
 
-\subsection{Model building}
+\subsection{Model Building}
 
 \subsubsection{Nested Resampling}
 
@@ -290,15 +291,13 @@ In the outer loop, we use 4-fold cross-validation. In this approach, we partitio
 
 In the inner resampling loop, we train each classifier using a fixed holdout instance to find the optimal hyperparameters on each of the individual classifiers. We use a fixed holdout set to enable us to simply standardize numeric variables and create our Weight of Evidence features (by calculating off the training set and applying those values to the holdout set) within the inner loop. This preprocessing step is necessary for all variable transformations that are dependent on the data to prevent overfitting the model.
 
-The inner resampling loop assesses the quality of the model given the chosen hyperparameters. With the consideration that a grid search across the entire hyperparameter search space would be too costly, we choose to instead do a random search across the search space. The random search method will randomly choose parameters from our specified values, with a maximum of 20 iterations. Additionally, we train each classifier to optimize for AUC (area under the ROC curve), since such classifiers tend to produce better accuracy relative to those that only optimize for accuracy [@Huang05usingauc]. The chosen hyperparameters are then passed on to the outer loop where a new model is trained with the corresponding hyperparameters. Finally, we predict the results on the outer loop holdout set and aggregate results.
+The inner resampling loop assesses the quality of the model given the chosen hyperparameters. With the consideration that a grid search across the entire hyperparameter search space would be too computationally intensive, we choose to instead do a random search across the search space. The random search method will randomly choose parameters from our specified values, with a maximum of 20 iterations. Additionally, we train each classifier to optimize for AUC (area under the ROC curve), since such classifiers tend to produce better accuracy relative to those that only optimize for accuracy [@Huang05usingauc]. The chosen hyperparameters are then passed on to the outer loop where a new model is trained with the corresponding hyperparameters. In order to improve speed and scalability, we wrap each hyperparameter tuning process in a parallelization loop. Finally, we predict the results on the outer loop holdout set and aggregate results.
 
-We note that nested resampling is a computationally intensive process. For this reason, we limit the inner loop cross-validation process to 4 iterations Additionally, we employ relatively small search spaces for hyperparameters (usually not exceeding 30 possible combinations) that are informed by theoretical considerations. In order to accelerate the overall model fitting process, we employ a parallelization wrapper around the tuning process.
+We validate the nested resampling process by viewing the predictive power (in terms of accuracy and total cost, respectively) across resampling iterations and for all classifiers is shown in [FIGURES x,y]. The dot in the center represents the average value, whereas the spread is indicated by one standard error above and below the mean. On average, the neural network consistently performs best both on prediction accuracy and total cost metrics. In comparison, gradient boosting tends to perform the worst in terms of prediction accuracy but random forests perform the worst in terms of total cost minimization. Logistic regression, as expected, shows the smallest variation between iterations. However, although neural networks and logistic regression tends to vary little between iterations, gradient boosting and random forest approaches have far larger variations between iterations in terms of total cost minimization. The best performance of any one run came from a gradient boost iteration. We explain the suprisingly good performance of logistic regression compared to random forests with existence of linear effects and our meticulous data preparation. As @coussement2017comparative have demonstrated, logistic regression can compete with more complex algorithms if exposed to well prepared data sets. 
 
-\subsubsection{Ensembling}
+![Cross-validation accuracy](Images/CV-accuracy.png)
 
-As our last model building step, we ensemble models from each of the k runs and compare the final combined result to the average of the individual candidate classifiers. Our ensemble approach uses majority voting. Given that we are ensembling four models, we use the best model in terms of cost minimization as a tie breaker, which is the the neural network.
-
-For each of the 4 iterations of the cross-validation process, we use our ensembling method to assign final predictions for each instance. We then calculate the total cost of misclassification and compare that to the average cost for each individual classifier.
+![Cross-validation total cost](Images/CV-cost.png)
 
 \subsubsection{Model Calibration}
 
@@ -367,8 +366,6 @@ cat(c("\\begin{table}[!htb]
 \\end{table}"
 ))  
 
-
-
 ```
 <!-- Just keeping these old tables as a backup -->
 <!-- |      Classifier     | Uncalibrated | Calibrated | -->
@@ -398,6 +395,12 @@ cat(c("\\begin{table}[!htb]
 
 Table: Total cost comparison
 
+\subsubsection{Ensembling}
+
+As our last model building step, we ensemble models from each of the k runs and compare the final combined result to the average of the individual candidate classifiers. Our ensemble approach uses majority voting. Given that we are ensembling four models, we use the best model in terms of cost minimization as a tie breaker, which is the the neural network.
+
+For each of the 4 iterations of the cross-validation process, we use our ensembling method to assign final predictions for each instance. We then calculate the total cost of misclassification and compare that to the average cost for each individual classifier.
+
 \subsubsection{Post-Processing}
 
 The final class memberships of our model predictions are the results of our cost-minimizing threshold strategy. Despite the suitability of threshold tuning in general, the outcome might not be optimal due to the presence of cost asymmetry. This holds especially true for the items with a low item price, where disparity between the distinct classification errors is the largest. This can be seen in figure 1 (left) where the error costs relative to the item price is displayed for both types of misclassification. We refer to those predictions as type error 1, if the predicted value ends up being a False Positive (FP), meaning that we erroneously predicted an item return to be returned by the customer. In contrast, the type 2 errors relate to the False Negatives which implies we predicted a non-return when the item has in fact been returned. For low item prices, the spread between both error cost ratios is very high because of the fixed return costs being relatively high to item price. We therefore suspected it may be cost-saving to manipulate our model predictions to reduce the costs of FN.
@@ -409,19 +412,9 @@ Specifically, we tested whether it is more costly to use our predicted model cla
 where C1 and C2 refer to the misclassifications errors of type 1 and 2 at a given item price. Since some item price levels have sparse class membership, we create equal frequency price bins and approximate C1 and C2 with mean erros costs. We test our strategy based on the baseline prediction of our logistic regression model on a stratified test set. In our sample, the pure return strategy only saves costs for a item price of zero. This is because the high spread between costs is outweighed by the high ratio between TN and FN. This can be seen in figure 1 (right), where this ratio os displayed for all price bins. As very few cheap items are returned by customers, the number of FN is small in low price bins, leading to a high ratio.
 
 \section{Empirical Results}
-\subsection{Model performance}
-The output of the nested resampling results in a total of four candidate models and sets of predictions for each of the classifiers. We use the calibrated results of these classifiers for the following:
 
-1. Assess the stability of the hyperparameters
-2. Estimate the prediction accuracy and total cost of the model
-3. Get the average optimal decision threshold to apply to our final classifiers
-4. Use the model with the lowest average cost as a tiebreaker in our ensemble
+\subsection{Model Performance}
 
-We can examine the stability of our hyperparameters in [TABLES x,y,z]. Since the hyperparameters do not vary wildly between iterations, we can make the assumption the inner loop optimization works as designed. The distribution of performance values (in terms of accuracy and total cost, respectively) across resampling iterations and for all classifiers is shown in [FIGURES x,y]. The dot in the center represents the average value, whereas the spread is indicated by one standard error above and below the mean. On average, the neural network consistently performs best both on prediction accuracy and total cost metrics. In comparison, gradient boosting tends to perform the worst in terms of prediction accuracy but random forests perform the worst in terms of total cost minimization. Logistic regression, as expected, shows the smallest variation between iterations. However, although neural networks and logistic regression tends to vary little between iterations, gradient boosting and random forest approaches have far larger variations between iterations in terms of total cost minimization. The best performance of any one run came from a gradient boost iteration. We explain the suprisingly good performance of logistic regression compared to random forests with existence of linear effects and our meticulous data preparation. As @coussement2017comparative have demonstrated, logistic regression can compete with more complex algorithms if exposed to well prepared data sets.
-
-![Cross-validation accuracy](Images/CV-accuracy.png)
-
-![Cross-validation total cost](Images/CV-cost.png)
 
 -> NOW talk about ensembling!!!
 
@@ -438,7 +431,7 @@ Table: Cost improvement from ensembling
 
 The results of ensembling show an average improvement of 1.5% compared to the average base classifier. Although this figure may seem small, it can result in significant cost savings for the retailer over the long run. Additionally, we note that in some cases the ensemble performs slightly worse than the best individual classifier. However, we believe this approach remains valid because of how high the variation is between individual runs, depending on the observations in the data set. The ensembling process helps reduce this variation by averaging the performance of each model.
 
-\subsection{Return management implications}
+\subsection{Return Management Implications}
 
 \section{Conclusion}
 
