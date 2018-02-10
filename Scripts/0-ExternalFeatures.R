@@ -20,7 +20,13 @@
 ################################################################################
 ### Income Features
 
-load("BADS_WS1718_known_imp1.RData")
+rm(list = ls())
+
+# Adjust your working directory
+wd = file.path(Sys.getenv("HOME"),"/Documents/Projects/bads-ws1718-group21")
+setwd(wd)
+
+load("Data/BADS_WS1718_known_imp1.RData")
 
 #### Construct income average for Bundeslaender
 income.bl.dat <- data.frame(

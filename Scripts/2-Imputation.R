@@ -4,17 +4,14 @@
 #
 ################################################################################
 # Description:
-# Imputation of delivery time and age according to
-# different imputation methods
+# Imputation of delivery time and age according to different imputation methods
 ################################################################################
-
-# Load pre-cleaned data set 
 
 rm(list = ls())
 
 # Adjust your working directory
-setwd("")
-getwd()
+wd = file.path(Sys.getenv("HOME"),"/Documents/Projects/bads-ws1718-group21")
+setwd(wd)
 
 # LOAD NECESSARY PACKAGES & DATA
 # List all packages needed for session
@@ -33,7 +30,7 @@ lapply(neededPackages, function(x) suppressPackageStartupMessages(
     library(x, character.only = TRUE)))
 
 # Load dataset
-load("BADS_WS1718_known_clean.RData")
+load("Data/BADS_WS1718_known_clean.RData")
 names.vec <- colnames(dat.input)
 
 ############################################################################

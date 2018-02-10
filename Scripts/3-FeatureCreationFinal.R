@@ -15,8 +15,8 @@
 rm(list = ls())
 
 # Adjust your working directory
-setwd("")
-getwd()
+wd = file.path(Sys.getenv("HOME"),"/Documents/Projects/bads-ws1718-group21")
+setwd(wd)
 
 # LOAD NECESSARY PACKAGES & DATA
 # List all packages needed for session
@@ -35,10 +35,10 @@ lapply(neededPackages, function(x) suppressPackageStartupMessages(
     library(x, character.only = TRUE)))
 
 # Load dataset
-load("BADS_WS1718_known_imp1.RData")
+load("Data/BADS_WS1718_known_imp1.RData")
 
 # source helper packages
-source("../Scripts/Helpful.R")
+source("Scripts/Helpful.R")
 
 ############################################################################
 ############################################################################

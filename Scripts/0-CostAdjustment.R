@@ -8,11 +8,13 @@
 # Final lower and upper threshold in terms of price for adopting pure prediction
 # strategy (always predict return / not return)
 ################################################################################
+
+
 rm(list = ls())
 
 # Adjust your working directory
-setwd("")
-getwd()
+wd = file.path(Sys.getenv("HOME"),"/Documents/Projects/bads-ws1718-group21")
+setwd(wd)
 
 # LOAD NECESSARY PACKAGES & DATA
 # List all packages needed for session
@@ -34,7 +36,7 @@ lapply(neededPackages, function(x) suppressPackageStartupMessages(
 # source helper packages
 source("Scripts/Helpful.R")
 
-load("BADS_WS1718_known_ready.RData")
+load("Data/BADS_WS1718_known_ready.RData")
 
 ############################################################################
 ############################################################################
