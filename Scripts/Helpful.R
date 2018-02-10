@@ -312,3 +312,18 @@ plot.threshold <- function(act, pred, cost) {
     gt <- gTree(children = gList(ga, gb))
     return(grid.draw(gt, recording = TRUE))
 }
+
+
+getFisherscore <- function(variable, return){
+    bothMeans   = tapply(variable, return, mean)
+    featureMean = mean(variable)
+    diff.pos.sq = (bothMeans[1] - featureMean)^2
+    diff.neg.sq = (bothMeans[2] - featureMean)^2
+    nominator   = diff.pos.sq+ diff.neg.sq
+    bothSigma   = tapply(variable, return, sd)
+    denominator = (bothSigma[1])^2 + (bothSigma[2])^2
+    coefficient <- as.numeric(nominator / denominator)
+    return(coefficient)
+}
+
+year.extraction = function(x){substr(x, 1, 4)}
