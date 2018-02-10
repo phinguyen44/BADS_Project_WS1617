@@ -314,23 +314,73 @@ From the reliability plots, we can see a few major effects of calibration. First
 
 Overall, we see benefits in calibration when comparing the accuracy, log-loss, and cost metrics. In [FIGURE xxx], we compare the average across all validation runs for the aforementioned metrics. We see that calibration yields significant improvements in log-loss error for all models without negatively impacting accuracy and cost measurements.
 
-|      Classifier     | Uncalibrated | Calibrated |
-|:-------------------:|:------------:|:----------:|
-| Logistic Regression |     0.657    |    0.657   |
-| Neural Network      |     0.662    |    0.661   |
-| Random Forest       |     0.656    |    0.656   |
-| Gradient Boost      |     0.653    |    0.654   |
+```{r, echo = FALSE, eval = TRUE, warning = FALSE, message = FALSE, results = 'asis'}
 
-Table: Accuracy comparison
+library("knitr", quietly = TRUE)
+library("xtable", quietly = TRUE)
 
-|      Classifier     | Uncalibrated | Calibrated |
-|:-------------------:|:------------:|:----------:|
-| Logistic Regression |     0.709    |    0.618   |
-| Neural Network      |     0.774    |    0.621   |
-| Random Forest       |     0.774    |    0.625   |
-| Gradient Boost      |     0.817    |    0.628   |
+knitr::opts_chunk$set(message = FALSE) 
 
-Table: Log-loss error comparison
+# For both tables
+classifier = c("Logistic Regression", "Neural Network", "Random Forest", "Gradient Boost")
+
+# Accuracy Comparison Vectors
+acc.uncalibrated = c(0.657, 0.662, 0.656, 0.653)
+acc.calibrated = c(0.657, 0.661, 0.656, 0.654)
+
+# Log Loss Error Comparison Vectors
+loss.uncalibrated = c(0.709, 0.774, 0.774, 0.817)
+loss.calibrated = c(0.618, 0.621, 0.625, 0.628)
+
+acc.df = data.frame("Classifier"   = classifier, 
+                    "Uncalibrated" = acc.uncalibrated,
+                    "Calibrated"   = acc.calibrated)
+
+loss.df = data.frame("Classifier"   = classifier,
+                     "Uncalibrated" = loss.uncalibrated,
+                     "Calibrated"   = loss.calibrated)
+
+
+t1 = knitr::kable(acc.df, format  = "latex", booktabs = TRUE)
+t2 = knitr::kable(loss.df, format = "latex", booktabs = TRUE)
+
+cat(c("\\begin{table}[!htb]
+    \\begin{minipage}{.5\\linewidth}
+      \\caption{Accuracy Comparison}
+      \\bigskip
+      \\centering",
+        t1,
+    "\\end{minipage}%
+    \\begin{minipage}{.5\\linewidth}
+        \\caption{Log-Loss Error Comparison}
+        \\bigskip
+        \\centering",
+        t2,
+    "\\end{minipage} 
+\\end{table}"
+))  
+
+
+
+```
+<!-- Just keeping these old tables as a backup -->
+<!-- |      Classifier     | Uncalibrated | Calibrated | -->
+<!-- |:-------------------:|:------------:|:----------:| -->
+<!-- | Logistic Regression |     0.657    |    0.657   | -->
+<!-- | Neural Network      |     0.662    |    0.661   | -->
+<!-- | Random Forest       |     0.656    |    0.656   | -->
+<!-- | Gradient Boost      |     0.653    |    0.654   | -->
+
+<!-- Table: Accuracy comparison -->
+
+<!-- |      Classifier     | Uncalibrated | Calibrated | -->
+<!-- |:-------------------:|:------------:|:----------:| -->
+<!-- | Logistic Regression |     0.709    |    0.618   | -->
+<!-- | Neural Network      |     0.774    |    0.621   | -->
+<!-- | Random Forest       |     0.774    |    0.625   | -->
+<!-- | Gradient Boost      |     0.817    |    0.628   | -->
+
+<!-- Table: Log-loss error comparison -->
 
 |      Classifier     | Uncalibrated | Calibrated |
 |:-------------------:|:------------:|:----------:|
@@ -339,7 +389,7 @@ Table: Log-loss error comparison
 | Random Forest       |   -262464.2  |  -257532.9 |
 | Gradient Boost      |   -258767.0  |  -258816.6 |
 
-Table: Total cost comparison
+Table: Total Cost Comparison
 
 \subsection{Empirical Results}
 
@@ -369,24 +419,24 @@ rf.ntree = c(300, 350, 250, 400)
 rf.mtry = rep(3, 4)
 rf.nodesize = c(15, 30, 25, 15)
 
-nn.model = data.frame(nn.iteration, nn.size, nn.decay)
-rf.model = data.frame(rf.iteration, rf.ntree, rf.mtry, rf.nodesize)
+nn.model = data.frame("iteration" = nn.iteration, "size" = nn.size, "decay" = nn.decay)
+rf.model = data.frame("iteration" = rf.iteration, "size" = rf.ntree, "decay" = rf.mtry, rf.nodesize)
 
-t1 = knitr::kable(nn.model, format = "latex", booktabs = TRUE)
-t2 = knitr::kable(rf.model, format = "latex", booktabs = TRUE)
+t3 = knitr::kable(nn.model, format = "latex", booktabs = TRUE)
+t4 = knitr::kable(rf.model, format = "latex", booktabs = TRUE)
 
 cat(c("\\begin{table}[!htb]
     \\begin{minipage}{.5\\linewidth}
       \\caption{Neural Network Hyperparameter Tuning}
       \\bigskip
       \\centering",
-        t1,
+        t3,
     "\\end{minipage}%
     \\begin{minipage}{.5\\linewidth}
         \\caption{Random Forest Hyperparameter Tuning}
         \\bigskip
         \\centering",
-        t2,
+        t4,
     "\\end{minipage} 
 \\end{table}"
 ))  
@@ -394,24 +444,24 @@ cat(c("\\begin{table}[!htb]
 
 
 ```
+<!-- Just keeping the old tables as a backup -->
+<!-- Table: Neural Network Hyperparameter Tuning -->
 
-Table: Neural Network Hyperparameter Tuning
+<!-- | Iteration | size | decay | -->
+<!-- |-----------|:----:|:-----:| -->
+<!-- | 1         |   4  | 1e-03 | -->
+<!-- | 2         |   5  | 1e-05 | -->
+<!-- | 3         |   8  | 1e-02 | -->
+<!-- | 4         |   6  | 1e-03 | -->
 
-| Iteration | size | decay |
-|-----------|:----:|:-----:|
-| 1         |   4  | 1e-03 |
-| 2         |   5  | 1e-05 |
-| 3         |   8  | 1e-02 |
-| 4         |   6  | 1e-03 |
+<!-- Table: Random Forest Hyperparameter Tuning -->
 
-Table: Random Forest Hyperparameter Tuning
-
-| Iteration | ntree | mtry | nodesize |
-|-----------|:-----:|:----:|:--------:|
-| 1         |  300  |   3  |    15    |
-| 2         |  350  |   3  |    30    |
-| 3         |  250  |   3  |    25    |
-| 4         |  400  |   3  |    15    |
+<!-- | Iteration | ntree | mtry | nodesize | -->
+<!-- |-----------|:-----:|:----:|:--------:| -->
+<!-- | 1         |  300  |   3  |    15    | -->
+<!-- | 2         |  350  |   3  |    30    | -->
+<!-- | 3         |  250  |   3  |    25    | -->
+<!-- | 4         |  400  |   3  |    15    | -->
 
 Table: Gradient Boost Hyperparameter Tuning
 
