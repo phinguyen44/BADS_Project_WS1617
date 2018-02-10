@@ -9,7 +9,7 @@ header-includes:
   - \onehalfspacing
 output: pdf_document
 latex_engine: lualatex
-geometry: margin = 3.5cm
+geometry: margin = 2.5cm
 bibliography: references.bib
 ---
 
@@ -153,10 +153,6 @@ However, the measures to be taken are out of scope of this paper. Instead a unde
 Such a forecast may supply companies with information on the reverse product flow and increase their inventory control [@brito_2009].
 
 
-
-\newpage
-
-
 \section{Previous Literature}
 
 \subsection{Quantifying the Problem}
@@ -186,11 +182,7 @@ The latter is picked up by @potdar_2009, who classifies product returns in the C
 
 Todo:   
 Lessmann Paper  
-  
-
-\clearpage
-\newpage
-
+   
 \section{Methodoloy}
 \subsection{Heterogeneous ensemble models}
 The idea behind ensemble models (EM) is to combine multiple learning algorithms that taken together improve prediction accuracy over the performance of the individual models. The success of EM in predictive analytics is due to their ability of reducing both bias and variance by combining multiple model forecasts [@dietterich2002ensemble]. EM can be divided into homogeneous and heterogeneous approaches. Homogeneous EM use a single base-learning algorithm (e.g. decision tree) on distinct training sets. In contrast, heterogeneous EM train and combine learning algorithms of different types. In the context of classification problems, heterogeneous EM are also referred to as multi-classifier systems (MCS) and have gained increasing popularity [@ranawana2006multi]. Two key design features for the success of MCS is the diversity among the selected classifiers as well as the good individual performances (strength) of the baseline classifiers [@shahid2015ensemble]. However, is has been shown that neither diversity nor individual performance of baseline models can directly predict the ensemble success [@ranawana2006multi]. 
@@ -226,16 +218,6 @@ print.xtable(modeldf.tab)
 ```
 
 
-
-
-\newpage
-
-
-
-\clearpage
-
-\newpage
-
 \section{Data}
 The two data sets available to us contain a total of 150,000 order records from an online apparel retailer from a yearlong selling period. For 50,000 of these records, it is unknown whether an ordered item has been sent back by the customer or not. This second data set is the target of our binary predictions on customer returning behavior (return/not return). Both data sets include a total of 13 continuous/discrete and categorical variables.  These covariates give information on customer demographics (e.g. user state, date of birth, title), order details (e.g. order date, delivery date), and item characteristics (e.g. item size, price or color). The majority of customers are middle-aged female shoppers, with a mean order volume of 70 Euro over the entire record period and an average product return rate of 48%.
 
@@ -247,17 +229,17 @@ Comprehensive feature engineering, i.e. creating and selecting useful and inform
 
 Table: Constructed features ordered by category (excerpt)
 
-|Feature category |   Feature         |   Type  |   Description                                  | 
+|Feature category |   Feature         |   Type  |Description                                  | 
 |:---------------:|:------------------:|:-------:|:----------------------------------------------------:|
-| Product         | Item price   |  Numeric | Price at which item is purchased                                   |
-|                 | Item category|  Factor  | Category (eg. clothing, shoes) of item                             |
-|                 | Item WOE     |  Numeric | WOE based on item id                                               |
-| Customer        | Customer Age |  Numeric | Age in years at purchase                                           |
-|                 | Account Age  |  Numeric | Days since registration at purchase                                |
-|                 | User's income|  Numeric | Proxy for costumers's income                                       |
-| Order/Basket    | Large basket |  Factor  | No. of items in same basket exeeds one                             |
-|                 | Discount pc. |  Numeric | Discount on item price in %                                        |
-|                 | Same category|  Numeric | No. of items belonging to the same item category within same basket|
+| Product         | Item price   |  Numeric |Price at which item is purchased                                   |
+|                 | Item category|  Factor  |Category (eg. clothing, shoes) of item                             |
+|                 | Item WOE     |  Numeric |WOE based on item id                                               |
+| Customer        | Customer Age |  Numeric |Age in years at purchase                                           |
+|                 | Account Age  |  Numeric |Days since registration at purchase                                |
+|                 | User's income|  Numeric |Proxy for costumers's income                                       |
+| Order/Basket    | Large basket |  Factor  |No. of items in same basket exeeds one                             |
+|                 | Discount pc. |  Numeric |Discount on item price in %                                        |
+|                 | Same category|  Numeric |No. of items belonging to the same item category within same basket|
 
 In order to extract as much information as possible from the 13 original variables, we apply a variety of different extraction and projections methods, including unsupervised and supervised methods. Our extraction methods can be broadly summarized in four groups: discretization, projection, transformation/combination of variables and data augmentation by using external information. Based on these methods we construct an enriched data set with a total of 45 features. A small excerpt of these features can be seen in table 2.
 We apply discretization to several continuous variables, as this can be useful for capturing non-linear effects, constructing a more comprehensible representation of variables or improving predictive accuracy, especially in the context of tree-based decision algorithms [@liu2002discretization]. For example, we construct price item bins using equal frequency discretization as we suspect non-linearity regarding the target variable. This approach is superior to equal width discretization for our purpose since it is outlier-resistant and gives us a higher interval resolution for item prices with a high density [@cichosz2014data, 531]. 
@@ -422,13 +404,9 @@ Specifically, we tested whether it is more costly to use our predicted model cla
                 $0< \frac{C2}{C1} - \frac{TN}{FN}$
 where C1 and C2 refer to the misclassifications errors of type 1 and 2 at a given item price. Since some item price levels have sparse class membership, we create equal frequency price bins and approximate C1 and C2 with mean erros costs. We test our strategy based on the baseline prediction of our logistic regression model on a stratified test set. In our sample, the pure return strategy only saves costs for a item price of zero. This is because the high spread between costs is outweighed by the high ratio between TN and FN. This can be seen in figure 1 (right), where this ratio os displayed for all price bins. As very few cheap items are returned by customers, the number of FN is small in low price bins, leading to a high ratio.
 
-
-\clearpage
-\newpage
-
 \section{Results}
 
-\
+
 
 \section{Conclusion}
 
