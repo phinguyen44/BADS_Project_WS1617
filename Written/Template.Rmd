@@ -286,7 +286,7 @@ The inner resampling loop assesses the quality of the model given the chosen hyp
 
 \subsubsection{Model Calibration}
 
-Additionally, in the outer loop, we calibrate the probability estimates generated from each classifier. We use calibration for two reasons: Firstly, it ensures that the probability estimates better reflect their true posterior probabilities [@Caruana2006]. For example, in a well-calibrated model, if the probability estimate for a given instance is 70%, that means we can assume that that event has a 70% chance of occurring. Secondly, calibration transforms predictions from all models to place on them equivalent scale. Combining calibrated models in ensembling not only provides improvement in probability measures like logarithmic loss, but failure to use calibrated models may hurt ensemble performance [@Niculescu-Mizil2005].
+Alongside our 4-fold cross-validation, we calibrate the probability estimates generated from each classifier in our outerloop. We use calibration for two reasons: Firstly, it ensures that the probability estimates better reflect their true posterior probabilities [@Caruana2006]. For example, in a well-calibrated model, if the probability estimate for a given instance is 70%, that means we can assume that event has a 70% chance of occurring. Secondly, calibration transforms predictions from all models to place on them equivalent scale. Combining calibrated models in ensembling not only provides improvement in probability measures like logarithmic loss. Failure to use calibrated models may actually hurt ensemble performance [@Niculescu-Mizil2005].
 
 We use a method known as Platt scaling to obtain calibrated predictions. In Platt scaling, we pass the output probabilities through a sigmoid (which in our case is a logistic regression) [@Platt99probabilisticoutputs]. We apply the specific method below as described in [@obtainingcalibrated] in order to prevent overfitting and unwanted bias:
 
@@ -297,7 +297,7 @@ We use a method known as Platt scaling to obtain calibrated predictions. In Plat
 5. Use the predictions from calibration set to train a logistic regression model
 6. Pass the predictions from the test set through the logistic regression model in step 5 to obtain the final predictions
 
-We visualize the effect of calibration on each of our classifiers using reliability diagrams from the first fold of cross-validation. Reliability diagrams split the prediction space into 10 bins, then plot the mean prediction value for each bin against the true fraction of positive cases. The diagonal line indicates a perfectly calibrated model [@Niculescu-Mizil2005]. Additionally, in each diagram, we plot the histogram of predicted values before and after calibration. The results of calibration for each classifier can be seen in [FIGURE xxxx].
+We visualize the effect of calibration on each of our classifiers using reliability diagrams from the first fold of cross-validation which can be seen in [FIGURE xxxx]. Reliability diagrams split the prediction space into 10 bins, then plot the mean prediction value for each bin against the true fraction of positive cases. The diagonal line indicates a perfectly calibrated model [@Niculescu-Mizil2005]. Additionally, in each diagram, we plot the histogram of predicted values before and after calibration.
 
 ![Reliability plots for each classifier. Clockwise from top left: logistic regression, neural network, random forest, gradient boost](Images/ReliabilityPlot-combined.png)
 
@@ -334,14 +334,14 @@ Table: Total cost comparison
 
 \subsection{Empirical Results}
 
-The output of the nested resampling results in a total of five candidate models and sets of predictions for each of the four classifiers. We use the calibrated results of these classifiers for the following:
+The output of the nested resampling results in a total of four candidate models and sets of predictions for each of the classifiers. We use the calibrated results of these classifiers for the following:
 
 1. Assess the stability of the hyperparameters
 2. Estimate the prediction accuracy and total cost of the model
 3. Get the average optimal decision threshold to apply to our final classifiers
 4. Use the model with the lowest average cost as a tiebreaker in our ensemble
 
-We can examine the stability of our hyperparameters in [TABLES x,y,z]. Since the hyperparameters do not vary wildly between iterations, we can make the assumption the inner loop optimization works as designed. The distribution of performance values (in terms of accuracy and total cost, respectively) across resampling iterations and for all classifiers is shown in [FIGURES x,y]. The dot in the center represents the average value, whereas the spread is indicated by 1 standard error above and below the mean. On average, the neural network consistently performs best both on prediction accuracy and total cost metrics. In comparison, gradient boosting tends to perform the worst in terms of prediction accuracy but random forests perform the worst in terms of total cost minimization. Logistic regression, as expected, shows the smallest variation between iterations. However, although neural networks and logistic regression tends to vary little between iterations, gradient boosting and random forest approaches have far larger variations between iterations in terms of total cost minimization. The best performance of any one run came from a gradient boost iteration.
+We can examine the stability of our hyperparameters in [TABLES x,y,z]. Since the hyperparameters do not vary wildly between iterations, we can make the assumption the inner loop optimization works as designed. The distribution of performance values (in terms of accuracy and total cost, respectively) across resampling iterations and for all classifiers is shown in [FIGURES x,y]. The dot in the center represents the average value, whereas the spread is indicated by one standard error above and below the mean. On average, the neural network consistently performs best both on prediction accuracy and total cost metrics. In comparison, gradient boosting tends to perform the worst in terms of prediction accuracy but random forests perform the worst in terms of total cost minimization. Logistic regression, as expected, shows the smallest variation between iterations. However, although neural networks and logistic regression tends to vary little between iterations, gradient boosting and random forest approaches have far larger variations between iterations in terms of total cost minimization. The best performance of any one run came from a gradient boost iteration. We explain the suprisingly good performance of logistic regression compared to random forests with existence of linear effects and our meticulous data preparation. As @coussement2017comparative have demonstrated, logistic regression can compete with more complex algorithms if exposed to well prepared data sets.
 
 Table: Neural Network Hyperparameter Tuning
 
@@ -370,8 +370,6 @@ Table: Gradient Boost Hyperparameter Tuning
 | 3         |   8   | 1e-02 |   100   |   0.4  |     3     |
 | 4         |   6   | 1e-03 |   100   |    0   |     4     | 
 
-- Note from Claudia : Cite paper by Prof Lessman @coussement2017comparative:  We explain good performance of log reg with existence of linear effects and our meticulous data preparation. As @coussement2017comparative have demonstrated, logistic regression can compete with more complex algorithms ifexposed to well prepared data set
-
 ![Cross-Validation Accuracy](Images/CV-accuracy.png)
 
 ![Cross-Validation Total Cost](Images/CV-cost.png)
@@ -380,7 +378,7 @@ We note that nested resampling is a computationally intensive process. We limit 
 
 \subsubsection{Ensembling}
 
-Finally, we ensemble models from each of the k runs and compare the final combined result to the average of the individual candidate classifiers. Our ensemble approach uses majority voting as described in the Methodology section of the paper. Given that we are ensembling four models, we use the best model in terms of cost minimization as a tie breaker. In our case, our best performing model is the neural network.
+Finally, we ensemble models from each of the k runs and compare the final combined result to the average of the individual candidate classifiers. Our ensemble approach uses majority voting. Given that we are ensembling four models, we use the best model in terms of cost minimization as a tie breaker, which is the the neural network.
 
 For each of the 4 iterations of the cross-validation process, we use our ensembling method to assign final predictions for each instance. We then calculate the total cost of misclassification and compare that to the average cost for each individual classifier. The results can be seen in [TABLE XXXX].
 
