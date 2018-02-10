@@ -151,9 +151,8 @@ Several measures intended to counter such behavior have been proposed by @urbank
 
 <!-- Some of these options are already in practice for multiple large online retailers (http://www.retailwire.com/discussion/should-chronic-returners-be-banned/, https://www.nbcchicago.com/news/local/Amazon-Bans-Woman-For-Life-Over-Too-Many-Returns-388199532.html) -->
 
-@lessmann_2016 propose the development of a machine learning system that tracks customer's shopping carts. In case of a high likelihood of product returns, a warning may be displayed. They furthermore discuss to charge a price premium that compensates the risk. 
-
-In this paper, machine learning will be used to analyze the drivers of product returns and predict them accurately. 
+@lessmann_2016 propose the development of a machine learning system that tracks customer's shopping carts. In case of a high likelihood of product returns, a warning may be displayed. Such an approach has been successful in decreasing the addressed issue. 
+In this paper, an ensemble model will be developped in order to understand the features that drive product returns, predict them accuretely and increase profit.
 
 <!-- ---- -->
 <!-- Such a forecast may supply companies with information on the reverse product flow and increase their inventory control [@brito_2009]. -->
