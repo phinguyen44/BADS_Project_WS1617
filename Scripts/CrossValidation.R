@@ -347,5 +347,13 @@ colnames(ens.df) <- c('Average.Individual.Classifier', 'Ensembled.Classifier')
 ens.df$Percent.Improvement <-  -round((ens.df[, 2]-ens.df[, 1])/ens.df[, 1], 4)
 ens.df
 
+# improvement over baseline (no message world)
+baseline.cost <- pmap(list(actual, ts.price.f), 
+                      function(x,y) cost.calc(0.5,x,0,y))
+baseline.df <- data.frame(unlist(fin.cost), unlist(baseline.cost))
+colnames(baseline.df) <- c('Ensemble','Naive.Approach')
+baseline.df$Percent.Improvement <- -round((baseline.df[, 1]-baseline.df[, 2])/baseline.df[, 2], 4)
+baseline.df
+
 # SAVE ALL ENVIRONMENT VARIABLES
 save.image('Data/CV-results.RData')
