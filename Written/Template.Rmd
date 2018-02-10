@@ -185,7 +185,10 @@ returns in advance of the actual transaction.
 
 @Badea_2014 uses ANN to predict consumer behavior in Romania. Using a publicly available dataset on household as well as individual level, it is investigated whether the individuals would save money using bank deposits under certain conditions. The resulting predictions of the ANN are found to substantially increase accuracy compared to the ones of classical discriminant analysis.
 
-\section{Methodoloy}
+Todo:   
+Lessmann Paper  
+
+\section{Methodology}
 \subsection{Heterogeneous ensemble models}
 The idea behind ensemble models (EM) is to combine multiple learning algorithms that taken together improve prediction accuracy over the performance of the individual models. The success of EM in predictive analytics is due to their ability of reducing both bias and variance by combining multiple model forecasts [@dietterich2002ensemble]. EM can be divided into homogeneous and heterogeneous approaches. Homogeneous EM use a single base-learning algorithm (e.g. decision tree) on distinct training sets. In contrast, heterogeneous EM train and combine learning algorithms of different types. In the context of classification problems, heterogeneous EM are also referred to as multi-classifier systems (MCS) and have gained increasing popularity [@ranawana2006multi]. Two key design features for the success of MCS is the diversity among the selected classifiers as well as the good individual performances (strength) of the baseline classifiers [@shahid2015ensemble]. However, is has been shown that neither diversity nor individual performance of baseline models can directly predict the ensemble success [@ranawana2006multi].
 
@@ -222,13 +225,13 @@ Table: Base classifier description
 
 
 \section{Data}
-The two data sets available to us contain a total of 150,000 order records from an online apparel retailer from a yearlong selling period. For 50,000 of these records, it is unknown whether an ordered item has been sent back by the customer or not. This second data set is the target of our binary predictions on customer returning behavior (return/not return). Both data sets include a total of 13 continuous/discrete and categorical variables.  These covariates give information on customer demographics (e.g. user state, date of birth, title), order details (e.g. order date, delivery date), and item characteristics (e.g. item size, price or color). The majority of customers are middle-aged female shoppers, with a mean order volume of 70 Euro over the entire record period and an average product return rate of 48%.
+The two data sets available to us contain a total of 150,000 order records from an online apparel retailer from a yearlong selling period. For 50,000 of these records, it is unknown whether an ordered item has been sent back by the customer or not. This second data set is the target of our binary predictions on customer returning behavior (return/not return). Both data sets include a total of 13 continuous/discrete and categorical variables. These covariates give information on customer demographics (e.g. user state, date of birth, title), order details (e.g. order date, delivery date), and item characteristics (e.g. item size, price, color). The majority of customers are middle-aged female shoppers, with a mean order volume of 70 Euro over the entire record period and a mean product return rate of 48%.
 
-To prepare the data sets for our analysis, we apply a set of standard pre-processing actions. Following the careful inspection of each variable, we remove all implausible values (e.g. extreme outliers). Approximately 20% of all records have missing values in the variables *delivery date* and/or *date of birth*. For bettter comprehensibility, we transform these covariates to *delivery time* and *age* respectively. Before imputing missing values, we flag them using dummy variables to extract their predictive power [@de2016advanced, 18]. Since *age* seems to be missing (completely) at random (MCAR) according to our data inspection, imputing it using mean substitution gives us an unbiased estimates [@schafer2002missing]^[Additionally, we carry out a Maximum Likelihood imputation of age in case the missing values are only missing at random (MAR), yielding the same model performance.]. Missing values in delivery time, caused by missing delivery dates, are clearly not missing not at random (MNAR) as they have a zero mean return rate and therefore are a perfect predictor. Possible reasons for these missing values are manifold. Without knowing the process generating these MNAR values, we cannot find unbiased substitutes form them [@schafer2002missing, 171]. We adopt three single substitution methods, namely case dropping, mean and median imputation, and chose the latter one based on model performance. We standardize the continuous variables only after the feature creation step to maintain their interpretability. Likewise, we do not directly drop zero (almost) zero variance predictors (e.g. date of birth) since we use them for feature extraction.
+To prepare the data sets for our analysis, we apply a set of standard pre-processing actions. Following the careful inspection of each variable, we remove all implausible values (e.g. extreme outliers). Approximately 20% of all records have missing values in the variables *delivery date* and/or *date of birth*. For bettter comprehensibility, we transform these covariates to *delivery time* and *age* respectively. Before imputing missing values, we flag them using dummy variables to extract their predictive power [@de2016advanced, 18]. Since *age* seems to be missing completely at random according to our data inspection, imputing it using mean substitution gives us an unbiased estimates [@schafer2002missing]. Missing values in delivery time, caused by missing delivery dates, are clearly not missing not at random as they have a zero mean return rate and therefore are a perfect predictor. Possible reasons for these missing values are manifold. Without knowing the process generating these missings, we cannot find unbiased substitutes from them [@schafer2002missing, 171]. We adopt three single substitution methods, namely case dropping, mean and median imputation, and chose the latter one based on model performance. We standardize the continuous variables only after the feature creation step to maintain their interpretability. Likewise, we do not directly drop zero (almost) zero variance predictors (e.g. date of birth) since we use them for feature extraction.
 \section{Feature engineering}
 
 \subsection{Feature construction}
-Comprehensive feature engineering, i.e. creating and selecting useful and informative features, is the key to successful e-commerce prediction models  [@liu2016repeat]. Based on the data structure available we separate our indicators into three e-commerce-related categories, namely product, customer and basket related features. Based on the data structure available we separate our indicators into three e-commerce-related categories, namely product, customer and basket related features as can be seen in table 2. Features in the product category are all item-specific indicators (e.g. item size, item price). Likewise, customer-related features contain variables with relational or demographic information on each customer (e.g. customer age, age of user account). We define the basket-related features as those that are common within one order basket (e.g. number of items within a basket). We consider all items belonging to one basket that were ordered by the same user on the same day.
+Comprehensive feature engineering, i.e. creating and selecting useful and informative features, is the key to successful e-commerce prediction models  [@liu2016repeat]. Based on the data structure available we separate our indicators into three e-commerce-related categories, namely product, customer, and basket related features, as can be seen in table 2. Features in the product category are all item-specific indicators (e.g. item price). Likewise, customer-related features contain variables with relational or demographic information on each customer (e.g. customer age). We define the basket-related features as those that are common within one order basket (e.g. number of items within a basket). We consider all items belonging to one basket that were ordered by the same user on the same day.
 
 Table: Constructed features ordered by category (excerpt)
 
@@ -244,52 +247,65 @@ Table: Constructed features ordered by category (excerpt)
 |                 | Discount pc. |  Numeric |Discount on item price in %                                        |
 |                 | Same category|  Numeric |No. of items belonging to the same item category within same basket|
 
-In order to extract as much information as possible from the 13 original variables, we apply a variety of different extraction and projections methods, including unsupervised and supervised methods. Our extraction methods can be broadly summarized in four groups: discretization, projection, transformation/combination of variables and data augmentation by using external information. Based on these methods we construct an enriched data set with a total of 45 features. A small excerpt of these features can be seen in table 2.
-We apply discretization to several continuous variables, as this can be useful for capturing non-linear effects, constructing a more comprehensible representation of variables or improving predictive accuracy, especially in the context of tree-based decision algorithms [@liu2002discretization]. For example, we construct price item bins using equal frequency discretization as we suspect non-linearity regarding the target variable. This approach is superior to equal width discretization for our purpose since it is outlier-resistant and gives us a higher interval resolution for item prices with a high density [@cichosz2014data, 531].
-A special challenge of this data set, which applies to many predictive modeling settings on customer behavior, is the presence of high-cardinality attributes (e.g. user id, item id). We replace each category with its Weight of evidence (WOE), a numerical projection method for categorical variables. The WOE is a measure of predictive power of a category with respect to the target variable, which has gained popularity in credit scoring [@de2016advanced, 19-20]. For a given customer, it shows a customers tendency in returning behavior, a valuable predictor variable. Replacing high-cardinality attributes with their respective WOE also reduces the dimensionality of our data set drastically. Since WOE has been shown to work well across the different types of our baseline models and requires low computational effort, we apply this projection methods to all categorical variables[@de2016advanced, 32-33]. For categories where WOE is not computable due to the existence of empty classes, we adapt WOE calculation by adding artificial data points as suggested by @kohavi1997wrappers.
+In order to extract as much information as possible from the 13 original variables, we apply a variety of different extraction and projections methods, including unsupervised and supervised methods. Our extraction methods can be broadly summarized in four groups: discretization, projection, transformation/combination of variables, and data augmentation by using external information. Based on these methods we construct an enriched data set with a total of 45 features. A small excerpt of these features can be seen in table 2.
 
-Another useful approach we take is the transformation and combination of variables based on domain knowledge about consumer's shopping and returns behavior (@arnold2003hedonic). For example, we expect that discounted items will have a lower return rate due to lower item quality expectation as proposed by @petersen2009product. Thus, we construct several discount variables (absolute discount, percentage discount, discount dummy) by taking the maximum item price for each item size as proxy for the regular item price and considering all deviations as a discount. Furthermore, a common defect of online shopping is that customers might be unsure about which size or color they should order based on the item description and thus place multiple orders of the same item [@foscht2013retaining]. We therefore construct informative variables on the order basket of consumers, e.g. the basket size in terms of items or the number of similar items with distinct sizes within one basket.
-Furthermore, we augment and enrich the data sets by including external sources to construct new features. For example, we use statistics on the mean income for different age groups and different regions within Germany. By combining these indicators with each customer's demographical data (age and user state) we are able construct a proxy for each customer's income. Moreover, we tackle the lack of information on item categories (e.g. pants, shoes, clothing, accessories). Based on size tables for different apparel categories we gathered we are able to categorize over 90% of items by finding sizes unique to a category. As expected, the mean return rate of shoes is almost twice as high as mean returns in accessories.
+We apply discretization to several continuous variables, as this can be useful for capturing non-linear effects, constructing a more comprehensible representation of variables or improving predictive accuracy, especially in the context of tree-based decision algorithms [@liu2002discretization]. For example, we construct price item bins using equal frequency discretization, as we suspect non-linearity regarding the target variable. This approach is superior to equal width discretization for our purpose since it is outlier-resistant and gives us a higher interval resolution for item prices with a high density [@cichosz2014data, 531].
+
+A special challenge of this data set, which applies to many predictive modeling settings on customer behavior, is the presence of high-cardinality attributes (e.g. user id). We address this by replacing each category with its Weight of evidence (WOE), a numerical projection method for categorical variables. The WOE is a measure of predictive power of a category with respect to the target variable, which has gained popularity in credit scoring [@de2016advanced, 19-20]. For a given customer, it shows a customers tendency in returning behavior, a valuable predictor variable. Since WOE has been shown to work well across the different types of our baseline models, requires low computational effort, and reduces dimensionality [@de2016advanced, 32-33], we apply this projection method to all categorical variables. For categories where WOE is not computable due to class sparseness, we add artificial data points as suggested by @kohavi1997wrappers.
+
+Another useful approach we take is the transformation and combination of variables based on domain knowledge about consumer's shopping and returns behavior [@arnold2003hedonic]. For example, we expect that discounted items will have a lower return rate due to lower item quality expectation as proposed by @petersen2009product. Thus, we construct several discount variables (e.g. absolute discount, percentage discount) by taking the maximum item price for each item as proxy for the regular item price and considering all deviations as a discount. Furthermore, a common defect of online shopping is that customers might be unsure about which size or color they should order based on the item description and thus place multiple orders of the same item [@foscht2013retaining]. We therefore construct informative variables on the order basket of consumers, e.g. the basket size in terms of items or the number of similar items with distinct sizes within one basket.
+
+Furthermore, we augment and enrich the data sets by including external sources to construct new features. For example, we use statistics on the mean income for different age groups and different regions within Germany. By combining these indicators with each customer's demographical data (age and user state) we are able construct a proxy for each customer's income. Moreover, we tackle the lack of information on item categories (e.g. pants, shoes, clothing, accessories). Based on size tables for different apparel categories we gathered we are able to categorize over 90% of items by finding sizes unique to each category. As expected, the mean return rate of shoes (52%) is almost twice as high as mean returns in accessories (28%).
 
 \subsection{Feature selection}
 
 Finding an optimal feature subset is important for various reasons: First, learning algorithms like neural networks or tree-based models have been shown to degrade in performance when confronted with datasets containing redundant or irrelevant variables [@zdravevski2014feature]. Second, feature selection reduces data dimensionality, reducing the needed computational power for model building process and improving model comprehensibility. We adopt a hybrid feature selection strategy by combining filters and wrappers.
-As a first preprocessing step as proposed by @zdravevski2014feature, we remove very poor variables based on model agnostic information criteria. This has the advantage of reducing space dimensionality quickly and address overfitting [@guyon2003introduction, 1170]. For numerical variables we compute the F-Score as proposed by @chen2006combining, whereas the average information value (obtained from WOE) is computed for categorical covariates.
 
-The second step in our feature selection is a wrapper approach as described in @kohavi1997wrappers. This Greedy selection strategy is advantageous since it has been shown to be robust against overfitting and is designed to optimize model performance [@guyon2003introduction, 1167]. We use a sequential floating backward selection (SFBS) algorithm as proposed by @pudil1994floating. SFBS is able to capture interaction effects between variables better than non-floating approaches and has been shown to provide good results in medium-scale problems like this [@kudo2000comparison].
-Since the single baseline models from our ensemble model might perform best on distinct feature subsets, the optimal approach would be to conduct an individual wrapper for each model. Due to computational constraints we are nevertheless limited to conducting a single wrapper for all models. As feature subsetting is especially important for tree-based models and neural networks, we design a wrapper based on a simple random forest. First, we create a hold-out test set by creating a random stratified test and training data set. After standardization of both data sets, the WOE for all categorical variables is calculated on the training set and then passed on to the test set to prevent overfitting. Finally, we remove features by means of sequential floating backward selection based on maximizing AUC, which leaves us with a final subset of 17 features.
+As a first preprocessing step as proposed by @zdravevski2014feature, we remove very poor variables based on model-agnostic information criteria. For numerical variables we compute the F-Score as proposed by @chen2006combining, whereas the average information value (obtained from WOE) is computed for categorical covariates.
 
-\section{Model Building}
+The second step in our feature selection is a wrapper approach as described in @kohavi1997wrappers. This greedy selection strategy is advantageous since it has been shown to be robust against overfitting and is designed to optimize model performance [@guyon2003introduction, 1167]. We use a sequential floating backward selection (SFBS) algorithm as proposed by @pudil1994floating. SFBS is able to capture interaction effects between variables better than non-floating approaches and has been shown to provide good results in medium-scale problems like this [@kudo2000comparison].
+
+Since the single baseline models from our ensemble model might perform best on distinct feature subsets, the optimal approach would be to conduct an individual wrapper for each model. Due to computational constraints we are nevertheless limited to conducting a single wrapper for all models. As feature subsetting is especially important for tree-based models and neural networks, we design a wrapper based on a simple random forest. The experimental setup is similar to our inner resampling approach during baseline model training (section 6.2.1) The SFBS leaves us with a final subset of 17 features.
+
+\section{Experimental Design}
 
 \subsection{Performance Measurement}
 
-To evaluate predictive accuracy, we first consider two performance measures - classification accuracy and logarithmic loss. Classification accuracy is the number of correctly classified observations divided by the total number of observations. We use this initial measure due to its ease of interpretability. However, this measure does not differentiate between types of error (which we is important due to asymmetric costs) nor does it penalize overconfidence in classification. Therefore we look additionally at the logarithmic loss, a form of cross-entropy that is used when the desired outcome is the probability that an example is positive. The formula for logarithmic loss is shown below, where N is the total number of observations, $y_i$ is the true outcome, and $p_i$ is our predicted probability outcome. This measure is designed to penalize overly confident but misclassified observations and is often preferred for binary classification problems like ours [@Caruana04datamining].
+To evaluate final predictive power, we consider two performance measures - classification accuracy and logarithmic loss. Classification accuracy is the number of correctly classified observations divided by the total number of observations. We use this initial measure due to its ease of interpretability. However, this measure does not differentiate between types of error (which we is important due to asymmetric costs) nor does it penalize overconfidence in classification. Therefore we additionally look at the logarithmic loss, a form of cross-entropy that is used when the desired outcome is the probability that an example is positive. The formula for logarithmic loss is shown below, where N is the total number of observations, $y_i$ is the true outcome, and $p_i$ is our predicted probability outcome. This measure is designed to penalize overly confident but misclassified observations and is often preferred for binary classification problems like ours [@Caruana04datamining].
 
 $$logloss = -\frac{1}{N}\sum_{i=1}^N [y_ilog(p_i)+(1-y_i)log(1-p_i)]$$
 
-Finally, we consider predictive accuracy within the framework of our specific prediction task, which is to minimize the cost associated with incorrect classifications. Specifically, our problem deals with example-dependent misclassification costs because the penalty for false classification is associated with the item's corresponding cost due to restocking fees or return fees. Namely, in the event of false positive classification (we incorrectly predict the customer will return), there will be an opportunity cost of a lost potential purchase of $-0.5*item price$. In the event of a false negative classification (we incorrectly predict the customer will not return), we incur an actual financial penalty of $-0.5*5*(3+0.1*item price)$. For our purposes, we consider both actual and opportunity costs as impacting our cost calculations.
+Finally, we consider predictive power within the framework of our specific prediction task, which is to minimize the cost associated with incorrect classifications. Specifically, our problem deals with example-dependent misclassification costs because the penalty for false classification is associated with the item's corresponding cost due to restocking fees or return fees. Namely, in the event of false positive classification (we incorrectly predict the customer will return), there will be an opportunity cost of a lost potential purchase of $-0.5*item price$. In the event of a false negative classification (we incorrectly predict the customer will not return), we incur an actual financial penalty of $-0.5*5*(3+0.1*item price)$. For our purposes, we consider both actual and opportunity costs as impacting our cost calculations.
 
-To solve this problem, we use a thresholding approach. The thresholding approach selects the probability cutoff point that minimizes the total misclassification cost from the training data set and uses it to predict the class label of the test instances. Test instances that have a predicted probability below or equal to this threshold are classified as a negative instance, whereas test instances with a probability higher than the threshold are classified as a positive (i.e. return) instance. Despite its simplicity, thresholding often empirically outperforms other cost-sensitive learning methods [@ShengL06].
+To solve this problem, we use a threshold approach. The threshold approach selects the probability cutoff point that minimizes the total misclassification cost from the training data set and uses it to predict the class label of the test instances. Test instances that have a predicted probability below or equal to this threshold are classified as a negative instance, whereas test instances with a probability higher than the threshold are classified as a positive (i.e. return) instance. Despite its simplicity, thresholding often empirically outperforms other cost-sensitive learning methods [@ShengL06].
 
 Our specific approach mirrors a similar approach as suggested by @Fawcett2006, in which he generates a ROC curve that is sensitive to instance-varying costs. In our approach, we loop through a sequence of possible threshold values between 0 and 1, plot the corresponding accuracy and cost, then select the threshold that minimizes the overall cost. Since costs are shown as negative, we seek to maximize the value. We plot these graphs showing the accuracy and costs side by side given different threshold points for each of the four classifiers in [FIGURE XXX]. Notice how the threshold that optimizes costs is different from the one that maximizes accuracy.
 
 ![Threshold graphs for each classifier. Clockwise from top left: logistic regression, neural network, random forest, gradient boost](Images/Threshold-combined.png)
 
-\subsection{Experimental Design}
+\subsection{Model building}
 
 \subsubsection{Nested Resampling}
 
 In order to obtain reliable out-of-sample performance estimates for each classifier and the overall ensemble model, we undertake a nested resampling approach. This approach employs two cross-validation loops. We use the inner loop to tune the hyperparameters, while we use the outer loop to estimate how the model will generalize to a new, unknown data set by averaging the test results [@hastie01statisticallearning, 241].
 
-In the outer loop, we use 4-fold cross-validation. In this approach, we partition the initial test set containing 100,000 observations into four equally sized groups. For each iteration of the loop, we set aside the i-th partition for testing, while we use the remaining 4 partitions to train the individual classifiers (logistic regression, neural network, gradient boosting, random forest).
+In the outer loop, we use 4-fold cross-validation. In this approach, we partition the initial test set containing 100,000 observations into four equally sized randomly stratified groups. For each iteration of the loop, we set aside the i-th partition for testing, while we use the remaining 4 partitions to train the individual classifiers (logistic regression, neural network, gradient boosting, random forest).
 
 In the inner resampling loop, we train each classifier using a fixed holdout instance to find the optimal hyperparameters on each of the individual classifiers. We use a fixed holdout set to enable us to simply standardize numeric variables and create our Weight of Evidence features (by calculating off the training set and applying those values to the holdout set) within the inner loop. This preprocessing step is necessary for all variable transformations that are dependent on the data to prevent overfitting the model.
 
-The inner resampling loop assesses the quality of the model given the chosen hyperparameters. With the consideration that a grid search across the entire hyperparameter search space would be too costly, we choose to instead do a random search across the search space. The random search method will randomly choose from our specified values, with a maximum of 20 iterations. Additionally, we train each classifier to optimize for AUC (area under the ROC curve), since such classifiers tend to produce better accuracy relative to those that only optimize for accuracy [@Huang05usingauc]. The chosen hyperparameters are then passed to the outer loop where a new model is trained with the corresponding hyperparameters. We then predict the results on the outer loop holdout set and aggregate results.
+The inner resampling loop assesses the quality of the model given the chosen hyperparameters. With the consideration that a grid search across the entire hyperparameter search space would be too costly, we choose to instead do a random search across the search space. The random search method will randomly choose parameters from our specified values, with a maximum of 20 iterations. Additionally, we train each classifier to optimize for AUC (area under the ROC curve), since such classifiers tend to produce better accuracy relative to those that only optimize for accuracy [@Huang05usingauc]. The chosen hyperparameters are then passed on to the outer loop where a new model is trained with the corresponding hyperparameters. Finally, we predict the results on the outer loop holdout set and aggregate results.
+
+We note that nested resampling is a computationally intensive process. For this reason, we limit the inner loop cross-validation process to 4 iterations Additionally, we employ relatively small search spaces for hyperparameters (usually not exceeding 30 possible combinations) that are informed by theoretical considerations. In order to accelerate the overall model fitting process, we employ a parallelization wrapper around the tuning process.
+
+\subsubsection{Ensembling}
+
+As our last model building step, we ensemble models from each of the k runs and compare the final combined result to the average of the individual candidate classifiers. Our ensemble approach uses majority voting. Given that we are ensembling four models, we use the best model in terms of cost minimization as a tie breaker, which is the the neural network.
+
+For each of the 4 iterations of the cross-validation process, we use our ensembling method to assign final predictions for each instance. We then calculate the total cost of misclassification and compare that to the average cost for each individual classifier.
 
 \subsubsection{Model Calibration}
 
-Additionally, in the outer loop, we calibrate the probability estimates generated from each classifier. We use calibration for two reasons: Firstly, it ensures that the probability estimates better reflect their true posterior probabilities [@Caruana2006]. For example, in a well-calibrated model, if the probability estimate for a given instance is 70%, that means we can assume that that event has a 70% chance of occurring. Secondly, calibration transforms predictions from all models to place on them equivalent scale. Combining calibrated models in ensembling not only provides improvement in probability measures like logarithmic loss, but failure to use calibrated models may hurt ensemble performance [@Niculescu-Mizil2005].
+Alongside our 4-fold cross-validation, we calibrate the probability estimates generated from each classifier in our outer loop. We use calibration for two reasons: Firstly, it ensures that the probability estimates better reflect their true posterior probabilities [@Caruana2006]. For example, in a well-calibrated model, if the probability estimate for a given instance is 70%, that means we can assume that event has a 70% chance of occurring. Secondly, calibration transforms predictions from all models to place on them equivalent scale. Combining calibrated models in ensembling not only provides improvement in probability measures like logarithmic loss. Failure to use calibrated models may actually hurt ensemble performance [@Niculescu-Mizil2005].
 
 We use a method known as Platt scaling to obtain calibrated predictions. In Platt scaling, we pass the output probabilities through a sigmoid (which in our case is a logistic regression) [@Platt99probabilisticoutputs]. We apply the specific method below as described in [@obtainingcalibrated] in order to prevent overfitting and unwanted bias:
 
@@ -300,7 +316,7 @@ We use a method known as Platt scaling to obtain calibrated predictions. In Plat
 5. Use the predictions from calibration set to train a logistic regression model
 6. Pass the predictions from the test set through the logistic regression model in step 5 to obtain the final predictions
 
-We visualize the effect of calibration on each of our classifiers using reliability diagrams from the first fold of cross-validation. Reliability diagrams split the prediction space into 10 bins, then plot the mean prediction value for each bin against the true fraction of positive cases. The diagonal line indicates a perfectly calibrated model [@Niculescu-Mizil2005]. Additionally, in each diagram, we plot the histogram of predicted values before and after calibration. The results of calibration for each classifier can be seen in [FIGURE xxxx].
+We visualize the effect of calibration on each of our classifiers using reliability diagrams from the first fold of cross-validation which can be seen in [FIGURE xxxx]. Reliability diagrams split the prediction space into 10 bins, then plot the mean prediction value for each bin against the true fraction of positive cases. The diagonal line indicates a perfectly calibrated model [@Niculescu-Mizil2005]. Additionally, in each diagram, we plot the histogram of predicted values before and after calibration.
 
 ![Reliability plots for each classifier. Clockwise from top left: logistic regression, neural network, random forest, gradient boost](Images/ReliabilityPlot-combined.png)
 
@@ -385,100 +401,34 @@ cat(c("\\begin{table}[!htb]
 
 Table: Total Cost Comparison
 
-\subsection{Empirical Results}
+\subsubsection{Post-Processing}
 
-The output of the nested resampling results in a total of five candidate models and sets of predictions for each of the four classifiers. We use the calibrated results of these classifiers for the following:
+The final class memberships of our model predictions are the results of our cost-minimizing threshold strategy. Despite the suitability of threshold tuning in general, the outcome might not be optimal due to the presence of cost asymmetry. This holds especially true for the items with a low item price, where disparity between the distinct classification errors is the largest. This can be seen in figure 1 (left) where the error costs relative to the item price is displayed for both types of misclassification. We refer to those predictions as type error 1, if the predicted value ends up being a False Positive (FP), meaning that we erroneously predicted an item return to be returned by the customer. In contrast, the type 2 errors relate to the False Negatives which implies we predicted a non-return when the item has in fact been returned. For low item prices, the spread between both error cost ratios is very high because of the fixed return costs being relatively high to item price. We therefore suspected it may be cost-saving to manipulate our model predictions to reduce the costs of FN.
+
+![Error cost and price ratios for both misclassification types (left); Ratio of total True Negatives and False Negatives per price bin (right).](Images/CostError.png)
+
+Specifically, we tested whether it is more costly to use our predicted model classes or to always predict customers to return the low price item and thus save on shipment costs ('pure return strategy'). For a given item price, our pure return strategy saves costs if the savings in shipment costs outweigh the losses of items that would not have been returned by customers(TN). Thus, it must hold that
+                $0< \frac{C2}{C1} - \frac{TN}{FN}$
+where C1 and C2 refer to the misclassifications errors of type 1 and 2 at a given item price. Since some item price levels have sparse class membership, we create equal frequency price bins and approximate C1 and C2 with mean erros costs. We test our strategy based on the baseline prediction of our logistic regression model on a stratified test set. In our sample, the pure return strategy only saves costs for a item price of zero. This is because the high spread between costs is outweighed by the high ratio between TN and FN. This can be seen in figure 1 (right), where this ratio os displayed for all price bins. As very few cheap items are returned by customers, the number of FN is small in low price bins, leading to a high ratio.
+
+\section{Empirical Results}
+\subsection{Model performance}
+The output of the nested resampling results in a total of four candidate models and sets of predictions for each of the classifiers. We use the calibrated results of these classifiers for the following:
 
 1. Assess the stability of the hyperparameters
 2. Estimate the prediction accuracy and total cost of the model
 3. Get the average optimal decision threshold to apply to our final classifiers
 4. Use the model with the lowest average cost as a tiebreaker in our ensemble
 
-We can examine the stability of our hyperparameters in [TABLES x,y,z]. Since the hyperparameters do not vary wildly between iterations, we can make the assumption the inner loop optimization works as designed. The distribution of performance values (in terms of accuracy and total cost, respectively) across resampling iterations and for all classifiers is shown in [FIGURES x,y]. The dot in the center represents the average value, whereas the spread is indicated by 1 standard error above and below the mean. On average, the neural network consistently performs best both on prediction accuracy and total cost metrics. In comparison, gradient boosting tends to perform the worst in terms of prediction accuracy but random forests perform the worst in terms of total cost minimization. Logistic regression, as expected, shows the smallest variation between iterations. However, although neural networks and logistic regression tends to vary little between iterations, gradient boosting and random forest approaches have far larger variations between iterations in terms of total cost minimization. The best performance of any one run came from a gradient boost iteration.
-
-
-```{r, echo = FALSE, eval = TRUE, warning = FALSE, message = FALSE, results = 'asis'}
-
-library("knitr", quietly = TRUE)
-library("xtable", quietly = TRUE)
-
-knitr::opts_chunk$set(message = FALSE)
-
-nn.iteration = 1:4
-nn.size = c(4, 5, 8, 6)
-nn.decay = c(1e-03, 1e-05, 1e-02, 1e-03)
-
-rf.iteration = 1:4
-rf.ntree = c(300, 350, 250, 400)
-rf.mtry = rep(3, 4)
-rf.nodesize = c(15, 30, 25, 15)
-
-nn.model = data.frame("iteration" = nn.iteration, "size" = nn.size, "decay" = nn.decay)
-rf.model = data.frame("iteration" = rf.iteration, "size" = rf.ntree, "decay" = rf.mtry, rf.nodesize)
-
-t3 = knitr::kable(nn.model, format = "latex", booktabs = TRUE)
-t4 = knitr::kable(rf.model, format = "latex", booktabs = TRUE)
-
-cat(c("\\begin{table}[!htb]
-    \\begin{minipage}{.5\\linewidth}
-      \\caption{Neural Network Hyperparameter Tuning}
-      \\bigskip
-      \\centering",
-        t3,
-    "\\end{minipage}%
-    \\begin{minipage}{.5\\linewidth}
-        \\caption{Random Forest Hyperparameter Tuning}
-        \\bigskip
-        \\centering",
-        t4,
-    "\\end{minipage}
-\\end{table}"
-))  
-
-
-
-```
-<!-- Just keeping the old tables as a backup -->
-<!-- Table: Neural Network Hyperparameter Tuning -->
-
-<!-- | Iteration | size | decay | -->
-<!-- |-----------|:----:|:-----:| -->
-<!-- | 1         |   4  | 1e-03 | -->
-<!-- | 2         |   5  | 1e-05 | -->
-<!-- | 3         |   8  | 1e-02 | -->
-<!-- | 4         |   6  | 1e-03 | -->
-
-<!-- Table: Random Forest Hyperparameter Tuning -->
-
-<!-- | Iteration | ntree | mtry | nodesize | -->
-<!-- |-----------|:-----:|:----:|:--------:| -->
-<!-- | 1         |  300  |   3  |    15    | -->
-<!-- | 2         |  350  |   3  |    30    | -->
-<!-- | 3         |  250  |   3  |    25    | -->
-<!-- | 4         |  400  |   3  |    15    | -->
-
-Table: Gradient Boost Hyperparameter Tuning
-
-| Iteration | gamma |  eta  | nrounds | lambda | max_depth |
-|-----------|:-----:|:-----:|:-------:|:------:|:---------:|
-| 1         |   4   | 1e-03 |   100   |   0.3  |     3     |
-| 2         |   5   | 1e-05 |   200   |   0.1  |     3     |
-| 3         |   8   | 1e-02 |   100   |   0.4  |     3     |
-| 4         |   6   | 1e-03 |   100   |    0   |     4     |
-
-- Note from Claudia : Cite paper by Prof Lessman @coussement2017comparative:  We explain good performance of log reg with existence of linear effects and our meticulous data preparation. As @coussement2017comparative have demonstrated, logistic regression can compete with more complex algorithms ifexposed to well prepared data set
+We can examine the stability of our hyperparameters in [TABLES x,y,z]. Since the hyperparameters do not vary wildly between iterations, we can make the assumption the inner loop optimization works as designed. The distribution of performance values (in terms of accuracy and total cost, respectively) across resampling iterations and for all classifiers is shown in [FIGURES x,y]. The dot in the center represents the average value, whereas the spread is indicated by one standard error above and below the mean. On average, the neural network consistently performs best both on prediction accuracy and total cost metrics. In comparison, gradient boosting tends to perform the worst in terms of prediction accuracy but random forests perform the worst in terms of total cost minimization. Logistic regression, as expected, shows the smallest variation between iterations. However, although neural networks and logistic regression tends to vary little between iterations, gradient boosting and random forest approaches have far larger variations between iterations in terms of total cost minimization. The best performance of any one run came from a gradient boost iteration. We explain the suprisingly good performance of logistic regression compared to random forests with existence of linear effects and our meticulous data preparation. As @coussement2017comparative have demonstrated, logistic regression can compete with more complex algorithms if exposed to well prepared data sets.
 
 ![Cross-Validation Accuracy](Images/CV-accuracy.png)
 
 ![Cross-Validation Total Cost](Images/CV-cost.png)
 
-We note that nested resampling is a computationally intensive process. We limit the inner loop cross-validation process to 4 iterations for this reason. Additionally, we employ relatively small search spaces for hyperparameters (usually not exceeding 30 possible combinations) that are informed by theoretical considerations (citation???). In order to accelerate the overall model fitting process, we employ a parallelization wrapper around the tuning process.
+-> NOW talk about ensembling!!!
 
-\subsubsection{Ensembling}
-
-Finally, we ensemble models from each of the k runs and compare the final combined result to the average of the individual candidate classifiers. Our ensemble approach uses majority voting as described in the Methodology section of the paper. Given that we are ensembling four models, we use the best model in terms of cost minimization as a tie breaker. In our case, our best performing model is the neural network.
-
-For each of the 4 iterations of the cross-validation process, we use our ensembling method to assign final predictions for each instance. We then calculate the total cost of misclassification and compare that to the average cost for each individual classifier. The results can be seen in [TABLE XXXX].
+ The results can be seen in [TABLE XXXX].
 
 Table: Cost Improvement from Ensembling
 
@@ -490,19 +440,8 @@ Table: Cost Improvement from Ensembling
 |4|-259175.97|-257744.25|0.0055|
 
 The results of ensembling show an average improvement of 1.5% compared to the average base classifier. Although this figure may seem small, it can result in significant cost savings for the retailer over the long run. Additionally, we note that in some cases the ensemble performs slightly worse than the best individual classifier. However, we believe this approach remains valid because of how high the variation is between individual runs, depending on the observations in the data set. The ensembling process helps reduce this variation by averaging the performance of each model.
-\subsubsection{Post-hoc Cost-Sensitive Prediction Adjustment}
 
-The final class memberships of our model predictions are the results of our cost-minimizing threshold strategy. Despite the suitability of threshold tuning in general, the outcome might not be optimal due to the presence of cost assymetry. This holds especially true for the items with a low item price, where disparity between the distinct classification errors is the largest. This can be seen in figure 1 (left) where the error costs relative to the item price is displayed for both types of misclassification. We refer to those predictions as type error 1, if the predicted value ends up being a False Positive (FP), meaning that we erroneously predicted an item return to be returned by the customer. In contrast, the type 2 errors relate to the False Negatives which implies we predicted a non-return when the item has in fact been returned. For low item prices, the spread between both error cost ratios is very high because of the fixed return costs being relatively high to item price. We therefore suspected it may be cost-saving to manipulate our model predictions to reduce the costs of FN.
-
-![Error cost and price ratios for both misclassification types (left); Ratio of total True Negatives and False Negatives per price bin (right).](Images/CostError.png)
-
-Specifically, we tested whether it is more costly to use our predicted model classes or to always predict customers to return the low price item and thus save on shipment costs ('pure return strategy'). For a given item price, our pure return strategy saves costs if the savings in shipment costs outweigh the losses of items that would not have been returned by customers(TN). Thus, it must hold that
-                $0< \frac{C2}{C1} - \frac{TN}{FN}$
-where C1 and C2 refer to the misclassifications errors of type 1 and 2 at a given item price. Since some item price levels have sparse class membership, we create equal frequency price bins and approximate C1 and C2 with mean erros costs. We test our strategy based on the baseline prediction of our logistic regression model on a stratified test set. In our sample, the pure return strategy only saves costs for a item price of zero. This is because the high spread between costs is outweighed by the high ratio between TN and FN. This can be seen in figure 1 (right), where this ratio os displayed for all price bins. As very few cheap items are returned by customers, the number of FN is small in low price bins, leading to a high ratio.
-
-\section{Results}
-
-
+\subsection{Return management implications}
 
 \section{Conclusion}
 

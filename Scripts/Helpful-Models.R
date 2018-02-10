@@ -149,7 +149,7 @@ rf.mod <- function(learner, tr, ts, calib = FALSE, final = FALSE) {
     rf_param <- makeParamSet(
         makeDiscreteParam("ntree", seq(300, 500, by = 50)),
         makeIntegerParam("mtry", lower = 3, upper = 6),
-        makeIntegerParam("nodesize", lower = 1, upper = 30)
+        makeDiscreteParam("nodesize", seq(5, 30, by = 5))
     )
 
     start <- Sys.time()
