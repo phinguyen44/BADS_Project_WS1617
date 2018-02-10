@@ -138,16 +138,13 @@ Insert abstract here
 
 A major obstacle for companies participating in the rapidly rising E-Commerce sector are excessive product returns. Up to 35 % of the total sales in high fashion apparel are affected by this phenomenon [@toktay_2004].
 
-Historically, rising product returns have been often regarded as a necessary evil that is a byproduct of equivalently rising sales [@petersen2009product]. Nowadays, having customer- and product specific data en masse in combination with easily available computational power and sophisticated machine learning algorithms,
-there is no more need for companies to remain blind towards unnecessarily high rates of product returns and the associated risk.
+Historically, rising product returns have been often regarded as a necessary evil that is a byproduct of equivalently rising sales [@petersen2009product]. Nowadays, having customer- and product specific data en masse in combination with easily available computational power and sophisticated machine learning algorithms, there is no more need for companies to remain blind towards unnecessarily high rates of product returns and the associated risk.
 
 The possibility of free returns may be regarded as a result of fierce online competition, to enhance customer satisfaction and loyalty or to decrease risk on the buyer side and consequently pushing revenues. Another common argument in favor of the matter is to reduce uncertainty of a potential customer concerning products, which is generally higher in comparison to the haptic product experience in a brick-and-mortar store [@lessmann_2016].
 
-On the other hand, abnormally high product return rates are reported to have substantial impact on a company's profitability.
-Therefore it would be desirable to create a tradeoff between the mentioned advantages on the customer side and the losses on the corporate side. In order to do so, the drivers of product returns must be laid out in advance.
-Examples of such causes are uncertainty over a product, including, but not limited to incorrect fit, fraudulent behavior as well as damage inflicted by the customer or item defects [@potdar_2009].
+On the other hand, abnormally high product return rates are reported to have substantial impact on a company's profitability. Therefore it would be desirable to create a tradeoff between the mentioned advantages on the customer side and the losses on the corporate side. In order to do so, the drivers of product returns must be laid out in advance. Such causes are including, but not limited to, uncertainty over a product, incorrect fit, item defects, fraudulent behavior, as well as damage inflicted by the customer [@potdar_2009].
 
-Several measures intended to counter such behavior have been proposed by @urbanke_2015. Suggested counter-measures include increased delivery time, moral suasion or transaction denial. Proposing limited payment options is in line with @pur_2013, who find that Vorkasse, Sofortueberweisung and Lastschrift present a higher restriction to product returns and therefore decrease the likelihood of such
+Several measures intended to counter such behavior have been proposed by @urbanke_2015. Suggested counter-measures include increased delivery time, moral suasion or transaction denial. Proposing limited payment options is in line with @pur_2013, who find that Vorkasse, Sofortueberweisung and Lastschrift present a higher restriction to product returns and therefore decrease the likelihood of such.
 
 <!-- Some of these options are already in practice for multiple large online retailers (http://www.retailwire.com/discussion/should-chronic-returners-be-banned/, https://www.nbcchicago.com/news/local/Amazon-Bans-Woman-For-Life-Over-Too-Many-Returns-388199532.html) -->
 
@@ -164,8 +161,7 @@ In this paper, an ensemble model will be developed in order to understand the fe
 
 \subsection{Quantifying the Problem}
 
-@pur_2013 report a lack of consciousness of many companies towards the risk and profit options caused by product returns.
-Hence almost 40% of the E-Retailers are not aware of the according cost. They identify the main reason for product returns to be lack of fit. A third of the surveyed companies expect their profit to rise by 5% in case of 10% less returns.
+@pur_2013 report a lack of consciousness of many companies towards the risk and profit options caused by product returns. Hence almost 40% of the E-Retailers are not aware of the according cost. They identify the main reason for product returns to be lack of fit. A third of the surveyed companies expect their profit to rise by 5% in case of 10% less returns.
 
 \subsection{Model Infrastructure}
 
@@ -175,25 +171,25 @@ Hence almost 40% of the E-Retailers are not aware of the according cost. They id
 
 \subsection{Analyzing Customer Behavior}
 
-@toktay_2004 conclude that, despite the economic impact, literature on predicting product returns is generally sparse. Existing models are criticized to disregard relevant influential variables as product price, rebates, environmental consciousness and return price.
-He emphasizes the possibilities of accurate product return predictions on supply chain management and inventory control.  
+@toktay_2004 conclude that, despite the economic impact, literature on predicting product returns is generally sparse. Existing models are criticized to disregard relevant influential variables as product price, rebates, environmental consciousness and return price. They emphasize the possibilities of accurate product return predictions on supply chain management and inventory control.  
 
 Implications for reverse inventory flow are laid out by @potdar_2009, who classifies product returns in the Consumer Electronics Industry according to the reason for which they have been returned. Especially Data Envelopment Analysis and Linear Regression are used for reason-specific analysis.
 
-In line with @toktay_2004, @urbanke_2015 report a lack of academic literature on the regarded issue. They recommend future research to rely on the usage of machine learning to predict product
-returns in advance of the actual transaction.
+In line with @toktay_2004, @urbanke_2015 report a lack of academic literature on the regarded issue. They recommend future research to rely on the usage of machine learning to predict product returns in advance of the actual transaction.
 
 @Badea_2014 uses ANN to predict consumer behavior in Romania. Using a publicly available dataset on household as well as individual level, it is investigated whether the individuals would save money using bank deposits under certain conditions. The resulting predictions of the ANN are found to substantially increase accuracy compared to the ones of classical discriminant analysis.
 
 \section{Methodology}
+
 \subsection{Heterogeneous Ensemble Models}
-The idea behind ensemble models (EM) is to combine multiple learning algorithms that taken together improve prediction accuracy over the performance of the individual models. The success of EM in predictive analytics is due to their ability of reducing both bias and variance by combining multiple model forecasts [@dietterich2002ensemble]. EM can be divided into homogeneous and heterogeneous approaches. Homogeneous EM use a single base-learning algorithm (e.g. decision tree) on distinct training sets. In contrast, heterogeneous EM train and combine learning algorithms of different types. In the context of classification problems, heterogeneous EM are also referred to as multi-classifier systems (MCS) and have gained increasing popularity [@ranawana2006multi]. Two key design features for the success of MCS is the diversity among the selected classifiers as well as the good individual performances (strength) of the baseline classifiers [@shahid2015ensemble]. However, is has been shown that neither diversity nor individual performance of baseline models can directly predict the ensemble success [@ranawana2006multi].
+
+The idea behind ensemble models (EM) is to combine multiple learning algorithms that, taken together, improve prediction accuracy over the performance of the individual models. The success of EM in predictive analytics is due to their ability of reducing both bias and variance by combining multiple model forecasts [@dietterich2002ensemble]. EM can be divided into homogeneous and heterogeneous approaches. Homogeneous EM use a single base-learning algorithm (e.g. decision tree) on distinct training sets. In contrast, heterogeneous EM train and combine learning algorithms of different types. In the context of classification problems, heterogeneous EM are also referred to as multi-classifier systems (MCS) and have gained increasing popularity [@ranawana2006multi]. Two key design features for the success of MCS is the diversity among the selected classifiers as well as the good individual performances (strength) of the baseline classifiers [@shahid2015ensemble]. However, is has been shown that neither diversity nor individual performance of baseline models can directly predict the ensemble success [@ranawana2006multi].
 
 MCS have been shown to be useful in predicting customer e-commerce behavior, outperforming single classifiers in prediction accuracy (@tsoumakas2008taxonomy, @kim2003combination). Specifically, @heilig2016data demonstrate the suitability of an ensemble selection approach (ES) for predicting product returns in online retailing. This three-step ensemble technique builds upon the creation of a library of heterogeneous candidate base models. Each classifier method can be used to build up multiple models with different meta-parameter settings. The ensemble model is created by combining base model from the library through an extensive search strategy. Though this approach has been demonstrated to be very effective for accurate predictions, it nevertheless requires extensive computational time. We therefore adopt a standard two-step ensemble approach. First, we develop and train four base classifiers models. Second, we combine these individual models with a simple non-linear combination method, namely unweighted majority voting. We opt for this majority voting technique since because it is computationally inexpensive and is likely to improve model accuracy in cases when individual baseline models are well trained [@kuncheva2004combining]. In case of a voting tie, the base model with the highest single accuracy will act as a tiebreaker.  
 
 \subsection{Base Classifier Models}
 
-The ensemble model consists of four separately trained constituents as summarized below. They have been selected due to their outstanding performance as classification models. Since the relationship between product returns and the independent variables is suspected to be of non-linear nature, the majority of the base models captures effects of such nature. Nevertheless, as information heterogeneity substantially influences the performance of an ensemble model, we use a simple logistic regression to capture linear relationships among the variables.
+The ensemble model consists of four separately trained constituents as summarized below. We select them due to their outstanding performance as classification models. Since the relationship between product returns and the independent variables is suspected to be of non-linear nature, the majority of the base models captures effects of such nature. Nevertheless, as information heterogeneity substantially influences the performance of an ensemble model, we use a simple logistic regression to capture linear relationships among the variables.
 
 We then employ an artificial neural network (ANN), which is a statistical model inspired by the functionality of the human brain. It consists of an input layer, possibly multiple hidden layers and an output layer, in which an activation function sends a signal dependent upon the processed input. @pacelli_2011 figure ANN successful in unveiling complex relationships, especially in combination with linear models, but emphasize the need to train them extensively for the risk of remaining in local minima during minimization of the error function.
 
@@ -220,15 +216,16 @@ We include a summary of the base classifiers and the hyperparameter space below.
 
 Table: Base classifier description
 
-
 \section{Data}
+
 The two data sets available to us contain a total of 150,000 order records from an online apparel retailer from a yearlong selling period. For 50,000 of these records, it is unknown whether an ordered item has been sent back by the customer or not. This second data set is the target of our binary predictions on customer returning behavior (return/not return). Both data sets include a total of 13 continuous/discrete and categorical variables. These covariates give information on customer demographics (e.g. user state, date of birth, title), order details (e.g. order date, delivery date), and item characteristics (e.g. item size, price, color). The majority of customers are middle-aged female shoppers, with a mean order volume of 70 Euro over the entire record period and a mean product return rate of 48%.
 
-To prepare the data sets for our analysis, we apply a set of standard pre-processing actions. Following the careful inspection of each variable, we remove all implausible values (e.g. extreme outliers). Approximately 20% of all records have missing values in the variables *delivery date* and/or *date of birth*. For bettter comprehensibility, we transform these covariates to *delivery time* and *age* respectively. Before imputing missing values, we flag them using dummy variables to extract their predictive power [@de2016advanced, 18]. Since *age* seems to be missing completely at random according to our data inspection, imputing it using mean substitution gives us an unbiased estimates [@schafer2002missing]. Missing values in delivery time, caused by missing delivery dates, are clearly not missing not at random as they have a zero mean return rate and therefore are a perfect predictor. Possible reasons for these missing values are manifold. Without knowing the process generating these missings, we cannot find unbiased substitutes from them [@schafer2002missing, 171]. We adopt three single substitution methods, namely case dropping, mean and median imputation, and chose the latter one based on model performance. We standardize the continuous variables only after the feature creation step to maintain their interpretability. Likewise, we do not directly drop zero (almost) zero variance predictors (e.g. date of birth) since we use them for feature extraction.
+To prepare the data sets for our analysis, we apply a set of standard pre-processing actions. We begin by carefully inspecting all variables to  remove all implausible values (e.g. extreme outliers). Approximately 20% of all records have missing values in the variables *delivery date* and/or *date of birth*. For bettter comprehensibility, we transform these covariates to *delivery time* and *age* respectively. Before imputing missing values, we flag them using dummy variables to extract their predictive power [@de2016advanced, 18]. Since *age* seems to be missing completely at random according to our data inspection, imputing it using mean substitution gives us an unbiased estimates [@schafer2002missing]. Missing values in delivery time, caused by missing delivery dates, are clearly not missing not at random as they have a zero mean return rate and therefore are a perfect predictor. Possible reasons for these missing values are manifold. Without knowing the process generating these missings, we cannot find unbiased substitutes from them [@schafer2002missing, 171]. We adopt three single substitution methods: case dropping, mean imputation, and median imputation. We choose median imputation due to model performance. We standardize the continuous variables only after the feature creation step to maintain their interpretability. Likewise, we do not directly drop (almost) zero variance predictors (e.g. date of birth) since we use them for feature extraction.
 
 \section{Feature Engineering}
 
 \subsection{Feature Construction}
+
 Comprehensive feature engineering, i.e. creating and selecting useful and informative features, is the key to successful e-commerce prediction models  [@liu2016repeat]. Based on the data structure available we separate our indicators into three e-commerce-related categories, namely product, customer, and basket related features, as can be seen in table 2. Features in the product category are all item-specific indicators (e.g. item price). Likewise, customer-related features contain variables with relational or demographic information on each customer (e.g. customer age). We define the basket-related features as those that are common within one order basket (e.g. number of items within a basket). We consider all items belonging to one basket that were ordered by the same user on the same day.
 
 Table: Constructed features ordered by category (excerpt)
@@ -414,7 +411,6 @@ where C1 and C2 refer to the misclassifications errors of type 1 and 2 at a give
 \section{Empirical Results}
 
 \subsection{Model Performance}
-
 
 -> NOW talk about ensembling!!!
 
