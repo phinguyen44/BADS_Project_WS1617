@@ -171,7 +171,7 @@ Hence almost 40% of the E-Retailers are not aware of the according cost. They id
 
 \subsection{Model Infrastructure}
 
-@lessmann_2016 and other_lessmann_paper enrich the literature with applied ensemble models in churn and customer return prediction tasks. They show that the overall performance is generally superior to each of the constituent's contribution. The accuracy increases with higher diversity among the underlying models. Additional insight in the construction of data-driven prediction systems are provided, as linear data growth may cause exponentially increased computation time.
+@lessmann_2016 and @lessmann_2013 enrich the literature with applied ensemble models in churn and customer return prediction tasks. They show that the overall performance is generally superior to each of the constituent's contribution. The accuracy increases with higher diversity among the underlying models. Additional insight in the construction of data-driven prediction systems are provided, as linear data growth may cause exponentially increased computation time.
 
 @urbanke_2015 present a new framework to large-scale feature extraction. They mitigate common problems caused by sparse data matrices using dimensionality reduction in terms of Mahalanobis Feature Extraction. They report an outperformance compared to standard machine learning techniques.
 
