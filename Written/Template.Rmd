@@ -141,23 +141,25 @@ A major obstacle for companies participating in the rapidly rising E-Commerce se
 Historically, rising product returns have been often regarded as a necessary evil that is a byproduct of equivalently rising sales [@petersen2009product]. Nowadays, having customer- and product specific data en masse in combination with easily available computational power and sophisticated machine learning algorithms, 
 there is no more need for companies to remain blind towards unnecessarily high rates of product returns and the associated risk. 
 
-The possibility of free returns may be regarded as a result of fierce online competition, to enhance customer satisfaction and loyalty or to decrease risk on the buyer side and consequently pushing revenues. Another common argument in favor of the matter is to reduce uncertainty of a potential customer concerning product, which is generally higher in comparison to the haptic product experience in a brick-and-mortar store [@lessmann_2016]. 
+The possibility of free returns may be regarded as a result of fierce online competition, to enhance customer satisfaction and loyalty or to decrease risk on the buyer side and consequently pushing revenues. Another common argument in favor of the matter is to reduce uncertainty of a potential customer concerning products, which is generally higher in comparison to the haptic product experience in a brick-and-mortar store [@lessmann_2016]. 
 
 On the other hand, abnormally high product return rates are reported to have substantial impact on a company's profitability. 
 Therefore it would be desirable to create a tradeoff between the mentioned advantages on the customer side and the losses on the corporate side. In order to do so, the drivers of product returns must be laid out in advance. 
-Examples of such causes are uncertainty over a product, including, but not limited to incorrect fit, fraudulent behavior in terms of using the delivered item for a certain occasion and returning it afterwards as well as damage inflicted by the customer or item defects [@potdar_2009]. 
+Examples of such causes are uncertainty over a product, including, but not limited to incorrect fit, fraudulent behavior as well as damage inflicted by the customer or item defects [@potdar_2009]. 
 
 Several measures intended to counter such behavior have been proposed by @urbanke_2015. Suggested counter-measures include increased delivery time, moral suasion or transaction denial. Proposing limited payment options is in line with @pur_2013, who find that Vorkasse, Sofortueberweisung and Lastschrift present a higher restriction to product returns and therefore decrease the likelihood of such (todo: accurately translate these terms).
 
-Some of these options are already in practice for multiple large online retailers (http://www.retailwire.com/discussion/should-chronic-returners-be-banned/, https://www.nbcchicago.com/news/local/Amazon-Bans-Woman-For-Life-Over-Too-Many-Returns-388199532.html)
+<!-- Some of these options are already in practice for multiple large online retailers (http://www.retailwire.com/discussion/should-chronic-returners-be-banned/, https://www.nbcchicago.com/news/local/Amazon-Bans-Woman-For-Life-Over-Too-Many-Returns-388199532.html) -->
 
 @lessmann_2016 propose the development of a machine learning system that tracks customer's shopping carts. In case of a high likelihood of product returns, a warning may be displayed. They furthermore discuss to charge a price premium that compensates the risk. 
 
 In this paper, machine learning will be used to analyze the drivers of product returns and predict them accurately. 
 
-----
-Such a forecast may supply companies with information on the reverse product flow and increase their inventory control [@brito_2009].
-----
+<!-- ---- -->
+<!-- Such a forecast may supply companies with information on the reverse product flow and increase their inventory control [@brito_2009]. -->
+<!-- ---- -->
+
+\newpage
 
 \section{Previous Literature}
 
