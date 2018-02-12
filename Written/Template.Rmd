@@ -43,8 +43,7 @@ knitr::opts_chunk$set(fig.pos = 'H')
 
 \begin{center}
 
-\textbf{Predicting E-Commerce Returns with a Heter ...  TBD}
-
+\textbf{Predicting Product Returns in the Presence of Asymmetric Example-Dependent Item Costs}
 
 
 \medskip
@@ -61,7 +60,7 @@ School of Business and Economics  \linebreak
 by  \linebreak  
 
 \textbf{Claudia Günther, Phi Nguyen, Julian Winkel}  \linebreak  
-xxx, 526624, 562959 \linebreak
+576419, 526624, 562959 \linebreak
 \textbf{Group 21} \linebreak
 
 \medskip
@@ -69,13 +68,13 @@ xxx, 526624, 562959 \linebreak
 \medskip
 
 
-Berlin, Date \linebreak
+Berlin, 2018-02-12 \linebreak
 
 \end{center}
 
+\medskip
 
-
-
+\medskip
 
 
 \begin{abstract}
@@ -249,7 +248,7 @@ To evaluate final predictive power, we consider two performance measures - class
 
 $$logloss = -\frac{1}{N}\sum_{i=1}^N [y_ilog(p_i)+(1-y_i)log(1-p_i)]$$
 
-Finally, we consider predictive power within the framework of our specific prediction task, which is to minimize the cost associated with incorrect classifications. Specifically, our problem deals with example-dependent misclassification costs because the penalty for false classification is associated with the item's corresponding cost. Namely, in the event of false positive classification (we incorrectly predict the customer will return), there will be an opportunity cost of a lost potential purchase of $-0.5*item price$. In the event of a false negative classification (we incorrectly predict the customer will not return), we incur an actual financial penalty of $-0.5*5*(3+0.1*item price)$. For our purposes, we consider both actual and opportunity costs as impacting our cost calculations.
+Finally, we consider predictive power within the framework of our specific prediction task, which is to minimize the cost associated with incorrect classifications. Specifically, our problem deals with example-dependent misclassification costs because the penalty for false classification is associated with the item's corresponding cost. Namely, in the event of false positive classification (incorrectly predicting the customer will return), we assume that there will be an opportunity cost of a lost potential purchase of $-0.5*item price$, based on the assumption that the warning message will prevent 50% of the underlying purchases. In the event of a false negative classification (incorrectly predicting the customer will not return), we assume a financial penalty of $-0.5*5*(3+0.1*item price)$, given that we will incur fixed shipment-related costs and costs associated with lost resale value. 
 
 To solve this problem, we use a threshold approach. The threshold approach selects the probability cutoff point that minimizes the total misclassification cost from the training data set and uses it to predict the class label of the test instances. Test instances that have a predicted probability below or equal to this threshold are classified as a negative instance, whereas test instances with a probability higher than the threshold are classified as a positive (i.e. return) instance. Despite its simplicity, thresholding often outperforms other cost-sensitive learning methods [@ShengL06].
 
