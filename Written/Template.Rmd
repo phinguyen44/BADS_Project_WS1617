@@ -424,6 +424,25 @@ Based on our test set, ensembling shows an average cost improvement of 1.5% over
 
 \section{Conclusion}
 
+In this paper, we processed a dataset of a German E-Retailer in an ensemble model to understand which factors cause product returns and to perform predictions with respect to an observation-dependent cost function. On this dataset that includes order-, user-, and product-specific information, we created 45 unique features, of which we were able to extract 17 relevant ones that are used in the ensemble model. We have shown that the majority of the predictive power can be obtained by a relatively small subset of well-designed features. 
+Hence, the presented framework allows easy modification and further applications on real-world data. Data requirements revolve around information that any online company should possess already.
+Our ensemble model leverages the predictive power of the constituent models while reducing variance. 
+In this context, corporations affected by high product-return rates can raise their expected profits by implementing the proposed model and, in case a purchase is classified to likely be a return, issue a warning towards the customer. In the experiments we ran, we have shown that implementing such a measure can achieve a cost-savings of approximately 20%.
+
+
+
+- easily integrated
+appls
+flexible 
+modular
+cost savings compared to a naive approach where retailers do not predict reutrns. 
+data available
+
+in the experiments we have run we have been able to achieve cost savings of apprx. 20%. 
+
+
+
+
 
 \newpage
 
