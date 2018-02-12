@@ -1,5 +1,5 @@
 ---
-title: "Business Analytics and Data Science"
+title: "Predicting Product Returns in the Presence of Asymmetric Example-Dependent Item Costs"
 header-includes:
   - \usepackage{graphicx}
   - \usepackage{amsmath}
@@ -43,7 +43,8 @@ knitr::opts_chunk$set(fig.pos = 'H')
 
 \begin{center}
 
-\textbf{Predicting Product Returns in the Presence of Asymmetric Example-Dependent Item Costs}
+\textbf{Business Analytics and Data Science} \linebreak
+Winter 2017/18
 
 
 \medskip
