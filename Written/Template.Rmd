@@ -61,7 +61,10 @@ School of Business and Economics  \linebreak
 \medskip
 
 
-Chair  \linebreak
+\includegraphics[width=0.2\textwidth]{HU_Logo_small.png}
+
+
+
 
 by  \linebreak  
 
@@ -70,20 +73,17 @@ Immatriculation Numbers \linebreak
 
 
 
-
-\includegraphics[width=0.3\textwidth]{HU_Logo_small.png}
-
 \medskip
 
 \medskip
 
 
-Berlin, Date
+Berlin, Date \linebreak
 
 \end{center}
 
 
-\newpage
+
 \pagenumbering{roman}
 
 
@@ -91,7 +91,8 @@ Berlin, Date
 \begin{abstract}
 
 \smallskip
-High product return rates are common in online apparel shop offering generous return policies. From the retailer's perspective, a tradeoff between higher sales and higher shipment costs due to these return policies exists. We address this trade-off by developing a heterogenous ensemble model for customer return prediction. Our model is able to incorporate asymmetric misclassification costs. 
+High product return rates are common in online apparel shop offering generous return policies. From the retailer's perspective, a tradeoff between higher sales and higher return costs due to these return policies exists. We address this trade-off by developing a heterogeneous ensemble model for customer return prediction. Our model predictions can be combined with preventive intervention system to lower return rates. We go beyond maximizing model accuracy and instead incorporate asymmetric misclassification costs to minimize expected return costs. We demonstrate how multiple resampling loops can be implemented to ensure the stability of hyperparameter and refrain from overfitting. We also present a comprehensive features engineering approach, which helps us exploring the factors driving product returns. Our ensemble model is a stable and flexible customer return prediction tool, which enables online retailers to achieve considerate cost reduction.
+
 \bigskip
 
 
@@ -140,9 +141,9 @@ The possibility of free returns may be regarded as a result of fierce online com
 
 Though generous return policies can increase online product sales, high product return rates are reported to have substantial impact on a company's profitability. Therefore, it would be desirable to balance the tradeoff between the mentioned advantages on the customer side and the losses on the corporate side. In order to do so, the drivers of product returns must be laid out in advance. Such causes are including, but not limited to, uncertainty over a product appearance, incorrect fit, item defects, fraudulent behavior, as well as damage inflicted by the customer [@potdar_2009].
 
-Several measures intended to counter such behavior have been proposed by @urbanke_2015. Suggested counter-measures include increased delivery time, moral suasion or transaction denial. Proposing limited payment options is in line with @pur_2013, who find that advanced payment (Vorkasse), instant transfer (Sofortueberweisung) and direct debit (Lastschrift) present a higher restriction to product returns and therefore decrease the likelihood of such. @lessmann_2016 propose the development of a machine learning system that tracks customer's shopping carts. In case of a high likelihood of product returns, a warning may be displayed. Such an approach has been successful in decreasing the addressed issue.
+Several measures intended to counter such behavior have been proposed by @urbanke_2015. Suggested counter-measures include increased delivery time, moral suasion or transaction denial. Proposing limited payment options is in line with @pur_2013, who find that advanced payment (Vorkasse), instant transfer (Sofortueberweisung) and direct debit (Lastschrift) present a higher restriction to product returns and therefore decrease the likelihood of such. @lessmann_2016 propose the development of a machine learning system that tracks customer's shopping carts. In case of a high likelihood of product returns, a warning may be displayed. Such an approach has been successful in decreasing the addressed issue. We expand on this warning system approach in the context of assymetric misclasification costs.
 
-In this paper, we develop an ensemble model in order to understand the features that drive product returns, predict them accurately and increase company profit by reducing return cost. After a brief literature review, we elaborate different designs for heterogeneous ensemble models and describe our specifif ensemble approach. We then describe the data set of interest and our extensive feature engineering work. The main section presents our experimental setup, inlcuding performance measurement and model building. Following this, we present our empirical findings and conclude.
+In this paper, we develop an ensemble model in order to understand the features that drive product returns, predict them accurately and increase company profit by reducing return cost. After a brief literature review, we elaborate the design for heterogeneous ensemble models and describe our baseline classifier selection. We then describe the data set of interest and our extensive feature engineering work. The main section presents our experimental setup, inlcuding performance measurement and model building. Following this, we present our empirical findings and conclude.
 
 <!-- Some of these options are already in practice for multiple large online retailers (http://www.retailwire.com/discussion/should-chronic-returners-be-banned/, https://www.nbcchicago.com/news/local/Amazon-Bans-Woman-For-Life-Over-Too-Many-Returns-388199532.html) -->
 
@@ -154,17 +155,11 @@ In this paper, we develop an ensemble model in order to understand the features 
 
 \section{Previous Literature}
 
-\subsection{Quantifying the Problem}
-
-@pur_2013 report a lack of consciousness of many companies towards the risk and profit options caused by product returns. Hence almost 40% of the E-Retailers are not aware of the according cost. They identify the main reason for product returns to be lack of fit. A third of the surveyed companies expect their profit to rise by 5% in case of 10% less returns.
-
-\subsection{Model Infrastructure}
+@pur_2013 report a lack of consciousness towards the risk and profit options caused by product returns present among many companies. Specifically, almost 40% of all online retailers are not aware of the associated cost. According to @pur_2013, the main reason for product returns is poor item fit. A third of the surveyed companies expect their profit to rise by 5% in case of a 10% return decreasing, implying great return management potential. 
 
 @lessmann_2016 and @lessmann_2013 enrich the literature with applied ensemble models in churn and customer return prediction tasks. They show that the overall performance is generally superior to each of the constituent's contribution. The accuracy increases with higher diversity among the underlying models. Additional insight in the construction of data-driven prediction systems are provided, as linear data growth may cause exponentially increased computation time.
 
 @urbanke_2015 present a new framework to large-scale feature extraction. They mitigate common problems caused by sparse data matrices using dimensionality reduction in terms of Mahalanobis Feature Extraction. They report an outperformance compared to standard machine learning techniques.
-
-\subsection{Analyzing Customer Behavior}
 
 @toktay_2004 conclude that, despite the economic impact, literature on predicting product returns is generally sparse. Existing models are criticized to disregard relevant influential variables as product price, rebates, environmental consciousness and return price. They emphasize the possibilities of accurate product return predictions on supply chain management and inventory control.  
 
