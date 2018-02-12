@@ -56,7 +56,7 @@ submitted to
 
 
 \medskip
-Humboldt-Universität zu Berlin \linebreak     
+Humboldt-Universit?t zu Berlin \linebreak     
 School of Business and Economics  \linebreak
 \medskip
 
@@ -75,8 +75,6 @@ Immatriculation Numbers \linebreak
 
 \medskip
 
-Anything else we want to say
-
 \medskip
 
 
@@ -93,9 +91,7 @@ Berlin, Date
 \begin{abstract}
 
 \smallskip
-
-Insert abstract here
-
+High product return rates are common in online apparel shop offering generous return policies. From the retailer's perspective, a tradeoff between higher sales and higher shipment costs due to these return policies exists. We address this trade-off by developing a heterogenous ensemble model for customer return prediction. Our model is able to incorporate asymmetric misclassification costs. 
 \bigskip
 
 
@@ -138,25 +134,23 @@ Insert abstract here
 
 
 A major obstacle for companies participating in the rapidly rising E-Commerce sector are excessive product returns. Up to 35 % of the total sales in high fashion apparel are affected by this phenomenon [@toktay_2004].
-
 Historically, rising product returns have been often regarded as a necessary evil that is a byproduct of equivalently rising sales [@petersen2009product]. Nowadays, having customer- and product specific data en masse in combination with easily available computational power and sophisticated machine learning algorithms, there is no more need for companies to remain blind towards unnecessarily high rates of product returns and the associated risk.
 
 The possibility of free returns may be regarded as a result of fierce online competition, to enhance customer satisfaction and loyalty or to decrease risk on the buyer side and consequently pushing revenues [@urbanke_2015]. Another common argument in favor of the matter is to reduce uncertainty of a potential customer concerning products, which is generally higher in comparison to the haptic product experience in a brick-and-mortar store [@lessmann_2016].
 
-On the other hand, abnormally high product return rates are reported to have substantial impact on a company's profitability. Therefore it would be desirable to create a tradeoff between the mentioned advantages on the customer side and the losses on the corporate side. In order to do so, the drivers of product returns must be laid out in advance. Such causes are including, but not limited to, uncertainty over a product, incorrect fit, item defects, fraudulent behavior, as well as damage inflicted by the customer [@potdar_2009].
+Though generous return policies can increase online product sales, high product return rates are reported to have substantial impact on a company's profitability. Therefore, it would be desirable to balance the tradeoff between the mentioned advantages on the customer side and the losses on the corporate side. In order to do so, the drivers of product returns must be laid out in advance. Such causes are including, but not limited to, uncertainty over a product appearance, incorrect fit, item defects, fraudulent behavior, as well as damage inflicted by the customer [@potdar_2009].
 
-Several measures intended to counter such behavior have been proposed by @urbanke_2015. Suggested counter-measures include increased delivery time, moral suasion or transaction denial. Proposing limited payment options is in line with @pur_2013, who find that Vorkasse, Sofortueberweisung and Lastschrift present a higher restriction to product returns and therefore decrease the likelihood of such.
+Several measures intended to counter such behavior have been proposed by @urbanke_2015. Suggested counter-measures include increased delivery time, moral suasion or transaction denial. Proposing limited payment options is in line with @pur_2013, who find that advanced payment (Vorkasse), instant transfer (Sofortueberweisung) and direct debit (Lastschrift) present a higher restriction to product returns and therefore decrease the likelihood of such. @lessmann_2016 propose the development of a machine learning system that tracks customer's shopping carts. In case of a high likelihood of product returns, a warning may be displayed. Such an approach has been successful in decreasing the addressed issue.
+
+In this paper, we develop an ensemble model in order to understand the features that drive product returns, predict them accurately and increase company profit by reducing return cost. After a brief literature review, we elaborate different designs for heterogeneous ensemble models and describe our specifif ensemble approach. We then describe the data set of interest and our extensive feature engineering work. The main section presents our experimental setup, inlcuding performance measurement and model building. Following this, we present our empirical findings and conclude.
 
 <!-- Some of these options are already in practice for multiple large online retailers (http://www.retailwire.com/discussion/should-chronic-returners-be-banned/, https://www.nbcchicago.com/news/local/Amazon-Bans-Woman-For-Life-Over-Too-Many-Returns-388199532.html) -->
 
-@lessmann_2016 propose the development of a machine learning system that tracks customer's shopping carts. In case of a high likelihood of product returns, a warning may be displayed. Such an approach has been successful in decreasing the addressed issue.
-In this paper, an ensemble model will be developed in order to understand the features that drive product returns, predict them accurately and increase profit.
+
 
 <!-- ---- -->
 <!-- Such a forecast may supply companies with information on the reverse product flow and increase their inventory control [@brito_2009]. -->
 <!-- ---- -->
-
-\newpage
 
 \section{Previous Literature}
 
