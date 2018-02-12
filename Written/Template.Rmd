@@ -1,5 +1,5 @@
 ---
-title: "Predicting Product Returns in the Presence of Asymmetric Example-Dependent Item Costs"
+title: "Predicting Online Product Returns in the Presence of Example-Dependent Item Costs"
 header-includes:
   - \usepackage{graphicx}
   - \usepackage{amsmath}
@@ -157,7 +157,7 @@ Implications for reverse inventory flow are laid out by @potdar_2009, who classi
 
 In line with @toktay_2004, @urbanke_2015 report a lack of academic literature on the regarded issue. They recommend future research to rely on the usage of machine learning to predict product returns in advance of the actual transaction.
 
-@Badea_2014 uses ANN to predict consumer behavior in Romania. Using a publicly available dataset on household as well as individual level, it is investigated whether the individuals would save money using bank deposits under certain conditions. The resulting predictions of the ANN are found to substantially increase accuracy compared to the ones of classical discriminant analysis.
+@Badea_2014 uses an artificial neural network (ANN) to predict consumer behavior in Romania. Using a publicly available dataset on household as well as individual level, it is investigated whether the individuals would save money using bank deposits under certain conditions. The resulting predictions of the ANN are found to substantially increase accuracy compared to the ones of classical discriminant analysis.
 
 \section{Methodology}
 
@@ -169,15 +169,14 @@ MCS have been shown to be useful in predicting customer e-commerce behavior, out
 
 \subsection{Base Classifier Models}
 
-The ensemble model consists of four separately trained constituents as summarized below. We select them due to their outstanding performance as classification models. Since the relationship between product returns and the independent variables is suspected to be of non-linear nature, the majority of the base models captures effects of such nature. Nevertheless, as information heterogeneity substantially influences the performance of an ensemble model, we use a simple logistic regression to capture linear relationships among the variables.
+The ensemble model consists of four separately trained constituents as summarized below in Table. We select them due to their outstanding performance as classification models and their diversity in capturing effects. Since the relationship between product returns and the independent variables is suspected to be of non-linear nature, the majority of the base models captures effects of such nature. Nevertheless, as information heterogeneity substantially influences the performance of an ensemble model, we use a simple logistic regression to capture linear relationships among the variables.
 
-We then employ an artificial neural network (ANN), which is a statistical model inspired by the functionality of the human brain. It consists of an input layer, possibly multiple hidden layers and an output layer, in which an activation function sends a signal dependent upon the processed input. @pacelli_2011 figure ANN successful in unveiling complex relationships, especially in combination with linear models, but emphasize the need to train them extensively for the risk of remaining in local minima during minimization of the error function.
+We then employ an artificial neural network, which is a statistical model inspired by the functionality of the human brain. It consists of an input layer, possibly multiple hidden layers and an output layer, in which an activation function sends a signal dependent upon the processed input. @pacelli_2011 figure ANN successful in unveiling complex relationships, especially in combination with linear models, but emphasize the need to train them extensively for the risk of remaining in local minima during minimization of the error function.
 
 Following @singapore_2013, the inclusion of a random forest model enriches the information drawn from ANN and logistic regression as it does not rely on estimated predictors and is not prone to overfitting. Random forests are additionally useful for their ability to natively handle feature selection.
 
 Finally, we consider a gradient boosting model, which starts with a simple classifier then iteratively adds additional models that corrects the error of the prior model. We specifically employ the DART (Dropouts meet Multiple Additive Regression Trees) algorithm as proposed by @Rashmi over the more traditional as described by @Friedman00, as it solves the problem of over-specialization, where trees added at later iterations impact the prediction of only a few instances. It does so by randomly muting trees, which often results in a more balanced contribution from all of the trees and occasionally outperforms even random forests [@Rashmi].
 
-We include a summary of the base classifiers and the hyperparameter space in Table 1.
 
 |      Classifier     |    Relationship   | Hyperparameter | Possible Values |
 |---------------------|:-----------------:|----------------|-----------------|
@@ -417,9 +416,9 @@ From the results of our experiments, we can expect an approximate cost reduction
 
 \section{Conclusion}
 
-In this paper, we processed a dataset of a German online retailer in an ensemble model to understand which factors cause product returns and to perform predictions with respect to an observation-dependent cost function. On this dataset that includes order-, user-, and product-specific information, we created 45 unique features, of which we were able to extract 17 relevant ones that are used in the ensemble model. We have shown that the majority of the predictive power can be obtained by a relatively small subset of well-designed features.
-Hence, the presented framework allows easy modification and further applications on real-world data. Data requirements revolve around information that any online retailer should possess already.
-Our heterogeneous ensemble model leverages the predictive power of the constituent models while reducing individual variance.
+In this paper, we processed a real-world dataset of an online retailer in an ensemble model to understand which factors cause product returns and to perform predictions with respect to an observation-dependent cost function. On this dataset that includes order-, user-, and product-specific information, we created 45 unique features, of which we were able to extract 17 relevant ones that are used in the ensemble model. We have shown that the majority of the predictive power can be obtained by a relatively small subset of well-designed features.
+Hence, the presented ensemble framework allows easy modification and further applications on real-world data. Data requirements revolve around information that any online retailer should possess already.
+Our heterogeneous ensemble model leveraged the predictive power of the constituent models while reducing individual variance. It performed well both in terms of prediction accuracy as well as overall cost reduction. 
 In this context, corporations affected by high product-return rates can raise their expected profits by implementing the proposed model and, in case a purchase is classified to likely be a return, issue a warning towards the customer. In the experiments we ran, we have shown that implementing such a measure can achieve a cost-savings of approximately 20%.
 
 
