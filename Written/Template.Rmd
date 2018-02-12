@@ -1,5 +1,5 @@
 ---
-title: "Fancy Title"
+title: "Business Analytics and Data Science"
 header-includes:
   - \usepackage{graphicx}
   - \usepackage{amsmath}
@@ -43,7 +43,7 @@ knitr::opts_chunk$set(fig.pos = 'H')
 
 \begin{center}
 
-Business Analytics and Data Science Group Project  
+\textbf{Project of Group 21} 
 
 \medskip
 submitted to  
@@ -56,7 +56,7 @@ submitted to
 
 
 \medskip
-Humboldt-Universit?t zu Berlin \linebreak     
+Humboldt-Universität zu Berlin \linebreak     
 School of Business and Economics  \linebreak
 \medskip
 
@@ -121,6 +121,7 @@ Insert abstract here
 \textbf{ANN} & Artificial Neural Network     \\
 \textbf{EM} & Ensemble Model(s)    \\
 \textbf{LM} & Linear Model(s)    \\
+\textbf{WOE} & Weight of Evidence \\
 
 \end{tabular}
 
@@ -140,7 +141,7 @@ A major obstacle for companies participating in the rapidly rising E-Commerce se
 
 Historically, rising product returns have been often regarded as a necessary evil that is a byproduct of equivalently rising sales [@petersen2009product]. Nowadays, having customer- and product specific data en masse in combination with easily available computational power and sophisticated machine learning algorithms, there is no more need for companies to remain blind towards unnecessarily high rates of product returns and the associated risk.
 
-The possibility of free returns may be regarded as a result of fierce online competition, to enhance customer satisfaction and loyalty or to decrease risk on the buyer side and consequently pushing revenues. Another common argument in favor of the matter is to reduce uncertainty of a potential customer concerning products, which is generally higher in comparison to the haptic product experience in a brick-and-mortar store [@lessmann_2016].
+The possibility of free returns may be regarded as a result of fierce online competition, to enhance customer satisfaction and loyalty or to decrease risk on the buyer side and consequently pushing revenues [@urbanke_2015]. Another common argument in favor of the matter is to reduce uncertainty of a potential customer concerning products, which is generally higher in comparison to the haptic product experience in a brick-and-mortar store [@lessmann_2016].
 
 On the other hand, abnormally high product return rates are reported to have substantial impact on a company's profitability. Therefore it would be desirable to create a tradeoff between the mentioned advantages on the customer side and the losses on the corporate side. In order to do so, the drivers of product returns must be laid out in advance. Such causes are including, but not limited to, uncertainty over a product, incorrect fit, item defects, fraudulent behavior, as well as damage inflicted by the customer [@potdar_2009].
 
