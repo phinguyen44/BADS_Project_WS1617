@@ -4,6 +4,8 @@ bads-ws1718-group21_ created by GitHub Classroom
 
 ![image](https://qph.ec.quoracdn.net/main-qimg-527cbeca6d5ab2127118ace7d469b087)
 
+Members: Claudia Günther, Phi Nguyen, Julian Winkel
+
 ## Project Details
 
 Next Steps for BADS Group Assignment
